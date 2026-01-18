@@ -1,0 +1,132 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { VideoCard, type VideoListItem } from '@/components/video/VideoCard'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { Input } from '@/components/ui/Input'
+import { apiFetch } from '@/lib/api'
+import { cn } from '@/lib/utils'
+import { Search } from 'lucide-react'
+
+type Sort = 'latest' | 'popular'
+
+export default function Home() {
+  const [params, setParams] = useSearchParams()
+  const q = params.get('q') || ''
+  const sort = (params.get('sort') as Sort) || 'latest'
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [items, setItems] = useState<VideoListItem[]>([])
+
+  const title = useMemo(() => {
+    if (q.trim()) return `Results for “${q.trim()}”`
+    return sort === 'popular' ? 'Trending now' : 'Recommended'
+  }, [q, sort])
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    setError(null)
+    apiFetch<{ success: true; items: VideoListItem[] }>(`/api/videos?q=${encodeURIComponent(q)}&sort=${encodeURIComponent(sort)}&limit=24`)
+      .then((d) => {
+        if (!alive) return
+        setItems(d.items)
+      })
+      .catch((e: unknown) => {
+        if (!alive) return
+        setError(e instanceof Error ? e.message : 'Failed to load')
+      })
+      .finally(() => {
+        if (!alive) return
+        setLoading(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [q, sort])
+
+  return (
+    <div className="space-y-6 animate-fadeUp">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="font-heading text-xl font-bold tracking-tight">{title}</h1>
+          <div className="text-sm text-muted">Fast, clean, creator-first video.</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            className={cn(
+              'h-9 rounded-[10px] border border-border/10 px-3 text-sm font-semibold transition',
+              sort === 'latest' ? 'bg-white/5 text-text' : 'bg-surface text-muted hover:text-text hover:bg-surface2',
+            )}
+            onClick={() => {
+              params.set('sort', 'latest')
+              setParams(params)
+            }}
+          >
+            Latest
+          </button>
+          <button
+            className={cn(
+              'h-9 rounded-[10px] border border-border/10 px-3 text-sm font-semibold transition',
+              sort === 'popular' ? 'bg-white/5 text-text' : 'bg-surface text-muted hover:text-text hover:bg-surface2',
+            )}
+            onClick={() => {
+              params.set('sort', 'popular')
+              setParams(params)
+            }}
+          >
+            Popular
+          </button>
+        </div>
+      </div>
+
+      <div className="md:hidden">
+        <div className="relative">
+          <Input
+            aria-label="Search"
+            placeholder="Search videos and channels"
+            className="pl-9"
+            defaultValue={q}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter') return
+              const next = (e.currentTarget.value || '').trim()
+              if (next) {
+                params.set('q', next)
+              } else {
+                params.delete('q')
+              }
+              setParams(params)
+            }}
+          />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+        </div>
+      </div>
+
+      {error ? (
+        <div className="rounded-xl border border-border/10 bg-surface p-4">
+          <div className="text-sm font-semibold">Couldn’t load videos</div>
+          <div className="mt-1 text-sm text-muted">{error}</div>
+        </div>
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {loading
+          ? Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-border/10 bg-surface overflow-hidden">
+                <Skeleton className="aspect-video w-full rounded-none" />
+                <div className="p-3">
+                  <div className="flex gap-3">
+                    <Skeleton className="h-9 w-9 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-4/5" />
+                      <Skeleton className="h-3 w-2/5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          : items.map((v) => <VideoCard key={v.id} video={v} />)}
+      </div>
+    </div>
+  )
+}

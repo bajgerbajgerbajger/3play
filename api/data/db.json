@@ -1,0 +1,168 @@
+{
+  "users": [
+    {
+      "id": "u-f04097d8",
+      "email": "bajgerizzz@gmail.com",
+      "handle": "@newcreator",
+      "displayName": "New Creator",
+      "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20readable%20number%203%20with%20play%20triangle%20motif%2C%20minimal%2C%20sharp%20edges%2C%20red%20accent%2C%20dark%20background%2C%20vector%20style&image_size=square",
+      "passwordHash": "0d5f86139d46aacfb66cc4a2779da13f:993decbd32215439a821152470a7090dc1bfdfc049a39bb6d5153e068c0767e0b722fd543ad178820a686ea499b94417683fc9feab158e4f17e9406b454a0c31"
+    },
+    {
+      "id": "u-aurora",
+      "email": "creator@3play.dev",
+      "handle": "@aurora",
+      "displayName": "Aurora Labs",
+      "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20tech%20creator%2C%20neon%20red%20accent%2C%20minimal%2C%20sharp%20edges%2C%20dark%20background%2C%20vector%20style&image_size=square",
+      "passwordHash": "c122f17608f3f40bb53288a41fc80ac5:6e724c2084f1099e3bded4dba656f4b9befae6245c8711104da0776cf7a09a89f5a22e5d58bc59f2066f66771e01dac1b5616d3c9e91fb6fba6c208fd906bf57"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "p-ffe8d4ae",
+      "handle": "@newcreator",
+      "displayName": "New Creator",
+      "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20readable%20number%203%20with%20play%20triangle%20motif%2C%20minimal%2C%20sharp%20edges%2C%20red%20accent%2C%20dark%20background%2C%20vector%20style&image_size=square",
+      "bannerUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=wide%20banner%2C%20abstract%20tech%20background%2C%20dark%20theme%2C%20minimal%20geometric%20shapes%2C%20subtle%20gradient&image_size=landscape_16_9",
+      "bio": "Welcome to New Creator's channel",
+      "subscribers": 0
+    },
+    {
+      "id": "p-aurora",
+      "handle": "@aurora",
+      "displayName": "Aurora Labs",
+      "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20tech%20creator%2C%20neon%20red%20accent%2C%20minimal%2C%20sharp%20edges%2C%20dark%20background%2C%20vector%20style&image_size=square",
+      "bannerUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=wide%20banner%2C%20abstract%20tech%20waveforms%2C%20deep%20near-black%2C%20strong%20red%20accents%2C%20subtle%20purple%20highlights%2C%20minimal%2C%20flat%20vector%2C%20clean%20symmetry&image_size=landscape_16_9",
+      "bio": "Creator-first engineering breakdowns, studio workflows, and performance tuning.",
+      "subscribers": 128400
+    },
+    {
+      "id": "p-kairo",
+      "handle": "@kairo",
+      "displayName": "Kairo Motion",
+      "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20video%20editor%2C%20sharp%20edges%2C%20high%20contrast%2C%20red%20accent%2C%20minimal%20vector%20portrait&image_size=square",
+      "bannerUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=wide%20banner%2C%20cinematic%20gradient%2C%20near-black%20to%20dark%20gray%2C%20red%20highlight%20line%2C%20minimal%20tech%20aesthetic%2C%20flat%20design&image_size=landscape_16_9",
+      "bio": "Fast cuts, clean grading, creator tooling. Short, sharp, premium.",
+      "subscribers": 84210
+    },
+    {
+      "id": "p-nova",
+      "handle": "@novasynth",
+      "displayName": "Nova Synth",
+      "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20synthwave%20creator%2C%20minimal%2C%20sharp%2C%20red%20and%20subtle%20blue%20accents%2C%20dark%20background%2C%20vector%20style&image_size=square",
+      "bannerUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=wide%20banner%2C%20synthwave%20city%20silhouette%2C%20near-black%20base%2C%20red%20sun%20disc%2C%20subtle%20blue%20haze%2C%20flat%20vector%2C%20symmetric&image_size=landscape_16_9",
+      "bio": "Design, sound, and modern interfaces. Premium but minimal.",
+      "subscribers": 203500
+    }
+  ],
+  "videos": [
+    {
+      "id": "v-001",
+      "ownerId": "p-aurora",
+      "title": "3Play UI System: Dark-first, Minimal, Fast",
+      "description": "A practical walkthrough of building a dark-mode-first design system with real components, fast interactions, and a premium feel.",
+      "visibility": "published",
+      "status": "ready",
+      "thumbnailUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=video%20thumbnail%2C%20high%20contrast%2C%20readable%20title%20text%20%22Dark-first%20UI%22%2C%20creator%20portrait%20on%20left%2C%20cinematic%20lighting%2C%20minimal%20tech%2C%20red%20accents%2C%20clean%20typography%2C%20flat%20overlay&image_size=landscape_16_9",
+      "sourceUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+      "durationSeconds": 536,
+      "views": 182342,
+      "likes": 12840,
+      "dislikes": 402,
+      "likedBy": [],
+      "dislikedBy": [],
+      "publishedAt": "2026-01-10T21:54:31.025Z",
+      "createdAt": "2026-01-16T21:54:31.027Z",
+      "updatedAt": "2026-01-16T21:54:31.027Z"
+    },
+    {
+      "id": "v-002",
+      "ownerId": "p-kairo",
+      "title": "Creator Studio Workflow: Upload → Process → Publish",
+      "description": "A complete creator flow with progress UI, processing indicators, and publish controls. Built for speed and confidence.",
+      "visibility": "published",
+      "status": "ready",
+      "thumbnailUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=video%20thumbnail%2C%20title%20%22Studio%20Workflow%22%2C%20sleek%20dashboard%20screenshot%20style%2C%20red%20primary%20button%2C%20dark%20background%2C%20minimal%2C%20high%20contrast%2C%20cinematic&image_size=landscape_16_9",
+      "sourceUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+      "durationSeconds": 734,
+      "views": 95340,
+      "likes": 8021,
+      "dislikes": 221,
+      "likedBy": [],
+      "dislikedBy": [],
+      "publishedAt": "2026-01-14T21:54:31.027Z",
+      "createdAt": "2026-01-16T21:54:31.027Z",
+      "updatedAt": "2026-01-16T21:54:31.027Z"
+    },
+    {
+      "id": "v-003",
+      "ownerId": "p-nova",
+      "title": "Motion That Feels Premium (Without Being Distracting)",
+      "description": "Micro-interactions, thumbnail hovers, and page transitions that keep the focus on video.",
+      "visibility": "published",
+      "status": "ready",
+      "thumbnailUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=video%20thumbnail%2C%20title%20%22Premium%20Motion%22%2C%20abstract%20motion%20lines%2C%20near-black%20background%2C%20strong%20red%20highlight%2C%20subtle%20blue%20glow%2C%20minimal%2C%20high%20contrast&image_size=landscape_16_9",
+      "sourceUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      "durationSeconds": 492,
+      "views": 241902,
+      "likes": 16920,
+      "dislikes": 510,
+      "likedBy": [],
+      "dislikedBy": [],
+      "publishedAt": "2026-01-04T21:54:31.027Z",
+      "createdAt": "2026-01-16T21:54:31.027Z",
+      "updatedAt": "2026-01-16T21:54:31.027Z"
+    },
+    {
+      "id": "v-004",
+      "ownerId": "p-aurora",
+      "title": "Performance Playbook: Streaming UI at 60fps",
+      "description": "Tech-focused breakdown: rendering budgets, skeletons, and perceived speed on modern media platforms.",
+      "visibility": "published",
+      "status": "ready",
+      "thumbnailUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=video%20thumbnail%2C%20title%20%2260fps%20Playbook%22%2C%20tech%20graphs%2C%20minimal%20UI%2C%20dark%20theme%2C%20red%20accent%2C%20crisp%20typography%2C%20high%20contrast&image_size=landscape_16_9",
+      "sourceUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "durationSeconds": 596,
+      "views": 512300,
+      "likes": 44210,
+      "dislikes": 918,
+      "likedBy": [],
+      "dislikedBy": [],
+      "publishedAt": "2025-12-27T21:54:31.027Z",
+      "createdAt": "2026-01-16T21:54:31.027Z",
+      "updatedAt": "2026-01-16T21:54:31.027Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": "c-001",
+      "videoId": "v-001",
+      "authorHandle": "@novasynth",
+      "authorName": "Nova Synth",
+      "authorAvatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20synthwave%20creator%2C%20minimal%2C%20sharp%2C%20red%20and%20subtle%20blue%20accents%2C%20dark%20background%2C%20vector%20style&image_size=square",
+      "message": "This feels like a real product. The spacing + hover polish is perfect.",
+      "createdAt": "2026-01-16T21:24:31.027Z",
+      "likes": 92
+    },
+    {
+      "id": "c-002",
+      "videoId": "v-001",
+      "authorHandle": "@kairo",
+      "authorName": "Kairo Motion",
+      "authorAvatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20video%20editor%2C%20sharp%20edges%2C%20high%20contrast%2C%20red%20accent%2C%20minimal%20vector%20portrait&image_size=square",
+      "message": "The dark-first tokens make everything consistent. Great work.",
+      "createdAt": "2026-01-16T20:24:31.027Z",
+      "likes": 51
+    },
+    {
+      "id": "c-003",
+      "videoId": "v-003",
+      "authorHandle": "@aurora",
+      "authorName": "Aurora Labs",
+      "authorAvatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20tech%20creator%2C%20neon%20red%20accent%2C%20minimal%2C%20sharp%20edges%2C%20dark%20background%2C%20vector%20style&image_size=square",
+      "message": "Fast motion with restraint is the whole game. Nice.",
+      "createdAt": "2026-01-16T21:39:31.027Z",
+      "likes": 33
+    }
+  ]
+}
