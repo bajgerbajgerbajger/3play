@@ -151,6 +151,26 @@ export default function Studio() {
     }
   }
 
+  async function handleThumbnailUpload(file: File): Promise<string> {
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch('/api/studio/upload', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    })
+    const data = (await res.json()) as { success?: boolean; thumbnailUrl?: string; error?: string }
+    if (!data.success || !data.thumbnailUrl) {
+      throw new Error(data.error || 'Thumbnail upload failed')
+    }
+    return data.thumbnailUrl
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] animate-fadeUp">
       <StudioSidebar tab={tab} readyCount={readyCount} onTab={setTab} />
