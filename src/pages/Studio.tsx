@@ -19,7 +19,7 @@ export default function Studio() {
 
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadDesc, setUploadDesc] = useState('')
-  const [uploadSource, setUploadSource] = useState<string>(sampleSources[0].url)
+  const [uploadSource, setUploadSource] = useState<string>('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [creating, setCreating] = useState(false)
@@ -64,6 +64,11 @@ export default function Studio() {
       setError('Title must be at least 3 characters')
       return
     }
+    if (!uploadFile && !uploadSource.trim()) {
+      setError('Please select a file or enter a source URL')
+      return
+    }
+
     setError(null)
     setCreating(true)
     setUploadProgress(0)

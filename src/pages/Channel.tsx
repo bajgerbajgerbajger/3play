@@ -5,6 +5,9 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
 import { VideoCard, type VideoListItem } from '@/components/video/VideoCard'
 import { formatCompactNumber } from '@/lib/format'
+import { useAuthStore } from '@/store/auth'
+import { ChannelEditor } from '@/components/channel/ChannelEditor'
+import { Pencil } from 'lucide-react'
 
 type ChannelInfo = {
   id: string
@@ -20,10 +23,12 @@ type ChannelInfo = {
 
 export default function Channel() {
   const { handle } = useParams()
+  const { user } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [channel, setChannel] = useState<ChannelInfo | null>(null)
   const [videos, setVideos] = useState<VideoListItem[]>([])
+  const [isEditing, setIsEditing] = useState(false)
 
   useEffect(() => {
     if (!handle) return
@@ -51,6 +56,8 @@ export default function Channel() {
       alive = false
     }
   }, [handle])
+
+  const isOwner = user && channel && user.handle === channel.handle
 
   return (
     <div className="space-y-6 animate-fadeUp">
@@ -83,11 +90,28 @@ export default function Channel() {
                     {channel.bio ? <div className="mt-2 max-w-2xl text-sm text-text">{channel.bio}</div> : null}
                   </div>
                 </div>
-                <Button>Subscribe</Button>
+                {isOwner ? (
+                  <Button variant="secondary" onClick={() => setIsEditing(true)}>
+                    <Pencil size={16} />
+                    Edit Channel
+                  </Button>
+                ) : (
+                  <Button>Subscribe</Button>
+                )}
               </div>
             </div>
           </div>
         </>
+      ) : null}
+
+      {isEditing && channel ? (
+        <ChannelEditor 
+          initialData={channel} 
+          onClose={() => setIsEditing(false)} 
+          onUpdate={(updated) => {
+            setChannel({ ...channel, ...updated })
+          }}
+        />
       ) : null}
 
       {error ? (

@@ -39,11 +39,15 @@ export default function Auth() {
       if (mode === 'login') {
         await login({ email, password })
       } else {
-        await register({ email, password, displayName: displayName || 'New Creator', handle: handle || 'newcreator' })
+        // Enforce non-empty display name and handle
+        const finalDisplayName = displayName.trim() || 'New Creator'
+        const finalHandle = handle.trim() || 'newcreator'
+        await register({ email, password, displayName: finalDisplayName, handle: finalHandle })
       }
       nav(returnTo)
     } catch (e2: unknown) {
-      setError(e2 instanceof Error ? e2.message : 'Failed')
+      console.error('Auth error:', e2)
+      setError(e2 instanceof Error ? e2.message : 'Authentication failed')
     } finally {
       setLoading(false)
     }
