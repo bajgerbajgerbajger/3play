@@ -1,23 +1,35 @@
 import { Router, type Request, type Response } from 'express'
-import { findProfileByHandle, videos } from '../data/sample.js'
+import dbConnect from '../lib/db.js'
+import Profile from '../models/Profile.js'
+import Video from '../models/Video.js'
 
 const router = Router()
 
 router.get('/:handle', async (req: Request, res: Response) => {
+  await dbConnect()
   const { handle } = req.params
-  const profile = findProfileByHandle(handle)
+  // Handle in DB is stored with @ or not?
+  // Our seed data has @. User input might not.
+  // We should normalize or search carefully.
+  // The Profile model has `handle` as string.
+  // In `auth.ts` we normalize to `@handle`.
+  // So we should try to match exact or with @.
+  
+  const normalized = handle.startsWith('@') ? handle : `@${handle}`
+  const profile = await Profile.findOne({ handle: new RegExp(`^${normalized}$`, 'i') })
+  
   if (!profile) {
     res.status(404).json({ success: false, error: 'Channel not found' })
     return
   }
 
-  const published = videos.filter((v) => v.ownerId === profile.id && v.visibility === 'published' && v.status === 'ready')
+  const published = await Video.find({ ownerId: profile.id, visibility: 'published', status: 'ready' })
   const totalViews = published.reduce((acc, v) => acc + v.views, 0)
 
   res.status(200).json({
     success: true,
     channel: {
-      ...profile,
+      ...profile.toObject(),
       totalViews,
       videoCount: published.length,
     },
@@ -25,23 +37,28 @@ router.get('/:handle', async (req: Request, res: Response) => {
 })
 
 router.get('/:handle/videos', async (req: Request, res: Response) => {
+  await dbConnect()
   const { handle } = req.params
   const sort = typeof req.query.sort === 'string' ? req.query.sort : 'latest'
-  const profile = findProfileByHandle(handle)
+  
+  const normalized = handle.startsWith('@') ? handle : `@${handle}`
+  const profile = await Profile.findOne({ handle: new RegExp(`^${normalized}$`, 'i') })
+
   if (!profile) {
     res.status(404).json({ success: false, error: 'Channel not found' })
     return
   }
 
-  const list = videos
-    .filter((v) => v.ownerId === profile.id && v.visibility === 'published' && v.status === 'ready')
-    .slice()
-
+  let sortOption: any = { publishedAt: -1 }
   if (sort === 'popular') {
-    list.sort((a, b) => b.views - a.views)
-  } else {
-    list.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''))
+    sortOption = { views: -1 }
   }
+
+  const list = await Video.find({ 
+    ownerId: profile.id, 
+    visibility: 'published', 
+    status: 'ready' 
+  }).sort(sortOption)
 
   const items = list.map((v) => ({
     id: v.id,
@@ -62,4 +79,3 @@ router.get('/:handle/videos', async (req: Request, res: Response) => {
 })
 
 export default router
-

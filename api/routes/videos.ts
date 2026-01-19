@@ -1,30 +1,63 @@
 import { Router, type Request, type Response } from 'express'
-import { comments, findProfileById, publicVideoList, sortVideos, videos, updateVideo } from '../data/sample.js'
 import { getAuthToken, requireAuth, verifyToken } from '../lib/auth.js'
+import dbConnect from '../lib/db.js'
+import { seedDatabase } from '../lib/seed.js'
+import Video from '../models/Video.js'
+import Profile from '../models/Profile.js'
+import Comment from '../models/Comment.js'
 
 const router = Router()
 
+// Helper to sort videos since we might get mixed results
+function sortVideos(list: any[], sort: string | null) {
+  if (sort === 'latest') {
+    return list.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''))
+  }
+  if (sort === 'popular') {
+    return list.sort((a, b) => b.views - a.views)
+  }
+  return list.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''))
+}
+
 router.get('/', async (req: Request, res: Response) => {
+  await dbConnect()
+  
+  // Try to seed if empty
+  await seedDatabase()
+
   const query = typeof req.query.q === 'string' ? req.query.q.trim() : ''
   const sort = typeof req.query.sort === 'string' ? req.query.sort : null
   const limit = typeof req.query.limit === 'string' ? Number(req.query.limit) : 24
 
-  let list = publicVideoList()
+  let filter: any = { visibility: 'published', status: 'ready' }
+  
   if (query) {
-    const q = query.toLowerCase()
-    list = list.filter((v) => {
-      const channel = findProfileById(v.ownerId)
-      return (
-        v.title.toLowerCase().includes(q) ||
-        v.description.toLowerCase().includes(q) ||
-        (channel?.displayName || '').toLowerCase().includes(q)
-      )
-    })
+    const qRegex = new RegExp(query, 'i')
+    // We need to look up profiles to filter by channel name, which is hard in one query without aggregation.
+    // For simplicity, we'll fetch matches by title/desc first.
+    // Or we can use aggregation.
+    // Let's stick to simple find for now, maybe finding profiles first.
+    
+    const profiles = await Profile.find({ displayName: qRegex })
+    const profileIds = profiles.map(p => p.id)
+    
+    filter = {
+      visibility: 'published', 
+      status: 'ready',
+      $or: [
+        { title: qRegex },
+        { description: qRegex },
+        { ownerId: { $in: profileIds } }
+      ]
+    }
   }
+
+  let list = await Video.find(filter)
   list = sortVideos(list, sort)
 
-  const items = list.slice(0, Math.max(1, Math.min(60, Number.isFinite(limit) ? limit : 24))).map((v) => {
-    const owner = findProfileById(v.ownerId)
+  // Hydrate with profile info
+  const items = await Promise.all(list.slice(0, Math.max(1, Math.min(60, Number.isFinite(limit) ? limit : 24))).map(async (v) => {
+    const owner = await Profile.findOne({ id: v.ownerId })
     return {
       id: v.id,
       title: v.title,
@@ -34,14 +67,16 @@ router.get('/', async (req: Request, res: Response) => {
       publishedAt: v.publishedAt,
       channel: owner,
     }
-  })
+  }))
 
   res.status(200).json({ success: true, items })
 })
 
 router.get('/:videoId', async (req: Request, res: Response) => {
+  await dbConnect()
   const { videoId } = req.params
-  const v = videos.find((x) => x.id === videoId)
+  
+  const v = await Video.findOne({ id: videoId })
   if (!v || v.visibility !== 'published') {
     res.status(404).json({ success: false, error: 'Video not found' })
     return
@@ -49,9 +84,9 @@ router.get('/:videoId', async (req: Request, res: Response) => {
   
   // Increment views
   v.views += 1
-  updateVideo(v)
+  await v.save()
 
-  const owner = findProfileById(v.ownerId)
+  const owner = await Profile.findOne({ id: v.ownerId })
 
   // Check viewer rating
   let viewerRating = 'none'
@@ -67,7 +102,7 @@ router.get('/:videoId', async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     video: {
-      ...v,
+      ...v.toObject(),
       channel: owner,
       viewerRating,
     },
@@ -75,18 +110,18 @@ router.get('/:videoId', async (req: Request, res: Response) => {
 })
 
 router.get('/:videoId/comments', async (req: Request, res: Response) => {
+  await dbConnect()
   const { videoId } = req.params
-  const list = comments
-    .filter((c) => c.videoId === videoId)
-    .slice()
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const list = await Comment.find({ videoId }).sort({ createdAt: -1 })
   res.status(200).json({ success: true, items: list })
 })
 
 router.post('/:videoId/engagement', requireAuth, async (req: Request, res: Response) => {
+  await dbConnect()
   const { videoId } = req.params
   const { action } = (req.body || {}) as { action?: 'like' | 'dislike' }
-  const v = videos.find((x) => x.id === videoId)
+  
+  const v = await Video.findOne({ id: videoId })
   if (!v) {
     res.status(404).json({ success: false, error: 'Video not found' })
     return
@@ -97,7 +132,7 @@ router.post('/:videoId/engagement', requireAuth, async (req: Request, res: Respo
   if (action === 'like') {
     if (v.likedBy.includes(userId)) {
       // Toggle off
-      v.likedBy = v.likedBy.filter((id) => id !== userId)
+      v.likedBy = v.likedBy.filter((id: string) => id !== userId)
       v.likes = Math.max(0, v.likes - 1)
     } else {
       // Add like
@@ -105,7 +140,7 @@ router.post('/:videoId/engagement', requireAuth, async (req: Request, res: Respo
       v.likes += 1
       // Remove dislike if present
       if (v.dislikedBy.includes(userId)) {
-        v.dislikedBy = v.dislikedBy.filter((id) => id !== userId)
+        v.dislikedBy = v.dislikedBy.filter((id: string) => id !== userId)
         v.dislikes = Math.max(0, v.dislikes - 1)
       }
     }
@@ -114,7 +149,7 @@ router.post('/:videoId/engagement', requireAuth, async (req: Request, res: Respo
   if (action === 'dislike') {
     if (v.dislikedBy.includes(userId)) {
       // Toggle off
-      v.dislikedBy = v.dislikedBy.filter((id) => id !== userId)
+      v.dislikedBy = v.dislikedBy.filter((id: string) => id !== userId)
       v.dislikes = Math.max(0, v.dislikes - 1)
     } else {
       // Add dislike
@@ -122,13 +157,13 @@ router.post('/:videoId/engagement', requireAuth, async (req: Request, res: Respo
       v.dislikes += 1
       // Remove like if present
       if (v.likedBy.includes(userId)) {
-        v.likedBy = v.likedBy.filter((id) => id !== userId)
+        v.likedBy = v.likedBy.filter((id: string) => id !== userId)
         v.likes = Math.max(0, v.likes - 1)
       }
     }
   }
 
-  updateVideo(v)
+  await v.save()
 
   // Calculate new rating
   let viewerRating = 'none'

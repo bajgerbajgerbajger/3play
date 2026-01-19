@@ -1,11 +1,14 @@
 /**
- * This is a user authentication API route demo.
+ * This is a user authentication API route.
  * Handle user registration, login, token management, etc.
  */
 import { Router, type Request, type Response } from 'express'
 import rateLimit from 'express-rate-limit'
 import { signToken, requireAuth } from '../lib/auth.js'
-import { users, profiles, verifyPassword, hashPassword, addUser, addProfile } from '../data/sample.js'
+import { verifyPassword, hashPassword } from '../data/sample.js'
+import dbConnect from '../lib/db.js'
+import User from '../models/User.js'
+import Profile from '../models/Profile.js'
 
 const router = Router()
 
@@ -48,6 +51,8 @@ router.use('/register', registerLimiter)
  * POST /api/auth/register
  */
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
+  await dbConnect()
+
   const { email, password, displayName, handle, _gotcha } = (req.body || {}) as {
     email?: string
     password?: string
@@ -78,43 +83,50 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   const normalizedHandle = handle.startsWith('@') ? handle : `@${handle}`
   
   // 4. Persistence Check
-  if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
+  const existingEmail = await User.findOne({ email: new RegExp(`^${email}$`, 'i') })
+  if (existingEmail) {
     res.status(409).json({ success: false, error: 'Email already registered' })
     return
   }
-  if (users.some((u) => u.handle.toLowerCase() === normalizedHandle.toLowerCase())) {
+
+  const existingHandle = await User.findOne({ handle: new RegExp(`^${normalizedHandle}$`, 'i') })
+  if (existingHandle) {
     res.status(409).json({ success: false, error: 'Handle already taken' })
     return
   }
 
-  const user = {
-    id: `u-${Math.random().toString(16).slice(2, 10)}`,
+  const userId = `u-${Math.random().toString(16).slice(2, 10)}`
+  const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
+  
+  const avatarUrl = `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
+    'flat geometric avatar icon, readable number 3 with play triangle motif, minimal, sharp edges, red accent, dark background, vector style',
+  )}&image_size=square`
+
+  const user = new User({
+    id: userId,
     email,
     handle: normalizedHandle,
     displayName,
-    avatarUrl: `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-      'flat geometric avatar icon, readable number 3 with play triangle motif, minimal, sharp edges, red accent, dark background, vector style',
-    )}&image_size=square`,
+    avatarUrl,
     passwordHash: hashPassword(password),
-  }
+  })
   
-  // Use Persistence Helper
-  addUser(user)
+  await user.save()
 
   // Create a channel profile for the new user
-  const profile = {
-    id: `p-${Math.random().toString(16).slice(2, 10)}`,
+  const profile = new Profile({
+    id: profileId,
     handle: normalizedHandle,
     displayName,
-    avatarUrl: user.avatarUrl,
+    avatarUrl,
     bannerUrl: `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
       'wide banner, abstract tech background, dark theme, minimal geometric shapes, subtle gradient',
     )}&image_size=landscape_16_9`,
     bio: `Welcome to ${displayName}'s channel`,
     subscribers: 0,
-  }
-  // Use Persistence Helper
-  addProfile(profile)
+  })
+  
+  await profile.save()
 
   const token = signToken({ id: user.id, email: user.email, handle: user.handle })
   res.status(200).json({
@@ -135,16 +147,21 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
  * POST /api/auth/login
  */
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
+  await dbConnect()
+
   const { email, password } = (req.body || {}) as { email?: string; password?: string }
   if (!email || !password) {
     res.status(400).json({ success: false, error: 'Missing email or password' })
     return
   }
-  const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
+  
+  const user = await User.findOne({ email: new RegExp(`^${email}$`, 'i') })
+  
   if (!user || !verifyPassword(password, user.passwordHash)) {
     res.status(401).json({ success: false, error: 'Invalid credentials' })
     return
   }
+  
   const token = signToken({ id: user.id, email: user.email, handle: user.handle })
   res.status(200).json({
     success: true,
@@ -168,8 +185,11 @@ router.post('/logout', async (req: Request, res: Response): Promise<void> => {
 })
 
 router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  await dbConnect()
+
   const auth = (req as Request & { auth: { sub: string } }).auth
-  const user = users.find((u) => u.id === auth.sub)
+  const user = await User.findOne({ id: auth.sub })
+  
   if (!user) {
     res.status(401).json({ success: false, error: 'Unauthorized' })
     return
