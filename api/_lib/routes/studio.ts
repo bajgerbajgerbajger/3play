@@ -58,6 +58,43 @@ router.get('/me', async (req: Request, res: Response) => {
   res.status(200).json({ success: true, channel })
 })
 
+router.patch('/channel', async (req: Request, res: Response) => {
+  await dbConnect()
+  const auth = (req as Request & { auth: { handle: string } }).auth
+  
+  const { displayName, bio, avatarUrl, bannerUrl } = (req.body || {}) as {
+    displayName?: string
+    bio?: string
+    avatarUrl?: string
+    bannerUrl?: string
+  }
+
+  if (displayName && displayName.trim().length < 2) {
+    res.status(400).json({ success: false, error: 'Display name is too short' })
+    return
+  }
+
+  const channel = await Profile.findOneAndUpdate(
+    { handle: auth.handle },
+    { 
+      $set: {
+        ...(displayName && { displayName }),
+        ...(bio !== undefined && { bio }),
+        ...(avatarUrl && { avatarUrl }),
+        ...(bannerUrl && { bannerUrl }),
+      }
+    },
+    { new: true }
+  )
+
+  if (!channel) {
+    res.status(404).json({ success: false, error: 'Channel not found' })
+    return
+  }
+
+  res.status(200).json({ success: true, channel })
+})
+
 router.get('/videos', async (req: Request, res: Response) => {
   await dbConnect()
   const auth = (req as Request & { auth: { handle: string } }).auth
