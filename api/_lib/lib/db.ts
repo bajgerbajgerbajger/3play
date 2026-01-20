@@ -19,7 +19,10 @@ if (!cached) {
 }
 
 async function dbConnect() {
-  if (!MONGODB_URI) return null
+  if (!MONGODB_URI) {
+    console.log('Running in Local Mode (db.json)')
+    return null
+  }
 
   if (cached.conn) {
     return cached.conn

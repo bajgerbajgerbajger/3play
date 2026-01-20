@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { LocalModel } from '../lib/local-db-adapter.js'
 
 const VideoSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -31,4 +32,8 @@ const VideoSchema = new mongoose.Schema({
   publishedAt: { type: Date },
 }, { timestamps: true })
 
-export default (mongoose.models.Video || mongoose.model('Video', VideoSchema)) as mongoose.Model<any>
+const Model = process.env.MONGODB_URI
+  ? (mongoose.models.Video || mongoose.model('Video', VideoSchema))
+  : new LocalModel('videos')
+
+export default Model as mongoose.Model<any>

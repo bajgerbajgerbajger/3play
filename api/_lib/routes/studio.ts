@@ -1,13 +1,41 @@
 import { Router, type Request, type Response } from 'express'
 import { requireAuth } from '../lib/auth.js'
 import multer from 'multer'
-import { storage } from '../lib/cloudinary.js'
 import dbConnect from '../lib/db.js'
 import Video from '../models/Video.js'
 import Profile from '../models/Profile.js'
 import crypto from 'crypto'
+import path from 'path'
+import fs from 'fs'
 
 const router = Router()
+
+// Configure Storage
+let storage: multer.StorageEngine
+
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
+  // Use Cloudinary
+  const { storage: cloudinaryStorage } = await import('../lib/cloudinary.js')
+  storage = cloudinaryStorage
+} else {
+  // Use Local Storage
+  const uploadDir = path.resolve('uploads')
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true })
+  }
+  
+  storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadDir)
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+      const ext = path.extname(file.originalname)
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext)
+    }
+  })
+}
+
 const upload = multer({ storage })
 
 router.use(requireAuth)
@@ -18,32 +46,38 @@ router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
     return
   }
   
-  // Cloudinary storage puts the URL in path
-  const url = req.file.path
-  // For videos, Cloudinary response might be in req.file (casted to any)
-  const fileData = req.file as any
-  
-  let thumbnailUrl = url
+  let url = ''
+  let thumbnailUrl = ''
   let duration = 0
 
-  if (req.file.mimetype.startsWith('video/')) {
-    // Cloudinary automatically generates thumbnails for videos by changing extension to .jpg
-    // But the url might be .mp4.
-    // Example: https://res.cloudinary.com/.../video/upload/.../video.mp4
-    // Thumbnail: https://res.cloudinary.com/.../video/upload/.../video.jpg
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
+    // Cloudinary Logic
+    url = req.file.path
+    const fileData = req.file as any
     
-    // Also, if resource_type is video, we can try to derive thumbnail
-    const lastDot = url.lastIndexOf('.')
-    if (lastDot !== -1) {
-      thumbnailUrl = url.substring(0, lastDot) + '.jpg'
-    } else {
-      thumbnailUrl = url + '.jpg'
+    thumbnailUrl = url
+    if (req.file.mimetype.startsWith('video/')) {
+       const lastDot = url.lastIndexOf('.')
+       if (lastDot !== -1) {
+         thumbnailUrl = url.substring(0, lastDot) + '.jpg'
+       } else {
+         thumbnailUrl = url + '.jpg'
+       }
+       if (fileData.duration) {
+         duration = fileData.duration
+       }
     }
+  } else {
+    // Local Logic
+    // Serve files from /uploads route
+    const filename = req.file.filename
+    url = `/uploads/${filename}`
     
-    // duration might be available in fileData if Cloudinary returned it
-    if (fileData.duration) {
-      duration = fileData.duration
-    }
+    // For local video, we can't easily generate thumbnail without ffmpeg.
+    // We will use a default placeholder or the video itself as source.
+    thumbnailUrl = url // Frontend might handle video as img source (won't work) or we use a generic icon
+    // TODO: Integrate ffmpeg for thumbnails if needed. For now, use a placeholder.
+    // Or just let the frontend show a default video icon.
   }
 
   res.status(200).json({ success: true, url, thumbnailUrl, duration })

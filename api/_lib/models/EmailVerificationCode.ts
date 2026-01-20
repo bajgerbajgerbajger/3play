@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { LocalModel } from '../lib/local-db-adapter.js'
 
 const EmailVerificationCodeSchema = new mongoose.Schema({
   email: { type: String, required: true, index: true },
@@ -8,5 +9,9 @@ const EmailVerificationCodeSchema = new mongoose.Schema({
   attempts: { type: Number, default: 0 },
 }, { timestamps: true })
 
-export default (mongoose.models.EmailVerificationCode || mongoose.model('EmailVerificationCode', EmailVerificationCodeSchema)) as mongoose.Model<any>
+const Model = process.env.MONGODB_URI
+  ? (mongoose.models.EmailVerificationCode || mongoose.model('EmailVerificationCode', EmailVerificationCodeSchema))
+  : new LocalModel('codes')
+
+export default Model as mongoose.Model<any>
 

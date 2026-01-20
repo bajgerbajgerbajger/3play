@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { LocalModel } from '../lib/local-db-adapter.js'
 
 const ProfileSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -11,4 +12,8 @@ const ProfileSchema = new mongoose.Schema({
   subscribers: { type: Number, default: 0 },
 }, { timestamps: true })
 
-export default (mongoose.models.Profile || mongoose.model('Profile', ProfileSchema)) as mongoose.Model<any>
+const Model = process.env.MONGODB_URI
+  ? (mongoose.models.Profile || mongoose.model('Profile', ProfileSchema))
+  : new LocalModel('profiles')
+
+export default Model as mongoose.Model<any>
