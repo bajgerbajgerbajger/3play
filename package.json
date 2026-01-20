@@ -10,13 +10,14 @@
     "preview": "vite preview",
     "check": "tsc --noEmit",
     "server:dev": "nodemon",
-    "dev": "concurrently \"npm run client:dev\" \"npm run server:dev\""
+    "migrate": "tsx api/_lib/scripts/migrate.ts",
+    "create-admin": "tsx api/_lib/scripts/create-admin.ts",
+    "dev": "concurrently \"npm.cmd run client:dev\" \"npm.cmd run server:dev\""
   },
   "dependencies": {
     "@types/express-rate-limit": "^5.1.3",
     "@types/fluent-ffmpeg": "^2.1.28",
     "@types/multer": "^2.0.0",
-    "@vercel/speed-insights": "^1.3.1",
     "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",

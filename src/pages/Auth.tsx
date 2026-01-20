@@ -13,13 +13,17 @@ export default function Auth() {
   const [params] = useSearchParams()
   const returnTo = params.get('returnTo') || '/studio'
 
-  const { user, login, register } = useAuthStore()
+  const { user, login, register, requestCode } = useAuthStore()
 
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [handle, setHandle] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [codeSending, setCodeSending] = useState(false)
+  const [devCodeHint, setDevCodeHint] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,10 +43,9 @@ export default function Auth() {
       if (mode === 'login') {
         await login({ email, password })
       } else {
-        // Enforce non-empty display name and handle
         const finalDisplayName = displayName.trim() || 'New Creator'
         const finalHandle = handle.trim() || 'newcreator'
-        await register({ email, password, displayName: finalDisplayName, handle: finalHandle })
+        await register({ email, password, displayName: finalDisplayName, handle: finalHandle, verificationCode, acceptTerms: termsAccepted })
       }
       nav(returnTo)
     } catch (e2: unknown) {
@@ -50,6 +53,23 @@ export default function Auth() {
       setError(e2 instanceof Error ? e2.message : 'Authentication failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function onSendCode() {
+    if (!email) {
+      setError('Enter your email before requesting a code')
+      return
+    }
+    setError(null)
+    setCodeSending(true)
+    try {
+      const dev = await requestCode({ email })
+      setDevCodeHint(dev)
+    } catch (e2: unknown) {
+      setError(e2 instanceof Error ? e2.message : 'Failed to send code')
+    } finally {
+      setCodeSending(false)
     }
   }
 
@@ -111,6 +131,35 @@ export default function Auth() {
             <div className="mb-1 text-xs font-semibold text-muted">Password</div>
             <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
           </div>
+          {mode === 'register' ? (
+            <>
+              <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+                <div>
+                  <div className="mb-1 text-xs font-semibold text-muted">Email verification code</div>
+                  <Input value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} placeholder="123456" />
+                </div>
+                <Button type="button" variant="secondary" loading={codeSending} onClick={onSendCode}>
+                  Send code
+                </Button>
+              </div>
+              <label className="mt-2 flex items-start gap-2 text-xs text-muted">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="mt-0.5 h-3 w-3 rounded border-border/60 bg-surface"
+                />
+                <span>
+                  I agree to the Terms of Service, Privacy Policy, and Cookies Policy.
+                </span>
+              </label>
+              {devCodeHint ? (
+                <div className="mt-1 text-[11px] text-muted">
+                  Dev code: {devCodeHint}
+                </div>
+              ) : null}
+            </>
+          ) : null}
           <Button type="submit" loading={loading} className="w-full">
             {mode === 'login' ? 'Sign in' : 'Create account'}
           </Button>

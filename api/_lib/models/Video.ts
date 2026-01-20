@@ -5,6 +5,11 @@ const VideoSchema = new mongoose.Schema({
   ownerId: { type: String, required: true, ref: 'Profile' }, // Reference by string ID
   title: { type: String, required: true },
   description: { type: String },
+  type: {
+    type: String,
+    enum: ['video', 'movie', 'episode'],
+    default: 'video'
+  },
   visibility: { 
     type: String, 
     enum: ['draft', 'unlisted', 'published'], 

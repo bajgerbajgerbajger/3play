@@ -22,6 +22,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // load env
+dotenv.config({ path: path.join(__dirname, '../../.env.local') })
 dotenv.config()
 
 const app: express.Application = express()

@@ -16,7 +16,8 @@ type AuthState = {
   error: string | null
   init: () => Promise<void>
   login: (input: { email: string; password: string }) => Promise<void>
-  register: (input: { email: string; password: string; displayName: string; handle: string }) => Promise<void>
+  register: (input: { email: string; password: string; displayName: string; handle: string; verificationCode: string; acceptTerms: boolean }) => Promise<void>
+  requestCode: (input: { email: string }) => Promise<string | null>
   logout: () => void
 }
 
@@ -65,14 +66,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     saveStored(data.token)
     set({ token: data.token, user: data.user, error: null })
   },
-  register: async ({ email, password, displayName, handle }) => {
+  register: async ({ email, password, displayName, handle, verificationCode, acceptTerms }) => {
     set({ error: null })
     const data = await apiFetch<{ success: true; token: string; user: AuthUser }>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, displayName, handle }),
+      body: JSON.stringify({ email, password, displayName, handle, verificationCode, acceptTerms }),
     })
     saveStored(data.token)
     set({ token: data.token, user: data.user, error: null })
+  },
+  requestCode: async ({ email }) => {
+    set({ error: null })
+    const data = await apiFetch<{ success: true; devCode?: string }>('/api/auth/request-code', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+    return data.devCode ?? null
   },
   logout: () => {
     saveStored(null)

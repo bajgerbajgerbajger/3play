@@ -119,12 +119,13 @@ router.post('/videos', async (req: Request, res: Response) => {
     return
   }
 
-  const { title, description, sourceUrl, thumbnailUrl, duration } = (req.body || {}) as {
+  const { title, description, sourceUrl, thumbnailUrl, duration, type } = (req.body || {}) as {
     title?: string
     description?: string
     sourceUrl?: string
     thumbnailUrl?: string
     duration?: number
+    type?: 'video' | 'movie' | 'episode'
   }
 
   if (!title || title.trim().length < 3) {
@@ -140,6 +141,7 @@ router.post('/videos', async (req: Request, res: Response) => {
     ownerId: channel.id,
     title: title.trim(),
     description: description || '',
+    type: type || 'video',
     visibility: 'draft',
     status: 'ready', // Cloudinary uploads are ready immediately usually
     thumbnailUrl: thumbnailUrl || '',

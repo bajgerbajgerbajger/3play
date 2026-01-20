@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 
 const ProfileSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
+  userId: { type: String, unique: true, sparse: true }, // Link to User.id
   handle: { type: String, required: true, unique: true },
   displayName: { type: String, required: true },
   avatarUrl: { type: String },

@@ -7,24 +7,28 @@ import { sampleSources } from './types'
 export function UploadPanel({
   title,
   description,
+  type,
   sourceUrl,
   file,
   creating,
   progress,
   onTitle,
   onDescription,
+  onType,
   onSourceUrl,
   onFileSelect,
   onCreate,
 }: {
   title: string
   description: string
+  type: 'video' | 'movie' | 'episode'
   sourceUrl: string
   file?: File | null
   creating: boolean
   progress: number
   onTitle: (v: string) => void
   onDescription: (v: string) => void
+  onType: (v: 'video' | 'movie' | 'episode') => void
   onSourceUrl: (v: string) => void
   onFileSelect: (v: File | null) => void
   onCreate: () => void
@@ -47,6 +51,27 @@ export function UploadPanel({
           <div className="mb-1 text-xs font-semibold text-muted">Title</div>
           <Input value={title} onChange={(e) => onTitle(e.target.value)} placeholder="Enter a clean, readable title" />
         </div>
+        
+        <div>
+          <div className="mb-1 text-xs font-semibold text-muted">Content Type</div>
+          <div className="flex gap-2">
+            {(['video', 'movie', 'episode'] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onType(t)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  type === t
+                    ? 'bg-brand/10 border-brand text-brand'
+                    : 'bg-surface border-border/10 text-muted hover:border-border/30 hover:text-text'
+                }`}
+              >
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div>
           <div className="mb-1 text-xs font-semibold text-muted">Description</div>
           <textarea

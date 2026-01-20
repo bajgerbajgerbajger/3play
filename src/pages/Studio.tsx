@@ -19,6 +19,7 @@ export default function Studio() {
 
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadDesc, setUploadDesc] = useState('')
+  const [uploadType, setUploadType] = useState<'video' | 'movie' | 'episode'>('video')
   const [uploadSource, setUploadSource] = useState<string>('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -103,7 +104,8 @@ export default function Studio() {
         token,
         body: JSON.stringify({ 
           title: uploadTitle.trim(), 
-          description: uploadDesc, 
+          description: uploadDesc,
+          type: uploadType,
           sourceUrl: finalSourceUrl,
           thumbnailUrl: finalThumbnailUrl,
           duration: finalDuration
@@ -115,6 +117,7 @@ export default function Studio() {
       setSelected(d.video)
       setUploadTitle('')
       setUploadDesc('')
+      setUploadType('video')
       setUploadFile(null)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed')
@@ -203,12 +206,14 @@ export default function Studio() {
           <UploadPanel
             title={uploadTitle}
             description={uploadDesc}
+            type={uploadType}
             sourceUrl={uploadSource}
             file={uploadFile}
             creating={creating}
             progress={uploadProgress}
             onTitle={setUploadTitle}
             onDescription={setUploadDesc}
+            onType={setUploadType}
             onSourceUrl={setUploadSource}
             onFileSelect={setUploadFile}
             onCreate={createUpload}

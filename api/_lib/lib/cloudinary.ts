@@ -1,5 +1,8 @@
 import { v2 as cloudinary } from 'cloudinary'
-import { CloudinaryStorage } from 'multer-storage-cloudinary'
+import * as multerStorageCloudinary from 'multer-storage-cloudinary'
+
+// Handle CloudinaryStorage export which might be a default export or named export depending on environment
+const CloudinaryStorage = (multerStorageCloudinary as any).CloudinaryStorage || (multerStorageCloudinary as any).default?.CloudinaryStorage || multerStorageCloudinary.default
 
 // Configure Cloudinary
 cloudinary.config({
@@ -10,7 +13,7 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (req, file) => {
+  params: async (req: any, file: any) => {
     const isVideo = file.mimetype.startsWith('video/')
     return {
       folder: '3play-uploads',

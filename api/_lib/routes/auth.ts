@@ -9,6 +9,7 @@ import { verifyPassword, hashPassword } from '../data/sample.js'
 import dbConnect from '../lib/db.js'
 import User from '../models/User.js'
 import Profile from '../models/Profile.js'
+import EmailVerificationCode from '../models/EmailVerificationCode.js'
 
 const router = Router()
 
@@ -46,6 +47,51 @@ function isSafeInput(str: any) {
 router.use('/login', authLimiter)
 router.use('/register', registerLimiter)
 
+const codeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, error: 'Too many verification requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+router.use('/request-code', codeLimiter)
+
+router.post('/request-code', async (req: Request, res: Response): Promise<void> => {
+  await dbConnect()
+
+  const { email, _gotcha } = (req.body || {}) as { email?: string; _gotcha?: string }
+
+  if (_gotcha) {
+    res.status(200).json({ success: false, error: 'Verification failed security check.' })
+    return
+  }
+
+  if (!email) {
+    res.status(400).json({ success: false, error: 'Email is required' })
+    return
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase()
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString()
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
+
+  await EmailVerificationCode.findOneAndUpdate(
+    { email: normalizedEmail, used: false },
+    { email: normalizedEmail, code, expiresAt, used: false, attempts: 0 },
+    { upsert: true, new: true },
+  )
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Dev email verification code for', normalizedEmail, 'is', code)
+    res.status(200).json({ success: true, devCode: code })
+    return
+  }
+
+  res.status(200).json({ success: true })
+})
+
 /**
  * User Login
  * POST /api/auth/register
@@ -53,11 +99,13 @@ router.use('/register', registerLimiter)
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   await dbConnect()
 
-  const { email, password, displayName, handle, _gotcha } = (req.body || {}) as {
+  const { email, password, displayName, handle, verificationCode, acceptTerms, _gotcha } = (req.body || {}) as {
     email?: string
     password?: string
     displayName?: string
     handle?: string
+    verificationCode?: string
+    acceptTerms?: boolean
     _gotcha?: string // Honeypot field
   }
 
@@ -69,8 +117,13 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   }
 
   // 2. Input Validation
-  if (!email || !password || !displayName || !handle) {
+  if (!email || !password || !displayName || !handle || !verificationCode) {
     res.status(400).json({ success: false, error: 'Missing required fields' })
+    return
+  }
+
+  if (!acceptTerms) {
+    res.status(400).json({ success: false, error: 'You must accept the terms to continue' })
     return
   }
 
@@ -81,9 +134,10 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   }
 
   const normalizedHandle = handle.startsWith('@') ? handle : `@${handle}`
+  const normalizedEmail = String(email).trim().toLowerCase()
   
   // 4. Persistence Check
-  const existingEmail = await User.findOne({ email: new RegExp(`^${email}$`, 'i') })
+  const existingEmail = await User.findOne({ email: new RegExp(`^${normalizedEmail}$`, 'i') })
   if (existingEmail) {
     res.status(409).json({ success: false, error: 'Email already registered' })
     return
@@ -95,6 +149,21 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
+  const codeDoc = await EmailVerificationCode.findOne({ email: normalizedEmail, used: false })
+
+  if (!codeDoc || !codeDoc.code || codeDoc.code !== verificationCode) {
+    res.status(400).json({ success: false, error: 'Invalid verification code' })
+    return
+  }
+
+  if (codeDoc.expiresAt && codeDoc.expiresAt.getTime() < Date.now()) {
+    res.status(400).json({ success: false, error: 'Verification code has expired' })
+    return
+  }
+
+  codeDoc.used = true
+  await codeDoc.save()
+
   const userId = `u-${Math.random().toString(16).slice(2, 10)}`
   const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
   
@@ -104,11 +173,12 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 
   const user = new User({
     id: userId,
-    email,
+    email: normalizedEmail,
     handle: normalizedHandle,
     displayName,
     avatarUrl,
     passwordHash: hashPassword(password),
+    emailVerified: true,
   })
   
   await user.save()
@@ -116,6 +186,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   // Create a channel profile for the new user
   const profile = new Profile({
     id: profileId,
+    userId: user.id,
     handle: normalizedHandle,
     displayName,
     avatarUrl,
@@ -161,6 +232,10 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     res.status(401).json({ success: false, error: 'Invalid credentials' })
     return
   }
+
+  // Update last login
+  user.lastLogin = new Date()
+  await user.save()
   
   const token = signToken({ id: user.id, email: user.email, handle: user.handle })
   res.status(200).json({
