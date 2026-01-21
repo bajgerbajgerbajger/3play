@@ -72,13 +72,28 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
 })
 
 /**
- * 404 handler
+ * Serve frontend in production
  */
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: 'API not found',
+const distPath = path.join(__dirname, '../../dist')
+if (process.env.NODE_ENV === 'production' && fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  app.get('*', (req: Request, res: Response) => {
+    if (req.path.startsWith('/api')) {
+      res.status(404).json({ success: false, error: 'API not found' })
+      return
+    }
+    res.sendFile(path.join(distPath, 'index.html'))
   })
-})
+} else {
+  /**
+   * 404 handler for API
+   */
+  app.use((req: Request, res: Response) => {
+    res.status(404).json({
+      success: false,
+      error: 'API not found',
+    })
+  })
+}
 
 export default app
