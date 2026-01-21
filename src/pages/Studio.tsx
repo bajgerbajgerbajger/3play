@@ -73,30 +73,84 @@ export default function Studio() {
     setError(null)
     setCreating(true)
     setUploadProgress(0)
-    const t = window.setInterval(() => {
-      setUploadProgress((p) => Math.min(95, p + Math.random() * 14))
-    }, 180)
+
     try {
       let finalSourceUrl = uploadSource
       let finalThumbnailUrl = undefined
       let finalDuration = 0
 
       if (uploadFile) {
-        const formData = new FormData()
-        formData.append('file', uploadFile)
-        
-        const res = await fetch('/api/studio/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
+        // Get upload signature
+        const sigRes = await fetch('/api/studio/upload-signature', {
+           headers: { 'Authorization': `Bearer ${token}` }
         })
-        const data = await res.json()
-        if (!data.success) throw new Error(data.error || 'Upload failed')
-        finalSourceUrl = data.url
-        finalThumbnailUrl = data.thumbnailUrl
-        finalDuration = data.duration || 0
+        const sigData = await sigRes.json()
+
+        if (sigData.mode === 'cloud') {
+             // Direct Cloudinary Upload
+             const formData = new FormData()
+             formData.append('file', uploadFile)
+             formData.append('api_key', sigData.apiKey)
+             formData.append('timestamp', sigData.timestamp)
+             formData.append('signature', sigData.signature)
+             formData.append('folder', sigData.folder)
+
+             await new Promise<void>((resolve, reject) => {
+                 const xhr = new XMLHttpRequest()
+                 xhr.open('POST', `https://api.cloudinary.com/v1_1/${sigData.cloudName}/auto/upload`)
+                 
+                 xhr.upload.onprogress = (e) => {
+                     if (e.lengthComputable) {
+                         setUploadProgress(Math.round((e.loaded / e.total) * 100))
+                     }
+                 }
+
+                 xhr.onload = () => {
+                     if (xhr.status >= 200 && xhr.status < 300) {
+                         const resp = JSON.parse(xhr.responseText)
+                         finalSourceUrl = resp.secure_url
+                         finalDuration = resp.duration || 0
+                         // Cloudinary video thumbnail convention
+                         if (resp.resource_type === 'video' || finalSourceUrl.match(/\.(mp4|mov|avi|webm|mkv)$/i)) {
+                             // Replace extension with .jpg
+                             finalThumbnailUrl = finalSourceUrl.replace(/\.[^/.]+$/, ".jpg")
+                         } else {
+                             finalThumbnailUrl = finalSourceUrl
+                         }
+                         resolve()
+                     } else {
+                         reject(new Error('Cloudinary upload failed'))
+                     }
+                 }
+                 xhr.onerror = () => reject(new Error('Network error during upload'))
+                 xhr.send(formData)
+             })
+        } else {
+            // Local Upload Fallback
+            const t = window.setInterval(() => {
+              setUploadProgress((p) => Math.min(95, p + Math.random() * 14))
+            }, 180)
+            
+            try {
+                const formData = new FormData()
+                formData.append('file', uploadFile)
+                
+                const res = await fetch('/api/studio/upload', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: formData
+                })
+                const data = await res.json()
+                if (!data.success) throw new Error(data.error || 'Upload failed')
+                finalSourceUrl = data.url
+                finalThumbnailUrl = data.thumbnailUrl
+                finalDuration = data.duration || 0
+            } finally {
+                window.clearInterval(t)
+            }
+        }
       }
 
       const d = await apiFetch<{ success: true; video: StudioVideo }>('/api/studio/videos', {
@@ -122,7 +176,6 @@ export default function Studio() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed')
     } finally {
-      window.clearInterval(t)
       setCreating(false)
       window.setTimeout(() => setUploadProgress(0), 800)
     }

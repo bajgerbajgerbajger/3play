@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { LocalModel } from '../lib/local-db-adapter.js'
 
 const CommentSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -10,4 +11,8 @@ const CommentSchema = new mongoose.Schema({
   likes: { type: Number, default: 0 },
 }, { timestamps: true })
 
-export default (mongoose.models.Comment || mongoose.model('Comment', CommentSchema)) as mongoose.Model<any>
+const Model = process.env.MONGODB_URI
+  ? (mongoose.models.Comment || mongoose.model('Comment', CommentSchema))
+  : new LocalModel('comments')
+
+export default Model as mongoose.Model<any>

@@ -16,8 +16,20 @@ type AuthState = {
   error: string | null
   init: () => Promise<void>
   login: (input: { email: string; password: string }) => Promise<void>
-  register: (input: { email: string; password: string; displayName: string; handle: string; verificationCode: string; acceptTerms: boolean }) => Promise<void>
+  register: (input: {
+    email: string
+    password: string
+    displayName: string
+    handle: string
+    verificationCode: string
+    acceptTerms: boolean
+    phone: string
+    consentContact: boolean
+    consentMarketing: boolean
+    consentVersion: string
+  }) => Promise<void>
   requestCode: (input: { email: string }) => Promise<string | null>
+  verifyCode: (input: { email: string; verificationCode: string }) => Promise<void>
   logout: () => void
 }
 
@@ -66,11 +78,33 @@ export const useAuthStore = create<AuthState>((set) => ({
     saveStored(data.token)
     set({ token: data.token, user: data.user, error: null })
   },
-  register: async ({ email, password, displayName, handle, verificationCode, acceptTerms }) => {
+  register: async ({
+    email,
+    password,
+    displayName,
+    handle,
+    verificationCode,
+    acceptTerms,
+    phone,
+    consentContact,
+    consentMarketing,
+    consentVersion,
+  }) => {
     set({ error: null })
     const data = await apiFetch<{ success: true; token: string; user: AuthUser }>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, displayName, handle, verificationCode, acceptTerms }),
+      body: JSON.stringify({
+        email,
+        password,
+        displayName,
+        handle,
+        verificationCode,
+        acceptTerms,
+        phone,
+        consentContact,
+        consentMarketing,
+        consentVersion,
+      }),
     })
     saveStored(data.token)
     set({ token: data.token, user: data.user, error: null })
@@ -82,6 +116,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       body: JSON.stringify({ email }),
     })
     return data.devCode ?? null
+  },
+  verifyCode: async ({ email, verificationCode }) => {
+    set({ error: null })
+    await apiFetch<{ success: true }>('/api/auth/verify-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, verificationCode }),
+    })
   },
   logout: () => {
     saveStored(null)

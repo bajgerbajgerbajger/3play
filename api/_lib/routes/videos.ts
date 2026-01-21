@@ -22,8 +22,8 @@ function sortVideos(list: any[], sort: string | null) {
 router.get('/', async (req: Request, res: Response) => {
   await dbConnect()
   
-  // Try to seed if empty
-  await seedDatabase()
+  // Try to seed if empty (fire and forget to avoid timeout on cold start)
+  seedDatabase().catch(err => console.error('Seed failed:', err))
 
   const query = typeof req.query.q === 'string' ? req.query.q.trim() : ''
   const sort = typeof req.query.sort === 'string' ? req.query.sort : null
@@ -112,7 +112,12 @@ router.get('/:videoId', async (req: Request, res: Response) => {
 router.get('/:videoId/comments', async (req: Request, res: Response) => {
   await dbConnect()
   const { videoId } = req.params
-  const list = await Comment.find({ videoId }).sort({ createdAt: -1 })
+  let list = await Comment.find({ videoId })
+  list = list.sort((a, b) => {
+    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+    return tb - ta
+  })
   res.status(200).json({ success: true, items: list })
 })
 

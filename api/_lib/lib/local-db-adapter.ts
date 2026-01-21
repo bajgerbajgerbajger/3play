@@ -18,24 +18,69 @@ const generateId = (prefix: string = '') => {
 
 // Helper to check if object matches query
 function matchesQuery(item: any, query: any): boolean {
+  if (!query || typeof query !== 'object') return true
+
   for (const key in query) {
-    if (query[key] !== item[key]) return false
+    const qVal = query[key]
+
+    if (key === '$or') {
+      if (!Array.isArray(qVal)) return false
+      if (!qVal.some((sub) => matchesQuery(item, sub))) return false
+      continue
+    }
+
+    if (key === '$and') {
+      if (!Array.isArray(qVal)) return false
+      if (!qVal.every((sub) => matchesQuery(item, sub))) return false
+      continue
+    }
+
+    const iVal = item?.[key]
+
+    if (qVal instanceof RegExp) {
+      if (typeof iVal !== 'string') return false
+      if (!qVal.test(iVal)) return false
+      continue
+    }
+
+    if (qVal && typeof qVal === 'object') {
+      if ('$in' in qVal) {
+        const list = (qVal as any).$in
+        if (!Array.isArray(list)) return false
+        if (!list.includes(iVal)) return false
+        continue
+      }
+    }
+
+    if (qVal !== iVal) return false
   }
+
   return true
 }
 
+let cachedDB: DBData | null = null
+
 async function getDB(): Promise<DBData> {
+  if (cachedDB) return cachedDB
+
   try {
     const data = await fs.readFile(DB_PATH, 'utf-8')
-    return JSON.parse(data)
+    cachedDB = JSON.parse(data)
+    return cachedDB!
   } catch (err) {
     // If file doesn't exist, return empty structure
-    return { users: [], videos: [], profiles: [], codes: [] }
+    cachedDB = { users: [], videos: [], profiles: [], codes: [], comments: [] }
+    return cachedDB!
   }
 }
 
 async function saveDB(data: DBData) {
-  await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2), 'utf-8')
+  cachedDB = data // Update cache immediately so read-only environments still "work" in memory
+  try {
+    await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2), 'utf-8')
+  } catch (err) {
+    console.error('[LocalDB] Warning: Failed to save database (filesystem might be read-only). Changes will not persist.', err)
+  }
 }
 
 export class LocalModel {
@@ -43,6 +88,11 @@ export class LocalModel {
 
   constructor(collectionName: string) {
     this.collectionName = collectionName
+  }
+
+  async countDocuments(query: any = {}) {
+    const items = await this.find(query)
+    return items.length
   }
 
   // Helper to convert raw data to "document" with save() method

@@ -15,8 +15,8 @@ router.get('/:handle', async (req: Request, res: Response) => {
   // In `auth.ts` we normalize to `@handle`.
   // So we should try to match exact or with @.
   
-  const normalized = handle.startsWith('@') ? handle : `@${handle}`
-  const profile = await Profile.findOne({ handle: new RegExp(`^${normalized}$`, 'i') })
+  const normalized = (handle.startsWith('@') ? handle : `@${handle}`).toLowerCase()
+  const profile = await Profile.findOne({ handle: normalized })
   
   if (!profile) {
     res.status(404).json({ success: false, error: 'Channel not found' })
@@ -41,24 +41,29 @@ router.get('/:handle/videos', async (req: Request, res: Response) => {
   const { handle } = req.params
   const sort = typeof req.query.sort === 'string' ? req.query.sort : 'latest'
   
-  const normalized = handle.startsWith('@') ? handle : `@${handle}`
-  const profile = await Profile.findOne({ handle: new RegExp(`^${normalized}$`, 'i') })
+  const normalized = (handle.startsWith('@') ? handle : `@${handle}`).toLowerCase()
+  const profile = await Profile.findOne({ handle: normalized })
 
   if (!profile) {
     res.status(404).json({ success: false, error: 'Channel not found' })
     return
   }
 
-  let sortOption: any = { publishedAt: -1 }
-  if (sort === 'popular') {
-    sortOption = { views: -1 }
-  }
+  let list = await Video.find({
+    ownerId: profile.id,
+    visibility: 'published',
+    status: 'ready',
+  })
 
-  const list = await Video.find({ 
-    ownerId: profile.id, 
-    visibility: 'published', 
-    status: 'ready' 
-  }).sort(sortOption)
+  if (sort === 'popular') {
+    list = list.sort((a, b) => (b.views || 0) - (a.views || 0))
+  } else {
+    list = list.sort((a, b) => {
+      const tb = b.publishedAt ? new Date(b.publishedAt).getTime() : 0
+      const ta = a.publishedAt ? new Date(a.publishedAt).getTime() : 0
+      return tb - ta
+    })
+  }
 
   const items = list.map((v) => ({
     id: v.id,

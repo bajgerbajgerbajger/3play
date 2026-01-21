@@ -7,6 +7,7 @@ import Profile from '../models/Profile.js'
 import crypto from 'crypto'
 import path from 'path'
 import fs from 'fs'
+import { cloudinary } from '../lib/cloudinary.js'
 
 const router = Router()
 
@@ -36,9 +37,36 @@ if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
   })
 }
 
-const upload = multer({ storage })
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 1024 * 1024 * 500 // 500MB
+  }
+})
 
 router.use(requireAuth)
+
+router.post('/upload-signature', (req: Request, res: Response) => {
+  if (!process.env.CLOUDINARY_API_SECRET) {
+    res.json({ mode: 'local' })
+    return
+  }
+  const timestamp = Math.round(new Date().getTime() / 1000)
+  const folder = '3play-uploads'
+  const signature = cloudinary.utils.api_sign_request({
+    timestamp,
+    folder
+  }, process.env.CLOUDINARY_API_SECRET)
+  
+  res.json({ 
+    mode: 'cloud',
+    signature,
+    timestamp,
+    folder,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME
+  })
+})
 
 router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
   if (!req.file) {
@@ -139,7 +167,12 @@ router.get('/videos', async (req: Request, res: Response) => {
     return
   }
 
-  const list = await Video.find({ ownerId: channel.id }).sort({ updatedAt: -1 })
+  let list = await Video.find({ ownerId: channel.id })
+  list = list.sort((a, b) => {
+    const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
+    const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
+    return tb - ta
+  })
   res.status(200).json({ success: true, items: list })
 })
 
@@ -170,14 +203,14 @@ router.post('/videos', async (req: Request, res: Response) => {
   const id = `v-${crypto.randomBytes(3).toString('hex')}`
   const now = new Date().toISOString()
   
-  const draft = new Video({
+  const draft = await Video.create({
     id,
     ownerId: channel.id,
     title: title.trim(),
     description: description || '',
     type: type || 'video',
     visibility: 'draft',
-    status: 'ready', // Cloudinary uploads are ready immediately usually
+    status: 'ready',
     thumbnailUrl: thumbnailUrl || '',
     sourceUrl: sourceUrl || '',
     durationSeconds: duration || 0,
@@ -187,7 +220,6 @@ router.post('/videos', async (req: Request, res: Response) => {
     publishedAt: null,
   })
 
-  await draft.save()
   res.status(200).json({ success: true, video: draft })
 })
 

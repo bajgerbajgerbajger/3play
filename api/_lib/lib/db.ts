@@ -20,6 +20,9 @@ if (!cached) {
 
 async function dbConnect() {
   if (!MONGODB_URI) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('MONGODB_URI is not defined. Falling back to in-memory/local database (changes may be ephemeral).')
+    }
     console.log('Running in Local Mode (db.json)')
     return null
   }
@@ -31,11 +34,17 @@ async function dbConnect() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000, // Fail fast if we can't connect (5s)
+      socketTimeoutMS: 45000,
     }
 
+    console.log('Connecting to MongoDB...')
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       console.log('MongoDB connected successfully')
       return mongoose
+    }).catch((err) => {
+      console.error('MongoDB connection failed immediately:', err)
+      throw err
     })
   }
 

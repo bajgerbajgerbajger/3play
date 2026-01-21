@@ -8,17 +8,32 @@ function getErrorFromPayload(payload: unknown): string | null {
   return typeof error === 'string' ? error : null
 }
 
-export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit & { token?: string | null }) {
+export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit & { token?: string | null; timeout?: number }) {
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
   if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   if (init?.token) headers.set('Authorization', `Bearer ${init.token}`)
 
-  const res = await fetch(input, { ...init, headers })
-  const data = (await res.json().catch(() => null)) as T | ApiError | null
-  if (!res.ok) {
-    const message = getErrorFromPayload(data) || res.statusText
-    throw new Error(message)
+  const timeout = init?.timeout ?? 15000 // 15s default timeout
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), timeout)
+
+  try {
+    const res = await fetch(input, { ...init, headers, signal: controller.signal })
+    clearTimeout(id)
+
+    const data = (await res.json().catch(() => null)) as T | ApiError | null
+    if (!res.ok) {
+      const message = getErrorFromPayload(data) || res.statusText
+      console.error(`API Error [${res.status}]:`, message, data)
+      throw new Error(message)
+    }
+    return data as T
+  } catch (err) {
+    clearTimeout(id)
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Požadavek trval příliš dlouho. Zkontrolujte připojení.')
+    }
+    throw err
   }
-  return data as T
 }

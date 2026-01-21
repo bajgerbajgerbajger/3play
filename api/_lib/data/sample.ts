@@ -119,6 +119,8 @@ const defaultProfiles: Profile[] = [
   },
 ]
 
+export const seedProfiles = defaultProfiles
+
 const defaultUsers: User[] = [
   {
     id: 'u-aurora',
@@ -129,6 +131,8 @@ const defaultUsers: User[] = [
     passwordHash: hashPassword('password123'),
   },
 ]
+
+export const seedUsers = defaultUsers
 
 const defaultVideos: Video[] = [
   {
@@ -209,6 +213,8 @@ const defaultVideos: Video[] = [
   },
 ]
 
+export const seedVideos = defaultVideos
+
 const defaultComments: Comment[] = [
   {
     id: 'c-001',
@@ -242,6 +248,8 @@ const defaultComments: Comment[] = [
   },
 ]
 
+export const seedComments = defaultComments
+
 // --- Persistence Layer ---
 
 // Initialize with defaults if file doesn't exist
@@ -259,10 +267,10 @@ try {
     const parsed = JSON.parse(raw)
     // Merge loaded data with defaults if missing (simple migration)
     data = {
-      users: parsed.users || defaultUsers,
-      profiles: parsed.profiles || defaultProfiles,
-      videos: parsed.videos || defaultVideos,
-      comments: parsed.comments || defaultComments,
+      users: Array.isArray(parsed.users) && parsed.users.length > 0 ? parsed.users : defaultUsers,
+      profiles: Array.isArray(parsed.profiles) && parsed.profiles.length > 0 ? parsed.profiles : defaultProfiles,
+      videos: Array.isArray(parsed.videos) && parsed.videos.length > 0 ? parsed.videos : defaultVideos,
+      comments: Array.isArray(parsed.comments) && parsed.comments.length > 0 ? parsed.comments : defaultComments,
     }
     console.log(`[Database] Loaded ${data.users.length} users, ${data.profiles.length} profiles, ${data.videos.length} videos from ${DB_PATH}`)
   } else {
