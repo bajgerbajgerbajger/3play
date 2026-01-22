@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { CloudUpload, Loader2, Upload, FileVideo } from 'lucide-react'
-import { sampleSources } from './types'
+import { CloudUpload, Loader2, Upload, FileVideo, Image as ImageIcon, Code, Link } from 'lucide-react'
 
 export function UploadPanel({
   title,
@@ -18,6 +17,13 @@ export function UploadPanel({
   onSourceUrl,
   onFileSelect,
   onCreate,
+  
+  uploadMode,
+  onUploadMode,
+  embedCode,
+  onEmbedCode,
+  thumbnailFile,
+  onThumbnailSelect,
 }: {
   title: string
   description: string
@@ -32,6 +38,13 @@ export function UploadPanel({
   onSourceUrl: (v: string) => void
   onFileSelect: (v: File | null) => void
   onCreate: () => void
+  
+  uploadMode: 'file' | 'embed'
+  onUploadMode: (v: 'file' | 'embed') => void
+  embedCode: string
+  onEmbedCode: (v: string) => void
+  thumbnailFile?: File | null
+  onThumbnailSelect: (v: File | null) => void
 }) {
   const progressText = useMemo(() => `${Math.round(progress)}%`, [progress])
   return (
@@ -42,7 +55,7 @@ export function UploadPanel({
         </div>
         <div>
           <h3 className="font-heading text-sm font-semibold">Upload a new video</h3>
-          <div className="text-xs text-muted">Upload file from device or use a remote URL.</div>
+          <div className="text-xs text-muted">Upload file from device or use an embed code.</div>
         </div>
       </div>
 
@@ -82,54 +95,115 @@ export function UploadPanel({
           />
         </div>
         
-        <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-                <div className="mb-1 text-xs font-semibold text-muted">Video File</div>
-                <div className="relative">
-                    <input
-                        type="file"
-                        accept="video/*"
-                        onChange={(e) => onFileSelect(e.target.files?.[0] || null)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <div className="flex items-center gap-2 h-10 w-full rounded-[10px] border border-border/10 bg-surface px-3 text-sm text-text">
-                         <FileVideo size={16} className="text-muted" />
-                         <span className="truncate">{file ? file.name : "Choose file..."}</span>
-                    </div>
-                </div>
+        {/* Upload Mode Switcher */}
+        <div>
+            <div className="mb-1 text-xs font-semibold text-muted">Source</div>
+            <div className="flex gap-2 mb-3">
+                <button
+                    type="button"
+                    onClick={() => onUploadMode('file')}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                        uploadMode === 'file'
+                            ? 'bg-brand/10 border-brand text-brand'
+                            : 'bg-surface border-border/10 text-muted hover:border-border/30 hover:text-text'
+                    }`}
+                >
+                    <FileVideo size={14} />
+                    File Upload
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onUploadMode('embed')}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+                        uploadMode === 'embed'
+                            ? 'bg-brand/10 border-brand text-brand'
+                            : 'bg-surface border-border/10 text-muted hover:border-border/30 hover:text-text'
+                    }`}
+                >
+                    <Code size={14} />
+                    Embed Code
+                </button>
             </div>
             
-            <div>
-              <div className="mb-1 text-xs font-semibold text-muted">Or Source URL</div>
-              <Input
-                value={sourceUrl}
-                disabled={!!file}
-                onChange={(e) => onSourceUrl(e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
+            {uploadMode === 'file' ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                        <div className="mb-1 text-xs font-semibold text-muted">Video File</div>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="video/*"
+                                onChange={(e) => onFileSelect(e.target.files?.[0] || null)}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <div className="flex items-center gap-2 h-10 w-full rounded-[10px] border border-border/10 bg-surface px-3 text-sm text-text overflow-hidden">
+                                <FileVideo size={16} className="text-muted flex-shrink-0" />
+                                <span className="truncate">{file ? file.name : "Choose video file..."}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                         <div className="mb-1 text-xs font-semibold text-muted">Source URL (Optional)</div>
+                         <div className="relative">
+                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+                                 <Link size={14} />
+                             </div>
+                             <Input 
+                                 value={sourceUrl} 
+                                 onChange={(e) => onSourceUrl(e.target.value)} 
+                                 placeholder="Or paste direct URL" 
+                                 className="pl-9"
+                             />
+                         </div>
+                    </div>
+                </div>
+            ) : (
+                <div>
+                     <div className="mb-1 text-xs font-semibold text-muted">Embed Code</div>
+                     <textarea
+                        value={embedCode}
+                        onChange={(e) => onEmbedCode(e.target.value)}
+                        placeholder={'<iframe src="..." ...></iframe>'}
+                        className="min-h-[80px] w-full rounded-[12px] border border-border/10 bg-surface px-3 py-2 text-sm text-text placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg font-mono text-xs"
+                      />
+                </div>
+            )}
         </div>
         
-        {file ? <div className="text-xs text-brand">File selected. URL input disabled.</div> : <div className="text-xs text-muted">Supports direct URLs or iframe embed codes.</div>}
-
-        {progress > 0 ? (
-          <div className="rounded-xl border border-border/10 bg-surface2 p-3">
-            <div className="flex items-center justify-between text-xs">
-              <div className="text-muted">Uploading</div>
-              <div className="text-text font-semibold">{progressText}</div>
+        {/* Thumbnail Upload - Always available */}
+        <div>
+            <div className="mb-1 text-xs font-semibold text-muted">Custom Thumbnail (Optional)</div>
+            <div className="relative">
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => onThumbnailSelect(e.target.files?.[0] || null)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="flex items-center gap-2 h-10 w-full rounded-[10px] border border-border/10 bg-surface px-3 text-sm text-text overflow-hidden">
+                    <ImageIcon size={16} className="text-muted flex-shrink-0" />
+                    <span className="truncate">{thumbnailFile ? thumbnailFile.name : "Choose custom thumbnail image..."}</span>
+                </div>
             </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/5">
-              <div className="h-2 rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
+            <div className="mt-1 text-[10px] text-muted">
+                If not provided, a thumbnail will be auto-generated from the video (for file uploads).
             </div>
-          </div>
-        ) : null}
+        </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <Button onClick={onCreate} loading={creating} className="sm:min-w-[160px]">
-            {creating ? <Loader2 size={16} /> : <Upload size={16} />}
-            Start upload
+        <div className="mt-2 flex justify-end">
+          <Button onClick={onCreate} disabled={creating || (!title) || (uploadMode === 'file' && !file && !sourceUrl) || (uploadMode === 'embed' && !embedCode)}>
+             {creating ? (
+                 <>
+                   <Loader2 size={16} className="animate-spin mr-2" />
+                   Uploading {progressText}
+                 </>
+             ) : (
+                 <>
+                   <Upload size={16} className="mr-2" />
+                   Publish Video
+                 </>
+             )}
           </Button>
-          <div className="text-xs text-muted">Processing auto-completes in a few seconds.</div>
         </div>
       </div>
     </div>

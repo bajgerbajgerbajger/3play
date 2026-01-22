@@ -23,6 +23,7 @@ const VideoSchema = new mongoose.Schema({
   },
   thumbnailUrl: { type: String },
   sourceUrl: { type: String },
+  embedCode: { type: String },
   durationSeconds: { type: Number, default: 0 },
   views: { type: Number, default: 0 },
   likes: { type: Number, default: 0 },

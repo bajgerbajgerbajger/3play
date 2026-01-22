@@ -14,6 +14,199 @@
     <meta property="og:description" content="A creator-first, high-performance video platform." />
     <meta property="og:type" content="website" />
     <title>3Play</title>
+    <style>
+      :root{ 
+        --bg: #07080b; 
+        --card: rgba(20,22,28,0.72); 
+        --cardBorder: rgba(255,255,255,0.08); 
+        --text: rgba(255,255,255,0.92); 
+        --muted: rgba(255,255,255,0.55); 
+        --accent: #e50914; /* Netflix-ish red; change to your brand */ 
+      } 
+      
+      .intro{ 
+        position: fixed; 
+        inset: 0; 
+        z-index: 9999; 
+        display: grid; 
+        place-items: center; 
+        overflow: hidden; 
+        background: transparent; 
+        opacity: 1; 
+        transform: translateZ(0); 
+      } 
+      
+      .intro__bg{ 
+        position:absolute; inset:-20%; 
+        background: 
+          radial-gradient(1200px 800px at 50% 45%, rgba(229,9,20,0.10), transparent 60%), 
+          radial-gradient(900px 600px at 30% 70%, rgba(255,255,255,0.06), transparent 55%), 
+          linear-gradient(180deg, #020205 0%, var(--bg) 100%); 
+        filter: saturate(1.1); 
+        transform: scale(1.02); 
+      } 
+      
+      .intro__card{ 
+        position: relative; 
+        width: min(560px, 90vw); 
+        padding: 36px 28px 28px; 
+        border-radius: 22px; 
+        background: var(--card); 
+        border: 1px solid var(--cardBorder); 
+        box-shadow: 0 18px 70px rgba(0,0,0,0.55); 
+        backdrop-filter: blur(10px); 
+        -webkit-backdrop-filter: blur(10px); 
+      } 
+      
+      /* Logo */ 
+      .logo{ 
+        position: relative; 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 14px; 
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; 
+        font-weight: 800; 
+        font-size: clamp(42px, 6vw, 72px); 
+        letter-spacing: -0.04em; 
+        color: var(--text); 
+        transform-origin: 50% 60%; 
+        animation: logoEnter 900ms cubic-bezier(.2,.9,.2,1) both; 
+      } 
+      
+      .logo__three, .logo__text {
+        animation: collapseElement 800ms cubic-bezier(.4,0,.2,1) forwards 1.6s;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+
+      .logo__three{ 
+        font-weight: 900; 
+        text-shadow: 0 10px 30px rgba(0,0,0,0.35); 
+      } 
+      
+      .logo__play{ 
+        width: 0; height: 0; 
+        border-top: 0.46em solid transparent; 
+        border-bottom: 0.46em solid transparent; 
+        border-left: 0.82em solid var(--accent); 
+        filter: drop-shadow(0 10px 24px rgba(229,9,20,0.22)); 
+        transform: translateY(0.02em); 
+        animation: 
+          playPulse 1400ms ease-in-out infinite,
+          spinPlay 2000ms linear infinite 2.4s; 
+      } 
+      
+      .logo__text{ 
+        opacity: 0.98; 
+        text-shadow: 0 10px 30px rgba(0,0,0,0.25); 
+      } 
+      
+      /* moving shine across the logo */ 
+      .logo__shine{ 
+        position: absolute; 
+        inset: -30% -10%; 
+        pointer-events: none; 
+        background: linear-gradient(110deg, 
+          transparent 40%, 
+          rgba(255,255,255,0.18) 48%, 
+          rgba(255,255,255,0.08) 52%, 
+          transparent 60%); 
+        transform: translateX(-120%); 
+        animation: shine 1400ms ease-in-out 300ms infinite; 
+        mix-blend-mode: screen; 
+      } 
+      
+      /* Subtitle */ 
+      .intro__sub{ 
+        margin-top: 12px; 
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; 
+        font-size: 14px; 
+        color: var(--muted); 
+        animation: fadeUp 700ms ease-out 120ms both; 
+      } 
+      
+      /* Progress meter */ 
+      .meter{ 
+        margin-top: 18px; 
+        height: 10px; 
+        border-radius: 999px; 
+        background: rgba(255,255,255,0.10); 
+        overflow: hidden; 
+        border: 1px solid rgba(255,255,255,0.08); 
+      } 
+      
+      .meter__bar{ 
+        height: 100%; 
+        width: 0%; 
+        border-radius: 999px; 
+        background: linear-gradient(90deg, var(--accent), rgba(229,9,20,0.45)); 
+        box-shadow: 0 6px 18px rgba(229,9,20,0.22); 
+        transition: width 220ms cubic-bezier(.2,.9,.2,1); 
+      } 
+      
+      .meter__meta{ 
+        margin-top: 10px; 
+        display: flex; 
+        justify-content: space-between; 
+        gap: 12px; 
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; 
+        font-size: 12px; 
+        color: rgba(255,255,255,0.62); 
+        animation: fadeUp 700ms ease-out 180ms both; 
+      } 
+      
+      .meter__hint{ opacity: 0.85; } 
+      
+      /* Exit animation (smooth hide) */ 
+      .intro.is-hiding{ 
+        animation: loaderExit 520ms cubic-bezier(.2,.9,.2,1) forwards; 
+      } 
+      .intro.is-hiding .intro__card{ 
+        animation: cardExit 520ms cubic-bezier(.2,.9,.2,1) forwards; 
+      } 
+      
+      /* Reduced motion */ 
+      @media (prefers-reduced-motion: reduce){ 
+        .logo, .logo__shine, .logo__play, .intro__sub, .meter__meta { animation: none !important; } 
+        .meter__bar { transition: none !important; } 
+      } 
+      
+      /* Keyframes */ 
+      @keyframes logoEnter{ 
+        0%{ opacity: 0; transform: translateY(14px) scale(0.96); filter: blur(6px); } 
+        100%{ opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } 
+      } 
+      @keyframes fadeUp{ 
+        0%{ opacity: 0; transform: translateY(8px); } 
+        100%{ opacity: 1; transform: translateY(0); } 
+      } 
+      @keyframes playPulse{ 
+        0%,100%{ transform: translateY(0.02em) scale(1); } 
+        50%{ transform: translateY(0.02em) scale(1.06); } 
+      } 
+      @keyframes spinPlay {
+        0% { transform: rotate(0deg) scale(1.2); }
+        100% { transform: rotate(360deg) scale(1.2); }
+      }
+      @keyframes collapseElement {
+        0% { opacity: 1; max-width: 200px; transform: scale(1); }
+        100% { opacity: 0; max-width: 0; transform: scale(0.8); margin: 0; }
+      }
+      @keyframes shine{ 
+        0%{ transform: translateX(-120%); opacity: 0.0; } 
+        20%{ opacity: 0.9; } 
+        55%{ opacity: 0.6; } 
+        100%{ transform: translateX(120%); opacity: 0.0; } 
+      } 
+      @keyframes loaderExit{ 
+        0%{ opacity: 1; } 
+        100%{ opacity: 0; pointer-events: none; } 
+      } 
+      @keyframes cardExit{ 
+        0%{ transform: translateY(0) scale(1); } 
+        100%{ transform: translateY(-10px) scale(0.98); } 
+      }
+    </style>
     <script type="module">
       if (import.meta.hot?.on) {
         import.meta.hot.on('vite:error', (error) => {
@@ -27,6 +220,158 @@
     </script>
   </head>
   <body>
+    <!-- Intro Loader --> 
+    <div id="introLoader" class="intro"> 
+      <div class="intro__bg"></div> 
+    
+      <div class="intro__card"> 
+        <div class="logo"> 
+          <div class="logo__three">3</div> 
+          <div class="logo__play"></div> 
+          <div class="logo__text">Play</div> 
+          <div class="logo__shine"></div> 
+        </div> 
+    
+        <div class="intro__sub">Načítání zážitku…</div> 
+    
+        <div class="meter" aria-label="Loading progress"> 
+          <div class="meter__bar" id="meterBar"></div> 
+        </div> 
+        <div class="meter__meta"> 
+          <span id="meterLabel">0%</span> 
+          <span class="meter__hint">Optimalizace pro vaše zařízení</span> 
+        </div> 
+      </div> 
+    </div> 
+    
+    <!-- Initial Loader Script -->
+    <script>
+    (() => {
+      const el = document.getElementById("introLoader");
+      const bar = document.getElementById("meterBar");
+      const label = document.getElementById("meterLabel");
+
+      // Tuning knobs 
+      const MIN_SHOW_MS = 2800;   // Increased to allow animation to finish
+      const MAX_SHOW_MS = 12000; // never hang forever 
+      const EXIT_MS = 520; 
+
+      const t0 = performance.now(); 
+      let progress = 0;       // 0..1 
+      let target = 0;         // 0..1 
+      let rafId = null; 
+      let doneCalled = false; 
+
+      // A helper that estimates how "loaded" the page is (0..1). 
+      function pageReadiness() { 
+        // document.readyState: loading | interactive | complete 
+        const rs = document.readyState; 
+        let r = (rs === "loading") ? 0.2 : (rs === "interactive" ? 0.6 : 1.0); 
+
+        // If we can see resource timings, use them lightly to refine. 
+        // (Not perfect, but helps correlate with slow networks.) 
+        try { 
+          const entries = performance.getEntriesByType("resource"); 
+          // Count only a limited set to avoid huge loops. 
+          const sample = entries.slice(-60); 
+          const longOnes = sample.filter(e => (e.duration || 0) > 300).length; 
+          // If many long resources, cap readiness a bit until "complete" 
+          if (longOnes > 10 && rs !== "complete") r = Math.min(r, 0.85); 
+        } catch {} 
+
+        return r; 
+      } 
+
+      function clamp01(x){ return Math.max(0, Math.min(1, x)); } 
+
+      function setUI(p){ 
+        const pct = Math.floor(p * 100); 
+        bar.style.width = pct + "%"; 
+        label.textContent = pct + "%"; 
+      } 
+
+      function loop(){ 
+        // Compute target from readiness + time-based easing. 
+        const elapsed = performance.now() - t0; 
+        const readiness = pageReadiness(); 
+
+        // Time curve pushes progress forward even if readiness stalls (feels responsive). 
+        // But it asymptotically approaches 0.92 until done() is called. 
+        const timePush = 1 - Math.exp(-elapsed / 1400); // 0..~1 
+        const softCap = doneCalled ? 1 : 0.92; 
+
+        target = clamp01(Math.min( 
+          softCap, 
+          0.15 + 0.75 * timePush,   // smooth forward motion 
+          readiness                 // real load state can jump it forward 
+        )); 
+
+        // Smoothly approach target 
+        progress += (target - progress) * 0.12; 
+        progress = clamp01(progress); 
+
+        setUI(progress); 
+
+        // Hard timeout 
+        if (!doneCalled && elapsed > MAX_SHOW_MS) { 
+          done(); 
+          return; 
+        } 
+
+        // Keep animating until fully done + hidden 
+        if (!(doneCalled && progress >= 0.999)) { 
+          rafId = requestAnimationFrame(loop); 
+        } else { 
+          // ensure 100% before exit 
+          setUI(1); 
+          hide(); 
+        } 
+      } 
+
+      function hide(){ 
+        // Respect minimum show time 
+        const elapsed = performance.now() - t0; 
+        const wait = Math.max(0, MIN_SHOW_MS - elapsed); 
+
+        setTimeout(() => { 
+          el.classList.add("is-hiding"); 
+          setTimeout(() => { 
+            el.remove(); 
+          }, EXIT_MS); 
+        }, wait); 
+      } 
+
+      function done(){ 
+        if (doneCalled) return; 
+        doneCalled = true; 
+        // accelerate to 100% 
+        target = 1; 
+        // jump progress faster 
+        const boost = () => { 
+          progress += (1 - progress) * 0.22; 
+          setUI(progress); 
+          if (progress >= 0.995) { 
+            progress = 1; 
+            setUI(1); 
+            hide(); 
+          } else { 
+            requestAnimationFrame(boost); 
+          } 
+        }; 
+        boost(); 
+      } 
+
+      // Expose a global hook your app can call when it’s ready 
+      window.IntroLoader = { done }; 
+
+      // Auto-finish when window load fires (useful for simple sites) 
+      window.addEventListener("load", () => done(), { once: true }); 
+
+      // Start animation 
+      loop(); 
+    })(); 
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

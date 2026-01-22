@@ -9,7 +9,6 @@ import { useTheme } from "@/hooks/useTheme";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { SplashLogo } from "@/components/SplashLogo";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Search, Sun, Moon, User, LogOut, Video, CircleUserRound, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -26,11 +25,17 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('q') || '');
-  const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
     init();
   }, [init]);
+
+  useEffect(() => {
+    if (hydrated) {
+      // Signal to the loader that the app is ready (data + initial render)
+      (window as any).IntroLoader?.done();
+    }
+  }, [hydrated]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -49,13 +54,13 @@ export default function App() {
   return (
     <Router>
       <div className="min-h-dvh flex flex-col bg-bg text-text">
-        {!hydrated || !introDone ? (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-bg">
-            <SplashLogo onIntroComplete={() => setIntroDone(true)} />
-          </div>
-        ) : null}
         <header className="sticky top-0 z-40 border-b border-border/10 bg-surface/80 backdrop-blur supports-[backdrop-filter]:bg-surface/60">
           <div className="container flex h-14 items-center gap-4">
+            <div className="md:hidden">
+              <IconButton aria-label="Menu" onClick={() => setMobileNavOpen(true)}>
+                <Menu size={20} />
+              </IconButton>
+            </div>
             <Link to="/" className="flex items-center gap-3">
               <Logo variant="horizontal" tone={tone} className="h-10" />
             </Link>

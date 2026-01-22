@@ -19,6 +19,7 @@ type VideoDetail = {
   status: 'uploading' | 'processing' | 'ready' | 'failed'
   thumbnailUrl: string
   sourceUrl: string
+  embedCode?: string
   durationSeconds: number
   views: number
   likes: number
@@ -129,7 +130,12 @@ export default function Watch() {
           {loading ? (
             <Skeleton className="aspect-video w-full rounded-none" />
           ) : video ? (
-            video.sourceUrl.trim().startsWith('<iframe') ? (
+            video.embedCode ? (
+               <div
+                className="aspect-video w-full [&>iframe]:h-full [&>iframe]:w-full"
+                dangerouslySetInnerHTML={{ __html: video.embedCode }}
+              />
+            ) : video.sourceUrl.trim().startsWith('<iframe') ? (
               <div
                 className="aspect-video w-full [&>iframe]:h-full [&>iframe]:w-full"
                 dangerouslySetInnerHTML={{ __html: video.sourceUrl }}

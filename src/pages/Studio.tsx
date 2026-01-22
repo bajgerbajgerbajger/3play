@@ -20,8 +20,11 @@ export default function Studio() {
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadDesc, setUploadDesc] = useState('')
   const [uploadType, setUploadType] = useState<'video' | 'movie' | 'episode'>('video')
+  const [uploadMode, setUploadMode] = useState<'file' | 'embed'>('file')
   const [uploadSource, setUploadSource] = useState<string>('')
+  const [uploadEmbedCode, setUploadEmbedCode] = useState<string>('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadThumbnail, setUploadThumbnail] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [creating, setCreating] = useState(false)
   const [selected, setSelected] = useState<StudioVideo | null>(null)
@@ -59,15 +62,62 @@ export default function Studio() {
     return () => window.clearInterval(t)
   }, [token])
 
+  // Helper to generate thumbnail from video file
+  const generateThumbnail = async (videoFile: File): Promise<File> => {
+      return new Promise((resolve, reject) => {
+          const video = document.createElement('video')
+          video.preload = 'metadata'
+          video.src = URL.createObjectURL(videoFile)
+          video.muted = true
+          
+          video.onloadedmetadata = () => {
+              // Seek to 1s or middle if short
+              video.currentTime = Math.min(1, video.duration / 2)
+          }
+          
+          video.onseeked = () => {
+              const canvas = document.createElement('canvas')
+              canvas.width = video.videoWidth
+              canvas.height = video.videoHeight
+              const ctx = canvas.getContext('2d')
+              if (!ctx) {
+                  reject(new Error('Could not get canvas context'))
+                  return
+              }
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+              canvas.toBlob((blob) => {
+                  if (blob) {
+                      const file = new File([blob], "thumbnail.jpg", { type: "image/jpeg" })
+                      resolve(file)
+                  } else {
+                      reject(new Error('Thumbnail generation failed'))
+                  }
+                  URL.revokeObjectURL(video.src)
+              }, 'image/jpeg', 0.8)
+          }
+          
+          video.onerror = () => {
+              URL.revokeObjectURL(video.src)
+              reject(new Error('Video load error'))
+          }
+      })
+  }
+
   async function createUpload() {
     if (!token) return
     if (uploadTitle.trim().length < 3) {
       setError('Title must be at least 3 characters')
       return
     }
-    if (!uploadFile && !uploadSource.trim()) {
+    
+    if (uploadMode === 'file' && !uploadFile && !uploadSource.trim()) {
       setError('Please select a file or enter a source URL')
       return
+    }
+
+    if (uploadMode === 'embed' && !uploadEmbedCode.trim()) {
+        setError('Please enter the embed code')
+        return
     }
 
     setError(null)
@@ -78,79 +128,190 @@ export default function Studio() {
       let finalSourceUrl = uploadSource
       let finalThumbnailUrl = undefined
       let finalDuration = 0
+      let finalEmbedCode = uploadMode === 'embed' ? uploadEmbedCode : undefined
+      
+      let thumbnailToUpload = uploadThumbnail
+      
+      // Auto-generate thumbnail if missing and we have a video file
+      if (uploadMode === 'file' && uploadFile && !thumbnailToUpload) {
+          try {
+              thumbnailToUpload = await generateThumbnail(uploadFile)
+          } catch (err) {
+              console.warn('Failed to generate thumbnail:', err)
+              // Continue without thumbnail
+          }
+      }
 
-      if (uploadFile) {
-        // Get upload signature
-        const sigRes = await fetch('/api/studio/upload-signature', {
-           headers: { 'Authorization': `Bearer ${token}` }
-        })
-        const sigData = await sigRes.json()
+      // Helper to upload a single file to Cloudinary
+      const uploadToCloudinary = async (file: File, folder: string, apiKey: string, timestamp: number, signature: string, cloudName: string) => {
+         const CHUNK_SIZE = 6 * 1024 * 1024 // 6MB
+         const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`
 
-        if (sigData.mode === 'cloud') {
-             // Direct Cloudinary Upload
+         // Standard upload for small files
+         if (file.size <= CHUNK_SIZE) {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('api_key', apiKey)
+            formData.append('timestamp', String(timestamp))
+            formData.append('signature', signature)
+            formData.append('folder', folder)
+
+            return new Promise<any>((resolve, reject) => {
+                const xhr = new XMLHttpRequest()
+                xhr.open('POST', url)
+                
+                if (file === uploadFile) {
+                   xhr.upload.onprogress = (e) => {
+                       if (e.lengthComputable) {
+                           setUploadProgress(Math.round((e.loaded / e.total) * 100))
+                       }
+                   }
+                }
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(JSON.parse(xhr.responseText))
+                    } else {
+                        reject(new Error(`Cloudinary upload failed: ${xhr.responseText}`))
+                    }
+                }
+                xhr.onerror = () => reject(new Error('Network error during upload'))
+                xhr.send(formData)
+            })
+         }
+
+         // Chunked upload for large files
+         const uniqueUploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+         const total = file.size
+         let start = 0
+         let result: any
+
+         while (start < total) {
+             const end = Math.min(start + CHUNK_SIZE, total)
+             const chunk = file.slice(start, end)
+             
              const formData = new FormData()
-             formData.append('file', uploadFile)
-             formData.append('api_key', sigData.apiKey)
-             formData.append('timestamp', sigData.timestamp)
-             formData.append('signature', sigData.signature)
-             formData.append('folder', sigData.folder)
-
-             await new Promise<void>((resolve, reject) => {
+             formData.append('file', chunk)
+             formData.append('api_key', apiKey)
+             formData.append('timestamp', String(timestamp))
+             formData.append('signature', signature)
+             formData.append('folder', folder)
+             
+             await new Promise((resolve, reject) => {
                  const xhr = new XMLHttpRequest()
-                 xhr.open('POST', `https://api.cloudinary.com/v1_1/${sigData.cloudName}/auto/upload`)
+                 xhr.open('POST', url)
                  
-                 xhr.upload.onprogress = (e) => {
-                     if (e.lengthComputable) {
-                         setUploadProgress(Math.round((e.loaded / e.total) * 100))
-                     }
-                 }
-
+                 // Content-Range: bytes start-end/total
+                 // end is inclusive index (byte pos), so end-1
+                 const rangeEnd = end - 1
+                 xhr.setRequestHeader('X-Unique-Upload-Id', uniqueUploadId)
+                 xhr.setRequestHeader('Content-Range', `bytes ${start}-${rangeEnd}/${total}`)
+                 
                  xhr.onload = () => {
                      if (xhr.status >= 200 && xhr.status < 300) {
-                         const resp = JSON.parse(xhr.responseText)
-                         finalSourceUrl = resp.secure_url
-                         finalDuration = resp.duration || 0
-                         // Cloudinary video thumbnail convention
-                         if (resp.resource_type === 'video' || finalSourceUrl.match(/\.(mp4|mov|avi|webm|mkv)$/i)) {
-                             // Replace extension with .jpg
-                             finalThumbnailUrl = finalSourceUrl.replace(/\.[^/.]+$/, ".jpg")
-                         } else {
-                             finalThumbnailUrl = finalSourceUrl
+                         // Cloudinary returns the full response on the last chunk
+                         const response = JSON.parse(xhr.responseText)
+                         if (end >= total) {
+                             result = response
                          }
-                         resolve()
+                         resolve(response)
                      } else {
-                         reject(new Error('Cloudinary upload failed'))
+                         reject(new Error(`Chunk upload failed: ${xhr.responseText}`))
                      }
                  }
-                 xhr.onerror = () => reject(new Error('Network error during upload'))
+                 
+                 xhr.onerror = () => reject(new Error('Network error during chunk upload'))
+                 
+                 if (file === uploadFile) {
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable) {
+                            // e.loaded is bytes loaded for *this chunk*
+                            // Total loaded = start + e.loaded
+                            const totalLoaded = start + e.loaded
+                            setUploadProgress(Math.round((totalLoaded / total) * 100))
+                        }
+                    }
+                 }
+                 
                  xhr.send(formData)
              })
-        } else {
-            // Local Upload Fallback
-            const t = window.setInterval(() => {
+             
+             start = end
+         }
+         
+         return result
+      }
+
+      const sigRes = await fetch('/api/studio/upload-signature', {
+         headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const sigData = await sigRes.json()
+
+      if (sigData.mode === 'cloud') {
+           // Cloudinary Mode
+           
+           // 1. Upload Thumbnail if exists
+           if (thumbnailToUpload) {
+               // We need a separate signature for thumbnail if we want to be strict, but usually same works if logic allows.
+               // Actually, the signature is bound to timestamp and folder.
+               // We can reuse if we don't change parameters too much, but ideally we should get fresh signature or just reuse parameters.
+               // Our backend signs { timestamp, folder }.
+               // So we can reuse.
+               const thumbResp = await uploadToCloudinary(thumbnailToUpload, sigData.folder, sigData.apiKey, sigData.timestamp, sigData.signature, sigData.cloudName)
+               finalThumbnailUrl = thumbResp.secure_url
+           }
+
+           // 2. Upload Video if exists
+          if (uploadMode === 'file' && uploadFile) {
+              const vidResp = await uploadToCloudinary(uploadFile, sigData.folder, sigData.apiKey, sigData.timestamp, sigData.signature, sigData.cloudName)
+              finalSourceUrl = vidResp.secure_url
+              finalDuration = vidResp.duration || 0
+              
+              // If no custom thumbnail, try to use video thumbnail
+              if (!finalThumbnailUrl) {
+                  if (vidResp.resource_type === 'video' || finalSourceUrl.match(/\.(mp4|mov|avi|webm|mkv)$/i)) {
+                      finalThumbnailUrl = finalSourceUrl.replace(/\.[^/.]+$/, ".jpg")
+                  } else {
+                      finalThumbnailUrl = finalSourceUrl
+                  }
+              }
+          }
+      } else {
+          // Local Mode
+          // We use the single endpoint for both now (multipart)
+          const t = window.setInterval(() => {
               setUploadProgress((p) => Math.min(95, p + Math.random() * 14))
-            }, 180)
-            
-            try {
-                const formData = new FormData()
-                formData.append('file', uploadFile)
-                
-                const res = await fetch('/api/studio/upload', {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: formData
-                })
-                const data = await res.json()
-                if (!data.success) throw new Error(data.error || 'Upload failed')
-                finalSourceUrl = data.url
-                finalThumbnailUrl = data.thumbnailUrl
-                finalDuration = data.duration || 0
-            } finally {
-                window.clearInterval(t)
-            }
-        }
+          }, 180)
+          
+          try {
+               const formData = new FormData()
+               if (uploadMode === 'file' && uploadFile) {
+                   formData.append('file', uploadFile)
+               }
+               if (thumbnailToUpload) {
+                   formData.append('thumbnail', thumbnailToUpload)
+               }
+               
+               const res = await fetch('/api/studio/upload', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                },
+                body: formData
+              })
+              const data = await res.json()
+              if (!data.success) throw new Error(data.error || 'Upload failed')
+              
+              if (uploadMode === 'file' && uploadFile) {
+                  finalSourceUrl = data.url
+                  finalDuration = data.duration || 0
+              }
+              if (data.thumbnailUrl) {
+                  finalThumbnailUrl = data.thumbnailUrl
+              }
+          } finally {
+              window.clearInterval(t)
+          }
       }
 
       const d = await apiFetch<{ success: true; video: StudioVideo }>('/api/studio/videos', {
@@ -162,7 +323,8 @@ export default function Studio() {
           type: uploadType,
           sourceUrl: finalSourceUrl,
           thumbnailUrl: finalThumbnailUrl,
-          duration: finalDuration
+          duration: finalDuration,
+          embedCode: finalEmbedCode
         }),
       })
       setUploadProgress(100)
@@ -173,6 +335,9 @@ export default function Studio() {
       setUploadDesc('')
       setUploadType('video')
       setUploadFile(null)
+      setUploadThumbnail(null)
+      setUploadEmbedCode('')
+      setUploadMode('file')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed')
     } finally {
@@ -270,6 +435,14 @@ export default function Studio() {
             onSourceUrl={setUploadSource}
             onFileSelect={setUploadFile}
             onCreate={createUpload}
+            
+            // New Props
+            uploadMode={uploadMode}
+            onUploadMode={setUploadMode}
+            embedCode={uploadEmbedCode}
+            onEmbedCode={setUploadEmbedCode}
+            thumbnailFile={uploadThumbnail}
+            onThumbnailSelect={setUploadThumbnail}
           />
         ) : (
           <VideosPanel loading={loading} items={items} selectedId={selected?.id || null} onSelect={(v) => setSelected(v)} />

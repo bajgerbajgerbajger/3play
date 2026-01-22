@@ -68,9 +68,11 @@ router.post('/upload-signature', (req: Request, res: Response) => {
   })
 })
 
-router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
-  if (!req.file) {
-    res.status(400).json({ success: false, error: 'No file uploaded' })
+router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]), (req: Request, res: Response) => {
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined
+  
+  if (!files || (!files['file'] && !files['thumbnail'])) {
+    res.status(400).json({ success: false, error: 'No file or thumbnail uploaded' })
     return
   }
   
@@ -80,32 +82,41 @@ router.post('/upload', upload.single('file'), (req: Request, res: Response) => {
 
   if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
     // Cloudinary Logic
-    url = req.file.path
-    const fileData = req.file as any
+    if (files['file']?.[0]) {
+      const file = files['file'][0]
+      url = file.path
+      const fileData = file as any
+      
+      // Default thumbnail from video
+      thumbnailUrl = url
+      if (file.mimetype.startsWith('video/')) {
+         const lastDot = url.lastIndexOf('.')
+         if (lastDot !== -1) {
+           thumbnailUrl = url.substring(0, lastDot) + '.jpg'
+         } else {
+           thumbnailUrl = url + '.jpg'
+         }
+         if (fileData.duration) {
+           duration = fileData.duration
+         }
+      }
+    }
     
-    thumbnailUrl = url
-    if (req.file.mimetype.startsWith('video/')) {
-       const lastDot = url.lastIndexOf('.')
-       if (lastDot !== -1) {
-         thumbnailUrl = url.substring(0, lastDot) + '.jpg'
-       } else {
-         thumbnailUrl = url + '.jpg'
-       }
-       if (fileData.duration) {
-         duration = fileData.duration
-       }
+    // If custom thumbnail is provided, override it
+    if (files['thumbnail']?.[0]) {
+        thumbnailUrl = files['thumbnail'][0].path
     }
   } else {
     // Local Logic
-    // Serve files from /uploads route
-    const filename = req.file.filename
-    url = `/uploads/${filename}`
+    if (files['file']?.[0]) {
+        const file = files['file'][0]
+        url = `/uploads/${file.filename}`
+        thumbnailUrl = url // Default fallback
+    }
     
-    // For local video, we can't easily generate thumbnail without ffmpeg.
-    // We will use a default placeholder or the video itself as source.
-    thumbnailUrl = url // Frontend might handle video as img source (won't work) or we use a generic icon
-    // TODO: Integrate ffmpeg for thumbnails if needed. For now, use a placeholder.
-    // Or just let the frontend show a default video icon.
+    if (files['thumbnail']?.[0]) {
+        thumbnailUrl = `/uploads/${files['thumbnail'][0].filename}`
+    }
   }
 
   res.status(200).json({ success: true, url, thumbnailUrl, duration })
@@ -186,13 +197,14 @@ router.post('/videos', async (req: Request, res: Response) => {
     return
   }
 
-  const { title, description, sourceUrl, thumbnailUrl, duration, type } = (req.body || {}) as {
+  const { title, description, sourceUrl, thumbnailUrl, duration, type, embedCode } = (req.body || {}) as {
     title?: string
     description?: string
     sourceUrl?: string
     thumbnailUrl?: string
     duration?: number
     type?: 'video' | 'movie' | 'episode'
+    embedCode?: string
   }
 
   if (!title || title.trim().length < 3) {
@@ -213,6 +225,7 @@ router.post('/videos', async (req: Request, res: Response) => {
     status: 'ready',
     thumbnailUrl: thumbnailUrl || '',
     sourceUrl: sourceUrl || '',
+    embedCode: embedCode || '',
     durationSeconds: duration || 0,
     views: 0,
     likes: 0,
