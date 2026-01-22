@@ -13,6 +13,19 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`Server ready on http://${HOST}:${PORT}`);
 });
 
+server.on('error', (err) => {
+  console.error('Server failed to start:', err);
+  process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 /**
  * close server
  */
