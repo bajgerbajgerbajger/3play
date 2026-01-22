@@ -138,8 +138,14 @@ export default function App() {
             <Route path="/channel/:handle" element={<Channel />} />
             <Route path="/studio" element={<Studio />} />
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Games */}
+            <Route path="/games/prsi" element={<Prsi />} />
+            <Route path="/games/ludo" element={<Ludo />} />
+            <Route path="/games/chess" element={<Chess />} />
           </Routes>
         </main>
+        <MobileMenu isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
         <footer className="border-t border-border/10 bg-surface/50 py-6">
           <div className="container text-center text-sm text-muted">
             &copy; {new Date().getFullYear()} 3Play. All rights reserved.
