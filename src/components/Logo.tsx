@@ -18,7 +18,7 @@ export function Logo({
   const src = isIcon ? BRAND.assets.logoIcon : BRAND.assets.logoHorizontal
 
   return (
-    <div className="relative flex items-center justify-center select-none" aria-label="3Play" role="img">
+    <div className="relative flex items-center justify-center select-none shrink-0" aria-label="3Play" role="img">
       <img
         src={src}
         alt="3Play Logo"

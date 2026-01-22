@@ -113,10 +113,10 @@ export default function App() {
                   ) : null}
                 </div>
               ) : (
-                <Link to="/auth" className="hidden sm:block">
-                  <Button variant="secondary">
+                <Link to="/auth">
+                  <Button variant="secondary" className="px-3 sm:px-4">
                     <User size={16} />
-                    Sign in
+                    <span className="hidden sm:inline ml-2">Sign in</span>
                   </Button>
                 </Link>
               )}
