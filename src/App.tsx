@@ -10,15 +10,23 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ThreePlayLoader } from "@/components/ui/ThreePlayLoader";
-import { Search, Sun, Moon, User, LogOut, Video, CircleUserRound } from "lucide-react";
+import { MobileMenu } from "@/components/MobileMenu";
+import { Search, Sun, Moon, User, LogOut, Video, CircleUserRound, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth";
+
+// Games
+import Prsi from "@/pages/games/Prsi";
+import Ludo from "@/pages/games/Ludo";
+import Chess from "@/pages/games/Chess";
 
 export default function App() {
   const { isDark, toggleTheme } = useTheme();
   const { user, init, hydrated, logout } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('q') || '');
+  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     init();
