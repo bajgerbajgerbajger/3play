@@ -41,11 +41,11 @@ export default function App() {
   return (
     <Router>
       <div className="min-h-dvh flex flex-col bg-bg text-text">
-        {!hydrated ? (
+        {!hydrated || !splashDone ? (
           <div className="fixed inset-0 z-50 grid place-items-center bg-bg/85 backdrop-blur">
             <div className="grid place-items-center gap-4">
-              <ThreePlayLoader size={120} theme={tone} label="Loading" />
-              <div className="text-sm font-semibold text-muted">Loading 3Play…</div>
+              <Logo className="h-24 w-auto" />
+              <ThreePlayLoader size={40} theme={tone} label="Loading" showMark={false} className="opacity-50" />
             </div>
           </div>
         ) : null}
