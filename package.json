@@ -8,6 +8,7 @@
   },
   "scripts": {
     "client:dev": "vite",
+    "test": "echo \"No tests specified\" && exit 0",
     "start": "tsx api/server.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
