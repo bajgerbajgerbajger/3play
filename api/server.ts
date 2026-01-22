@@ -6,10 +6,11 @@ import app from './_lib/app.js';
 /**
  * start server with port
  */
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
+const HOST = '0.0.0.0';
 
-const server = app.listen(PORT, () => {
-  console.log(`Server ready on port ${PORT}`);
+const server = app.listen(PORT, HOST, () => {
+  console.log(`Server ready on http://${HOST}:${PORT}`);
 });
 
 /**
