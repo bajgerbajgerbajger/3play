@@ -49,9 +49,12 @@ app.use('/api/studio', studioRoutes)
 app.use(
   '/api/health',
   (req: Request, res: Response): void => {
+    // Add DB check if possible
     res.status(200).json({
       success: true,
       message: 'ok',
+      uptime: process.uptime(),
+      timestamp: Date.now(),
     })
   },
 )
