@@ -9,7 +9,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { ThreePlayLoader } from "@/components/ui/ThreePlayLoader";
+import { SplashLogo } from "@/components/SplashLogo";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Search, Sun, Moon, User, LogOut, Video, CircleUserRound, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -26,12 +26,10 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('q') || '');
-  const [splashDone, setSplashDone] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
     init();
-    const timer = setTimeout(() => setSplashDone(true), 2500);
-    return () => clearTimeout(timer);
   }, [init]);
 
   useEffect(() => {
@@ -51,12 +49,9 @@ export default function App() {
   return (
     <Router>
       <div className="min-h-dvh flex flex-col bg-bg text-text">
-        {!hydrated || !splashDone ? (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-bg/85 backdrop-blur">
-            <div className="grid place-items-center gap-4">
-              <Logo className="h-24 w-auto" />
-              <ThreePlayLoader size={40} theme={tone} label="Loading" showMark={false} className="opacity-50" />
-            </div>
+        {!hydrated || !introDone ? (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-bg">
+            <SplashLogo onIntroComplete={() => setIntroDone(true)} />
           </div>
         ) : null}
         <header className="sticky top-0 z-40 border-b border-border/10 bg-surface/80 backdrop-blur supports-[backdrop-filter]:bg-surface/60">
