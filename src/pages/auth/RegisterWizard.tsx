@@ -126,6 +126,7 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
     try {
       const dev = await requestCode({ email: email.trim() })
       setDevCodeHint(dev)
+      if (dev) alert(`Váš ověřovací kód je: ${dev}`)
       setResendCooldown(45)
     } catch (e2: unknown) {
       setTopError(e2 instanceof Error ? e2.message : 'Nepodařilo se poslat kód znovu')
