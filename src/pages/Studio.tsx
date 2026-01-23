@@ -258,10 +258,14 @@ export default function Studio() {
          return result
       }
 
-      const sigRes = await fetch('/api/studio/upload-signature', {
-         headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const sigData = await sigRes.json()
+      const sigData = await apiFetch<{
+        mode: string
+        folder: string
+        apiKey: string
+        timestamp: number
+        signature: string
+        cloudName: string
+      }>('/api/studio/upload-signature', { token })
 
       if (sigData.mode === 'cloud') {
            // Cloudinary Mode
@@ -308,14 +312,17 @@ export default function Studio() {
                    formData.append('thumbnail', thumbnailToUpload)
                }
                
-               const res = await fetch('/api/studio/upload', {
+               const data = await apiFetch<{
+                 success: boolean
+                 error?: string
+                 url: string
+                 duration?: number
+                 thumbnailUrl?: string
+               }>('/api/studio/upload', {
                 method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                },
+                token,
                 body: formData
               })
-              const data = await res.json()
               if (!data.success) throw new Error(data.error || 'Upload failed')
               
               if (uploadMode === 'file' && uploadFile) {

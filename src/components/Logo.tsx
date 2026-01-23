@@ -17,13 +17,19 @@ export function Logo({
   const isIcon = variant === 'icon'
   const src = isIcon ? BRAND.assets.logoIcon : BRAND.assets.logoHorizontal
 
+  const toneClasses = {
+    dark: '',
+    light: 'brightness-0',
+    mono: 'grayscale',
+  }
+
   return (
     <div className="relative flex items-center justify-center select-none shrink-0" aria-label="3Play" role="img">
       <img
         src={src}
         alt="3Play Logo"
         loading="eager"
-        className={cn('h-10 w-auto object-contain', className)}
+        className={cn('h-10 w-auto object-contain', toneClasses[tone], className)}
       />
     </div>
   )
