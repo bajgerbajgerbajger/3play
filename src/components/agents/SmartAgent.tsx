@@ -97,7 +97,7 @@ export function SmartAgent() {
           topGenre ? `Mám tu skvělé novinky z žánru ${topGenre[0]}! 🎬` : "Objevil jsem něco zajímavého...",
           "Můžu ti s něčím poradit?",
           "Chceš vidět, co teď letí?",
-          `Už jsi viděl ${profile.history.length > 0 ? 'poslední novinky' : 'naši nabídku'}?`
+          `Už jsi viděl ${profile.activities.length > 0 ? 'poslední novinky' : 'naši nabídku'}?`
         ];
 
         const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
