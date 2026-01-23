@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Input } from '@/components/ui/Input'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { Search } from 'lucide-react'
+import { Search, Video } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { WelcomeModal } from '@/components/WelcomeModal'
 
