@@ -399,14 +399,11 @@ export default function Studio() {
     }
     const formData = new FormData()
     formData.append('file', file)
-    const res = await fetch('/api/studio/upload', {
+    const data = await apiFetch<{ success?: boolean; thumbnailUrl?: string; error?: string }>('/api/studio/upload', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      token,
       body: formData,
     })
-    const data = (await res.json()) as { success?: boolean; thumbnailUrl?: string; error?: string }
     if (!data.success || !data.thumbnailUrl) {
       throw new Error(data.error || 'Thumbnail upload failed')
     }

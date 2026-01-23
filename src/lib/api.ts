@@ -16,7 +16,9 @@ export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit &
 
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
-  if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+  if (init?.body && !headers.has('Content-Type') && !(init.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json')
+  }
   if (init?.token) headers.set('Authorization', `Bearer ${init.token}`)
 
   const timeout = init?.timeout ?? 15000 // 15s default timeout

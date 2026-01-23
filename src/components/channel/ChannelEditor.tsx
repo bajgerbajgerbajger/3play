@@ -37,15 +37,11 @@ export function ChannelEditor({ initialData, onClose, onUpdate }: ChannelEditorP
       const formData = new FormData()
       formData.append('file', file)
       
-      const res = await fetch('/api/studio/upload', {
+      const data = await apiFetch<{ success: true; url: string }>('/api/studio/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        token,
         body: formData
       })
-      const data = await res.json()
-      if (!data.success) throw new Error(data.error || 'Upload failed')
       
       if (type === 'avatar') {
         setAvatarUrl(data.url)
