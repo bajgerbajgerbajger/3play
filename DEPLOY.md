@@ -31,7 +31,7 @@ Pokud nepoužijete Blueprint, nastavte službu takto:
 *   **Frontend:** Vite build se vytvoří do složky `dist`.
 *   **Backend:** Express server (`api/server.ts`) běží přes `tsx` a v produkci servíruje statické soubory z `dist`.
 *   **Databáze:** Aplikace vyžaduje externí MongoDB (např. MongoDB Atlas).
-*   **Média:** Uploady jsou směrovány na Cloudinary (viz `src/lib/api.ts` a `api/_lib/lib/cloudinary.ts`). Lokální složka `uploads` slouží jen jako dočasné úložiště nebo fallback, na serverless hostingu (jako Vercel) by nefungovala trvale.
+*   **Média:** Uploady jsou směrovány na Cloudinary (viz `src/lib/api.ts` a `api/_lib/lib/cloudinary.ts`). Lokální složka `uploads` slouží jen jako dočasné úložiště nebo fallback, na serverless hostingu by nefungovala trvale.
 
 ## Kontrola před nasazením
 
