@@ -10,6 +10,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { MobileMenu } from "@/components/MobileMenu";
+import { SmartAgent } from "@/components/agents/SmartAgent";
 import { Search, Sun, Moon, User, LogOut, Video, CircleUserRound, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth";
@@ -148,6 +149,7 @@ export default function App() {
           </Routes>
         </main>
         <MobileMenu isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
+        <SmartAgent />
         <footer className="border-t border-border/10 bg-surface/50 py-6">
           <div className="container text-center text-sm text-muted">
             &copy; {new Date().getFullYear()} 3Play. All rights reserved.
