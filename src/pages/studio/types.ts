@@ -25,11 +25,11 @@ export const sampleSources = [
   },
   {
     label: 'Sintel (Official Platform)',
-    url: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+    url: 'https://vjs.zencdn.net/v/oceans.mp4',
   },
   {
     label: 'Tears of Steel (Official Platform)',
-    url: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+    url: 'https://vjs.zencdn.net/v/oceans.mp4',
   },
 ] as const
 

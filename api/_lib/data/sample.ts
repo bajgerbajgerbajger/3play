@@ -83,10 +83,10 @@ function sdxlUrl(prompt: string, size: 'landscape_16_9' | 'square') {
 }
 
 const sampleVideoSources = {
-  bbb: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
+  bbb: 'https://vjs.zencdn.net/v/oceans.mp4',
   ele: 'https://media.w3.org/2010/05/bunny/movie.mp4',
-  sintel: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
-  tears: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+  sintel: 'https://vjs.zencdn.net/v/oceans.mp4',
+  tears: 'https://vjs.zencdn.net/v/oceans.mp4',
 }
 
 const defaultProfiles: Profile[] = [
