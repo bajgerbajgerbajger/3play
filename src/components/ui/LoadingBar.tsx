@@ -44,14 +44,6 @@ export function LoadingBar() {
 
   if (progress === 0) return null;
 
-  // Show only on specific pages/actions
-  const shouldShow = 
-    pathname.startsWith('/watch/') || 
-    pathname.startsWith('/channel/') || 
-    pathname.startsWith('/auth');
-
-  if (!shouldShow) return null;
-
   return (
     <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent pointer-events-none" style={{ pointerEvents: 'none' }}>
       <div 
