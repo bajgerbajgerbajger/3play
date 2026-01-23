@@ -14,40 +14,56 @@ type Message = {
 };
 
 // Animated Character Component
-const AgentCharacter = ({ onClick, isThinking }: { onClick: () => void, isThinking: boolean }) => (
-  <motion.div
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={onClick}
-    className="fixed bottom-6 right-6 z-50 cursor-pointer"
-  >
-    <div className="relative h-16 w-16">
-      {/* Body */}
-      <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-indigo-500/30">
-        <div className="absolute inset-[2px] rounded-full bg-surface" />
-        <div className="absolute inset-[4px] rounded-full bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 backdrop-blur-sm" />
-      </div>
-      
-      {/* Eyes */}
-      <div className="absolute top-[35%] left-[25%] h-3 w-2.5 rounded-full bg-text transition-all duration-300">
-        <div className="absolute top-0.5 right-0.5 h-1 w-1 rounded-full bg-white opacity-60" />
-      </div>
-      <div className="absolute top-[35%] right-[25%] h-3 w-2.5 rounded-full bg-text transition-all duration-300">
-        <div className="absolute top-0.5 right-0.5 h-1 w-1 rounded-full bg-white opacity-60" />
-      </div>
-
-      {/* Mouth */}
-      {isThinking ? (
-        <div className="absolute bottom-[30%] left-[40%] h-1.5 w-3 rounded-full bg-text animate-pulse" />
-      ) : (
-        <div className="absolute bottom-[25%] left-[35%] h-1.5 w-5 rounded-full bg-text/80 transition-all duration-300" 
-             style={{ borderRadius: '0 0 50% 50%' }} />
+const AgentCharacter = ({ onClick, isThinking, message }: { onClick: () => void, isThinking: boolean, message: string | null }) => (
+  <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
+    <AnimatePresence>
+      {message && (
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="relative mr-4 w-48 rounded-2xl border border-border/10 bg-surface p-3 shadow-xl"
+        >
+          <p className="text-xs font-medium text-text">{message}</p>
+          <div className="absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-b border-r border-border/10 bg-surface" />
+        </motion.div>
       )}
+    </AnimatePresence>
 
-      {/* Accessories */}
-      <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-surface animate-pulse" />
-    </div>
-  </motion.div>
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className="cursor-pointer"
+    >
+      <div className="relative h-16 w-16">
+        {/* Body */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-indigo-500/30">
+          <div className="absolute inset-[2px] rounded-full bg-surface" />
+          <div className="absolute inset-[4px] rounded-full bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 backdrop-blur-sm" />
+        </div>
+        
+        {/* Eyes */}
+        <div className="absolute top-[35%] left-[25%] h-3 w-2.5 rounded-full bg-text transition-all duration-300">
+          <div className="absolute top-0.5 right-0.5 h-1 w-1 rounded-full bg-white opacity-60" />
+        </div>
+        <div className="absolute top-[35%] right-[25%] h-3 w-2.5 rounded-full bg-text transition-all duration-300">
+          <div className="absolute top-0.5 right-0.5 h-1 w-1 rounded-full bg-white opacity-60" />
+        </div>
+
+        {/* Mouth */}
+        {isThinking ? (
+          <div className="absolute bottom-[30%] left-[40%] h-1.5 w-3 rounded-full bg-text animate-pulse" />
+        ) : (
+          <div className="absolute bottom-[25%] left-[35%] h-1.5 w-5 rounded-full bg-text/80 transition-all duration-300" 
+               style={{ borderRadius: '0 0 50% 50%' }} />
+        )}
+
+        {/* Accessories */}
+        <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-surface animate-pulse" />
+      </div>
+    </motion.div>
+  </div>
 );
 
 export function SmartAgent() {
@@ -126,7 +142,14 @@ export function SmartAgent() {
 
   return (
     <>
-      <AgentCharacter onClick={() => setIsOpen(!isOpen)} isThinking={isTyping} />
+      <AgentCharacter 
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setNotification(null); // Clear notification on click
+        }} 
+        isThinking={isTyping} 
+        message={notification}
+      />
 
       {/* Sidebar */}
       <AnimatePresence>
