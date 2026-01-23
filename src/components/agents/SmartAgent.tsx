@@ -71,7 +71,7 @@ export function SmartAgent() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
+  const [agentMessage, setAgentMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const tracker = useRef(BehaviorTracker.getInstance());
@@ -101,10 +101,10 @@ export function SmartAgent() {
         ];
 
         const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-        setNotification(randomPrompt);
+        setAgentMessage(randomPrompt);
 
         // Auto hide after 8s
-        setTimeout(() => setNotification(null), 8000);
+        setTimeout(() => setAgentMessage(null), 8000);
       }
     }, 15000); // Check every 15s
 
@@ -176,10 +176,10 @@ export function SmartAgent() {
       <AgentCharacter 
         onClick={() => {
           setIsOpen(!isOpen);
-          setNotification(null); // Clear notification on click
+          setAgentMessage(null); // Clear notification on click
         }} 
         isThinking={isTyping} 
-        message={notification}
+        message={agentMessage}
       />
 
       {/* Sidebar */}
