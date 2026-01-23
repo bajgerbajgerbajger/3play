@@ -71,6 +71,7 @@ export function SmartAgent() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const tracker = useRef(BehaviorTracker.getInstance());
@@ -79,6 +80,36 @@ export function SmartAgent() {
 
   // Only show for registered users
   if (!user) return null;
+
+  // Proactive behavior
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isOpen) return; // Don't disturb if open
+
+      // 30% chance to trigger
+      if (Math.random() > 0.7) {
+        const profile = tracker.current.getProfile();
+        const topGenre = Object.entries(profile.preferences.favoriteGenres)
+          .sort((a, b) => b[1] - a[1])[0];
+        
+        const prompts = [
+          "Nevíš, na co koukat? Mám pro tebe tip!",
+          topGenre ? `Mám tu skvělé novinky z žánru ${topGenre[0]}! 🎬` : "Objevil jsem něco zajímavého...",
+          "Můžu ti s něčím poradit?",
+          "Chceš vidět, co teď letí?",
+          `Už jsi viděl ${profile.history.length > 0 ? 'poslední novinky' : 'naši nabídku'}?`
+        ];
+
+        const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+        setNotification(randomPrompt);
+
+        // Auto hide after 8s
+        setTimeout(() => setNotification(null), 8000);
+      }
+    }, 15000); // Check every 15s
+
+    return () => clearInterval(interval);
+  }, [isOpen]);
 
   // Initialize chat
   useEffect(() => {
