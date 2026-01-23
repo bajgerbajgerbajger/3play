@@ -1,4 +1,4 @@
--export interface UserActivity {
+export interface UserActivity {
   type: 'search' | 'watch' | 'view_category' | 'game_play' | 'page_view';
   content: string; // e.g., "sci-fi movies", "Interstellar", "games/chess"
   timestamp: number;
