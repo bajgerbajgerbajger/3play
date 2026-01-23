@@ -36,17 +36,6 @@ export default function App() {
   }, [init]); 
 
   useEffect(() => { 
-    if (hydrated) { 
-      // Immediately signal intro completion when app is hydrated (auth check done) 
-      // We don't wait for content loading - that's what the skeletons/loading bar are for. 
-      const timer = setTimeout(() => { 
-        (window as any).IntroLoader?.done(); 
-      }, 100); 
-      return () => clearTimeout(timer); 
-    } 
-  }, [hydrated]); 
-
-  useEffect(() => { 
     if (!menuOpen) return; 
     const onDown = (e: MouseEvent) => { 
       const target = e.target as HTMLElement | null; 
