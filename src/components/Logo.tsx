@@ -29,7 +29,7 @@ export function Logo({
         src={src}
         alt="3Play Logo"
         loading="eager"
-        className={cn('h-10 w-auto object-contain', toneClasses[tone], className)}
+        className={cn('h-10 w-auto object-contain', toneClasses[tone] || '', className)}
       />
     </div>
   )
