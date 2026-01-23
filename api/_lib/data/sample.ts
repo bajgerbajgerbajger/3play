@@ -83,10 +83,10 @@ function sdxlUrl(prompt: string, size: 'landscape_16_9' | 'square') {
 }
 
 const sampleVideoSources = {
-  bbb: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  ele: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-  sintel: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-  tears: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+  bbb: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
+  ele: 'https://media.w3.org/2010/05/bunny/movie.mp4',
+  sintel: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+  tears: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
 }
 
 const defaultProfiles: Profile[] = [
