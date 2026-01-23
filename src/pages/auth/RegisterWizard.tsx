@@ -213,14 +213,14 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Logo variant="horizontal" tone="dark" className="h-10" />
-              <div className="text-xs text-muted">Krok {step} ze 4</div>
+              <div className="text-xs text-muted">Krok {step} z 5</div>
             </div>
             <button onClick={onSwitchToLogin} type="button" className="text-xs font-semibold text-muted hover:text-text transition">Už mám účet</button>
           </div>
 
           <div className="mt-4">
             <div className="h-1 w-full rounded-full bg-white/5 overflow-hidden">
-              <div className="h-full bg-brand transition-all" style={{ width: `${(step / 4) * 100}%` }} />
+              <div className="h-full bg-brand transition-all" style={{ width: `${(step / 5) * 100}%` }} />
             </div>
           </div>
 
