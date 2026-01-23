@@ -206,10 +206,10 @@ export function SmartAgent() {
                       className="flex-1 rounded-xl border border-border/10 bg-surface2 px-4 py-3 text-sm focus:border-primary/50 focus:outline-none transition-all"
                     />
                     <Button 
-                      size="icon" 
+                      size="md"
                       onClick={handleSend}
                       disabled={!input.trim()}
-                      className={cn("shrink-0 h-[46px] w-[46px]", !input.trim() && "opacity-50")}
+                      className={cn("shrink-0 h-[46px] w-[46px] p-0", !input.trim() && "opacity-50")}
                     >
                       <Send size={20} />
                     </Button>
