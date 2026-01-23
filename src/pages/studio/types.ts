@@ -21,15 +21,15 @@ export type Tab = 'upload' | 'videos' | 'settings'
 export const sampleSources = [
   {
     label: 'Big Buck Bunny (Official Platform)',
-    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    url: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
   },
   {
     label: 'Sintel (Official Platform)',
-    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+    url: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
   },
   {
     label: 'Tears of Steel (Official Platform)',
-    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    url: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
   },
 ] as const
 
