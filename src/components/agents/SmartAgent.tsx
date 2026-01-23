@@ -178,7 +178,7 @@ export function SmartAgent() {
                     <h3 className="font-bold text-lg">Smart Guide</h3>
                     <p className="text-xs text-muted">Tvůj osobní průvodce světem 3Play</p>
                   </div>
-                  <IconButton onClick={() => setIsOpen(false)}>
+                  <IconButton onClick={() => setIsOpen(false)} aria-label="Zavřít">
                     <ChevronRight size={24} />
                   </IconButton>
                 </div>
