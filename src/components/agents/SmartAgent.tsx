@@ -74,7 +74,16 @@ export function SmartAgent() {
   const [agentMessage, setAgentMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const tracker = useRef(BehaviorTracker.getInstance());
+  const tracker = useRef<BehaviorTracker | null>(null);
+  
+  // Safe initialization of tracker
+  useEffect(() => {
+    try {
+      tracker.current = BehaviorTracker.getInstance();
+    } catch (e) {
+      console.error('Failed to initialize SmartAgent tracker', e);
+    }
+  }, []);
   
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -83,11 +92,13 @@ export function SmartAgent() {
 
   // Proactive behavior
   useEffect(() => {
+    if (!tracker.current) return;
+
     const interval = setInterval(() => {
       if (isOpen) return; // Don't disturb if open
 
       // 30% chance to trigger
-      if (Math.random() > 0.7) {
+      if (Math.random() > 0.7 && tracker.current) {
         const profile = tracker.current.getProfile();
         const topGenre = Object.entries(profile.preferences.favoriteGenres)
           .sort((a, b) => b[1] - a[1])[0];
@@ -113,14 +124,15 @@ export function SmartAgent() {
 
   // Initialize chat
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && tracker.current) {
       setMessages([{
         id: 'init',
         role: 'assistant',
         content: tracker.current.getSuggestedGreeting()
       }]);
     }
-  }, []);
+  }, [messages.length]);
+
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -136,7 +148,9 @@ export function SmartAgent() {
     setInput('');
     setIsTyping(true);
 
-    tracker.current.track('search', input);
+    if (tracker.current) {
+      tracker.current.track('search', input);
+    }
 
     setTimeout(() => {
       const response = generateResponse(userMsg.content);
@@ -146,6 +160,8 @@ export function SmartAgent() {
   };
 
   const generateResponse = (text: string): string => {
+    if (!tracker.current) return 'Omlouvám se, ale momentálně nemám přístup k tvým preferencím.';
+
     // ... same logic ...
     const lower = text.toLowerCase();
     const profile = tracker.current.getProfile();

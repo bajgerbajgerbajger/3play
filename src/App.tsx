@@ -33,8 +33,15 @@ export default function App() {
 
   useEffect(() => {
     if (hydrated) {
-      // Signal to the loader that the app is ready (data + initial render)
-      (window as any).IntroLoader?.done();
+      // If we are on the home page, we let the home page signal readiness when content is loaded.
+      // Otherwise (e.g. 404 or auth pages), we signal immediately.
+      // We check if the current path is likely a data-fetching page.
+      const path = window.location.pathname;
+      const isDataPage = path === '/' || path.startsWith('/watch/');
+      
+      if (!isDataPage) {
+        (window as any).IntroLoader?.done();
+      }
     }
   }, [hydrated]);
 

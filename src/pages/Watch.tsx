@@ -85,6 +85,8 @@ export default function Watch() {
       .finally(() => {
         if (!alive) return
         setLoading(false)
+        // Signal that the page content is ready (hides the intro loader if present)
+        ;(window as any).IntroLoader?.done()
       })
     return () => {
       alive = false

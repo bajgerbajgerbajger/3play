@@ -62,7 +62,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       return
     }
     try {
-      const data = await apiFetch<{ success: true; user: AuthUser }>('/api/auth/me', { token })
+      // Add timeout to prevent infinite loading state
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+      const data = await apiFetch<{ success: true; user: AuthUser }>('/api/auth/me', { 
+        token,
+        signal: controller.signal 
+      })
+      clearTimeout(timeoutId)
       set({ token, user: data.user, hydrated: true, error: null })
     } catch {
       saveStored(null)

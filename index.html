@@ -78,7 +78,7 @@
         height: auto;
         opacity: 0;
         will-change: transform, opacity, filter;
-        animation: logoModernSequence 5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        animation: logoEntrance 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       
       /* SHIMMER EFFECT */
@@ -98,7 +98,7 @@
           transparent 100%
         );
         transform: skewX(-20deg);
-        animation: shimmerModern 2.5s infinite 1s;
+        animation: shimmerModern 2s infinite 1s;
         pointer-events: none;
         mix-blend-mode: overlay;
       }
@@ -115,18 +115,18 @@
         background: radial-gradient(circle, rgba(229, 9, 20, 0.6) 0%, transparent 70%);
         filter: blur(50px);
         opacity: 0;
-        animation: pulseGlowModern 4s ease-in-out infinite alternate;
+        animation: pulseGlowModern 3s ease-in-out infinite alternate;
         z-index: -1;
       }
 
       /* Exit animation */ 
       .intro.is-hiding { 
         pointer-events: none;
-        animation: introExitModern 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+        animation: introExitModern 0.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
       }
       
       .intro.is-hiding .intro__logo {
-        animation: logoExitModern 0.6s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+        animation: logoExitModern 0.5s cubic-bezier(0.5, 0, 0.2, 1) forwards;
       }
 
       /* Keyframes */ 
@@ -141,26 +141,26 @@
         100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.3); }
       }
 
-      @keyframes logoModernSequence {
+      @keyframes logoEntrance {
         0% { 
           opacity: 0; 
-          transform: scale(0.9) translateY(40px); 
-          filter: blur(20px);
+          transform: scale(0.8) translateY(20px); 
+          filter: blur(10px);
         }
-        15% { 
+        40% { 
           opacity: 1; 
-          transform: scale(1) translateY(0); 
+          transform: scale(1.05) translateY(0); 
           filter: blur(0);
         }
         100% { 
-          transform: scale(1.05);
+          transform: scale(1);
           filter: drop-shadow(0 0 30px rgba(229,9,20,0.5));
         }
       }
       
       @keyframes logoExitModern {
-        0% { opacity: 1; transform: scale(1.05); filter: blur(0); }
-        100% { opacity: 0; transform: scale(1.15); filter: blur(20px); }
+        0% { opacity: 1; transform: scale(1); filter: blur(0); }
+        100% { opacity: 0; transform: scale(1.2); filter: blur(20px); }
       }
 
       @keyframes introExitModern {
@@ -210,9 +210,9 @@
       const el = document.getElementById("introLoader");
       const bg = document.getElementById("live-background");
 
-      // Exact 5 seconds as requested
-      const SHOW_MS = 5000; 
-      const EXIT_MS = 800; 
+      // Minimum duration to ensure animation is seen
+      const MIN_SHOW_MS = 2000; 
+      const EXIT_MS = 600; 
 
       const t0 = performance.now(); 
       let doneCalled = false; 
@@ -220,9 +220,9 @@
       function hide(){ 
         if (!el) return;
         
-        // Ensure we respect the 5s timer
+        // Ensure we respect the minimum timer
         const elapsed = performance.now() - t0; 
-        const remaining = Math.max(0, SHOW_MS - elapsed);
+        const remaining = Math.max(0, MIN_SHOW_MS - elapsed);
 
         setTimeout(() => {
           // Trigger exit animations
@@ -243,12 +243,11 @@
       } 
 
       window.IntroLoader = { done }; 
-      window.addEventListener("load", () => done(), { once: true }); 
       
-      // Fallback
+      // Fallback in case app fails to load
       setTimeout(() => {
         if (!doneCalled) done();
-      }, SHOW_MS + 100);
+      }, 8000);
 
     })(); 
     </script>
