@@ -53,8 +53,7 @@ export function WelcomeModal() {
               <div className="grid gap-3">
                 <Button
                   variant="primary"
-                  size="lg"
-                  className="w-full gap-2"
+                  className="w-full gap-2 h-12 text-lg"
                   onClick={() => {
                     closeModal()
                     navigate('/studio/onboarding')
@@ -67,8 +66,7 @@ export function WelcomeModal() {
                 {trigger === 'welcome' && (
                   <Button
                     variant="ghost"
-                    size="lg"
-                    className="w-full gap-2"
+                    className="w-full gap-2 h-12 text-lg"
                     onClick={closeModal}
                   >
                     <MonitorPlay size={20} />

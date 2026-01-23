@@ -9,6 +9,8 @@ import { UploadPanel } from '@/pages/studio/UploadPanel'
 import { VideosPanel } from '@/pages/studio/VideosPanel'
 import { SettingsPanel } from '@/pages/studio/SettingsPanel'
 import { VideoEditor } from '@/pages/studio/VideoEditor'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/Button'
 
 export default function Studio() {
   const nav = useNavigate()
@@ -22,6 +24,7 @@ export default function Studio() {
   type UploadItem = {
     id: string
     file: File
+    title: string
     progress: number
     status: 'pending' | 'uploading' | 'done' | 'error'
     error?: string

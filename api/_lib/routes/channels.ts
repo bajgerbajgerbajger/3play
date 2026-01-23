@@ -3,7 +3,6 @@ import dbConnect from '../lib/db.js'
 import Profile from '../models/Profile.js'
 import Video from '../models/Video.js'
 import { requireAuth } from '../lib/auth.js'
-import { normalizeHandle } from './auth.js' // We might need to duplicate or export this
 
 const router = Router()
 
