@@ -15,6 +15,8 @@ import { Search, Sun, Moon, User, LogOut, Video, CircleUserRound, Menu } from "l
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth";
 
+import { LoadingBar } from "@/components/ui/LoadingBar";
+
 // Games
 import Prsi from "@/pages/games/Prsi";
 import Ludo from "@/pages/games/Ludo";
@@ -33,15 +35,12 @@ export default function App() {
 
   useEffect(() => {
     if (hydrated) {
-      // If we are on the home page, we let the home page signal readiness when content is loaded.
-      // Otherwise (e.g. 404 or auth pages), we signal immediately.
-      // We check if the current path is likely a data-fetching page.
-      const path = window.location.pathname;
-      const isDataPage = path === '/' || path.startsWith('/watch/');
-      
-      if (!isDataPage) {
+      // Immediately signal intro completion when app is hydrated (auth check done)
+      // We don't wait for content loading - that's what the skeletons/loading bar are for.
+      const timer = setTimeout(() => {
         (window as any).IntroLoader?.done();
-      }
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [hydrated]);
 
@@ -61,6 +60,7 @@ export default function App() {
 
   return (
     <Router>
+      <LoadingBar />
       <div className="min-h-dvh flex flex-col bg-bg text-text">
         <header className="sticky top-0 z-40 border-b border-border/10 bg-surface/80 backdrop-blur supports-[backdrop-filter]:bg-surface/60">
           <div className="container flex h-14 items-center gap-4">

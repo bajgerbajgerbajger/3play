@@ -9,6 +9,11 @@ function getErrorFromPayload(payload: unknown): string | null {
 }
 
 export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit & { token?: string | null; timeout?: number }) {
+  // Signal start
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('api-load-start'));
+  }
+
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
   if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
@@ -35,5 +40,10 @@ export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit &
       throw new Error('Požadavek trval příliš dlouho. Zkontrolujte připojení.')
     }
     throw err
+  } finally {
+    // Signal end
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('api-load-end'));
+    }
   }
 }
