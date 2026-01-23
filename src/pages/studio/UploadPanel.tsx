@@ -15,7 +15,7 @@ export function UploadPanel({
   onDescription,
   onType,
   onSourceUrl,
-  onFileSelect,
+  onFilesSelect,
   onCreate,
   
   uploadMode,
@@ -36,7 +36,7 @@ export function UploadPanel({
   onDescription: (v: string) => void
   onType: (v: 'video' | 'movie' | 'episode') => void
   onSourceUrl: (v: string) => void
-  onFileSelect: (v: File | null) => void
+  onFilesSelect: (v: FileList | null) => void
   onCreate: () => void
   
   uploadMode: 'file' | 'embed'
@@ -54,19 +54,19 @@ export function UploadPanel({
           <CloudUpload size={18} className="text-brand" />
         </div>
         <div>
-          <h3 className="font-heading text-sm font-semibold">Upload a new video</h3>
-          <div className="text-xs text-muted">Upload file from device or use an embed code.</div>
+          <h3 className="font-heading text-sm font-semibold">Nahrát nové video</h3>
+          <div className="text-xs text-muted">Nahrajte soubor ze zařízení nebo použijte embed kód.</div>
         </div>
       </div>
 
       <div className="mt-5 grid gap-3">
         <div>
-          <div className="mb-1 text-xs font-semibold text-muted">Title</div>
-          <Input value={title} onChange={(e) => onTitle(e.target.value)} placeholder="Enter a clean, readable title" />
+          <div className="mb-1 text-xs font-semibold text-muted">Název</div>
+          <Input value={title} onChange={(e) => onTitle(e.target.value)} placeholder="Zadejte jasný a čitelný název" />
         </div>
         
         <div>
-          <div className="mb-1 text-xs font-semibold text-muted">Content Type</div>
+          <div className="mb-1 text-xs font-semibold text-muted">Typ obsahu</div>
           <div className="flex gap-2">
             {(['video', 'movie', 'episode'] as const).map((t) => (
               <button
@@ -79,25 +79,25 @@ export function UploadPanel({
                     : 'bg-surface border-border/10 text-muted hover:border-border/30 hover:text-text'
                 }`}
               >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+                {t === 'video' ? 'Video' : t === 'movie' ? 'Film' : 'Epizoda'}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <div className="mb-1 text-xs font-semibold text-muted">Description</div>
+          <div className="mb-1 text-xs font-semibold text-muted">Popis</div>
           <textarea
             value={description}
             onChange={(e) => onDescription(e.target.value)}
-            placeholder="Keep it creator-first: what’s in the video?"
+            placeholder="O čem je vaše video?"
             className="min-h-[110px] w-full rounded-[12px] border border-border/10 bg-surface px-3 py-2 text-sm text-text placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           />
         </div>
         
         {/* Upload Mode Switcher */}
         <div>
-            <div className="mb-1 text-xs font-semibold text-muted">Source</div>
+            <div className="mb-1 text-xs font-semibold text-muted">Zdroj</div>
             <div className="flex gap-2 mb-3">
                 <button
                     type="button"
@@ -109,7 +109,7 @@ export function UploadPanel({
                     }`}
                 >
                     <FileVideo size={14} />
-                    File Upload
+                    Nahrát soubor
                 </button>
                 <button
                     type="button"
@@ -121,29 +121,30 @@ export function UploadPanel({
                     }`}
                 >
                     <Code size={14} />
-                    Embed Code
+                    Embed Kód
                 </button>
             </div>
             
             {uploadMode === 'file' ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                        <div className="mb-1 text-xs font-semibold text-muted">Video File</div>
+                        <div className="mb-1 text-xs font-semibold text-muted">Video Soubor</div>
                         <div className="relative">
                             <input
                                 type="file"
                                 accept="video/*"
-                                onChange={(e) => onFileSelect(e.target.files?.[0] || null)}
+                                multiple
+                                onChange={(e) => onFilesSelect(e.target.files)}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                             <div className="flex items-center gap-2 h-10 w-full rounded-[10px] border border-border/10 bg-surface px-3 text-sm text-text overflow-hidden">
                                 <FileVideo size={16} className="text-muted flex-shrink-0" />
-                                <span className="truncate">{file ? file.name : "Choose video file..."}</span>
+                                <span className="truncate">{file ? file.name : "Vybrat video soubor(y)..."}</span>
                             </div>
                         </div>
                     </div>
                     <div>
-                         <div className="mb-1 text-xs font-semibold text-muted">Source URL (Optional)</div>
+                         <div className="mb-1 text-xs font-semibold text-muted">Zdrojová URL (Volitelné)</div>
                          <div className="relative">
                              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
                                  <Link size={14} />
@@ -151,7 +152,7 @@ export function UploadPanel({
                              <Input 
                                  value={sourceUrl} 
                                  onChange={(e) => onSourceUrl(e.target.value)} 
-                                 placeholder="Or paste direct URL" 
+                                 placeholder="Nebo vložte přímou URL" 
                                  className="pl-9"
                              />
                          </div>
@@ -159,7 +160,7 @@ export function UploadPanel({
                 </div>
             ) : (
                 <div>
-                     <div className="mb-1 text-xs font-semibold text-muted">Embed Code</div>
+                     <div className="mb-1 text-xs font-semibold text-muted">Embed Kód</div>
                      <textarea
                         value={embedCode}
                         onChange={(e) => onEmbedCode(e.target.value)}
@@ -172,7 +173,7 @@ export function UploadPanel({
         
         {/* Thumbnail Upload - Always available */}
         <div>
-            <div className="mb-1 text-xs font-semibold text-muted">Custom Thumbnail (Optional)</div>
+            <div className="mb-1 text-xs font-semibold text-muted">Vlastní náhledovka (Volitelné)</div>
             <div className="relative">
                 <input
                     type="file"
@@ -182,11 +183,11 @@ export function UploadPanel({
                 />
                 <div className="flex items-center gap-2 h-10 w-full rounded-[10px] border border-border/10 bg-surface px-3 text-sm text-text overflow-hidden">
                     <ImageIcon size={16} className="text-muted flex-shrink-0" />
-                    <span className="truncate">{thumbnailFile ? thumbnailFile.name : "Choose custom thumbnail image..."}</span>
+                    <span className="truncate">{thumbnailFile ? thumbnailFile.name : "Vybrat obrázek náhledu..."}</span>
                 </div>
             </div>
             <div className="mt-1 text-[10px] text-muted">
-                If not provided, a thumbnail will be auto-generated from the video (for file uploads).
+                Pokud není nahrána, bude vygenerována automaticky z videa.
             </div>
         </div>
 
@@ -195,12 +196,12 @@ export function UploadPanel({
              {creating ? (
                  <>
                    <Loader2 size={16} className="animate-spin mr-2" />
-                   Uploading {progressText}
+                   Nahrávání {progressText}
                  </>
              ) : (
                  <>
                    <Upload size={16} className="mr-2" />
-                   Publish Video
+                   Zveřejnit video
                  </>
              )}
           </Button>

@@ -184,7 +184,7 @@ router.post('/verify-code', async (req: Request, res: Response): Promise<void> =
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   await dbConnect()
 
-  const { email, password, displayName, handle, verificationCode, acceptTerms, phone, consentContact, consentMarketing, consentVersion, _gotcha } = (req.body || {}) as {
+  const { email, password, displayName, handle, verificationCode, acceptTerms, phone, consentContact, consentMarketing, consentVersion, gender, _gotcha } = (req.body || {}) as {
     email?: string
     password?: string
     displayName?: string
@@ -195,6 +195,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     consentContact?: boolean
     consentMarketing?: boolean
     consentVersion?: string
+    gender?: 'male' | 'female' | 'other'
     _gotcha?: string // Honeypot field
   }
 
@@ -267,9 +268,14 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   const userId = `u-${Math.random().toString(16).slice(2, 10)}`
   const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
   
-  const avatarUrl = `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-    'flat geometric avatar icon, readable number 3 with play triangle motif, minimal, sharp edges, red accent, dark background, vector style',
-  )}&image_size=square`
+  let avatarPrompt = 'flat geometric avatar icon, readable number 3 with play triangle motif, minimal, sharp edges, red accent, dark background, vector style'
+  if (gender === 'male') {
+    avatarPrompt = 'flat geometric avatar icon, young man character, minimal, sharp edges, blue and red accent, dark background, vector style'
+  } else if (gender === 'female') {
+    avatarPrompt = 'flat geometric avatar icon, young woman character, minimal, sharp edges, pink and red accent, dark background, vector style'
+  }
+
+  const avatarUrl = `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(avatarPrompt)}&image_size=square`
 
   const user = await User.create({
     id: userId,
@@ -277,30 +283,17 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     handle: normalizedHandle,
     displayName,
     avatarUrl,
+    gender,
     passwordHash: hashPassword(password),
     emailVerified: true,
   })
 
-  // Create a channel profile for the new user
-  await Profile.create({
-    id: profileId,
-    userId: user.id,
-    handle: normalizedHandle,
-    displayName,
-    avatarUrl,
-    bannerUrl: `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-      'wide banner, abstract tech background, dark theme, minimal geometric shapes, subtle gradient',
-    )}&image_size=landscape_16_9`,
-    bio: `Welcome to ${displayName}'s channel`,
-    subscribers: 0,
-    phone: normalizedPhone,
-    consentContact: Boolean(consentContact),
-    consentMarketing: Boolean(consentMarketing),
-    consentVersion: String(consentVersion),
-    consentedAt: new Date(),
-  })
+  // Create a channel profile for the new user - DEPRECATED: User creates channel manually later
+  // await Profile.create({ ... })
 
   const token = signToken({ id: user.id, email: user.email, handle: user.handle })
+  
+  // Return null channelId for new users
   res.status(200).json({
     success: true,
     token,
@@ -310,6 +303,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      channelId: undefined,
     },
   })
 })
@@ -339,6 +333,9 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   user.lastLogin = new Date()
   await user.save()
   
+  // Fetch channel if exists
+  const channel = await Profile.findOne({ userId: user.id })
+
   const token = signToken({ id: user.id, email: user.email, handle: user.handle })
   res.status(200).json({
     success: true,
@@ -349,6 +346,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      channelId: channel?.id,
     },
   })
 })
@@ -371,6 +369,9 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
     res.status(401).json({ success: false, error: 'Unauthorized' })
     return
   }
+
+  const channel = await Profile.findOne({ userId: user.id })
+
   res.status(200).json({
     success: true,
     user: {
@@ -379,6 +380,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      channelId: channel?.id,
     },
   })
 })

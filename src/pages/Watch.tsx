@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
+import { SubscribeButton } from '@/components/channel/SubscribeButton'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCompactNumber, formatTimeAgo } from '@/lib/format'
 import { type VideoListItem } from '@/components/video/VideoCard'
 import { VideoRow } from '@/components/video/VideoRow'
 import { useAuthStore } from '@/store/auth'
+import { useModalStore } from '@/store/modal'
 import { ThumbsDown, ThumbsUp, Share2, Bell, ChevronDown, RotateCw } from 'lucide-react'
 
 type VideoDetail = {
@@ -52,7 +55,8 @@ type CommentItem = {
 
 export default function Watch() {
   const { videoId } = useParams()
-  const { token } = useAuthStore()
+  const { token, user } = useAuthStore()
+  const { openChannelCreation } = useModalStore()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -103,10 +107,17 @@ export default function Watch() {
 
   async function engage(action: 'like' | 'dislike') {
     if (!videoId || !video) return
-    if (!token) {
+    if (!token || !user) {
       setError('Sign in to engage with videos')
       return
     }
+    
+    // Require channel to engage
+    if (!user.channelId) {
+        openChannelCreation('like')
+        return
+    }
+
     try {
       setEngaging(action)
       const d = await apiFetch<{ success: true; likes: number; dislikes: number; viewerRating: 'like' | 'dislike' | 'none' }>(
@@ -127,6 +138,16 @@ export default function Watch() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] animate-fadeUp">
+      {video ? (
+        <Helmet>
+          <title>{video.title} - 3Play</title>
+          <meta name="description" content={video.description || `Sledujte ${video.title} na 3Play.`} />
+          <meta property="og:title" content={video.title} />
+          <meta property="og:description" content={video.description || `Sledujte ${video.title} na 3Play.`} />
+          <meta property="og:image" content={video.thumbnailUrl} />
+          <meta property="og:type" content="video.other" />
+        </Helmet>
+      ) : null}
       <div className="space-y-4">
         <div className="overflow-hidden rounded-2xl border border-border/10 bg-black">
           {loading ? (
@@ -153,7 +174,7 @@ export default function Watch() {
               />
             )
           ) : (
-            <div className="aspect-video grid place-items-center text-sm text-muted">Unavailable</div>
+            <div className="aspect-video grid place-items-center text-sm text-muted">Nedostupné</div>
           )}
         </div>
 
@@ -176,13 +197,13 @@ export default function Watch() {
                     <img src={channel.avatarUrl} alt={channel.displayName} className="h-10 w-10 rounded-full object-cover" />
                     <div>
                       <div className="text-sm font-semibold">{channel.displayName}</div>
-                      <div className="text-xs text-muted">{formatCompactNumber(channel.subscribers)} subscribers</div>
+                      <div className="text-xs text-muted">{formatCompactNumber(channel.subscribers)} odběratelů</div>
                     </div>
                   </Link>
                 ) : null}
                 <Button variant="secondary" className="hidden md:inline-flex">
                   <Bell size={16} />
-                  Subscribe
+                  Odebírat
                 </Button>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -206,7 +227,7 @@ export default function Watch() {
                 </Button>
                 <Button variant="secondary" onClick={() => navigator.clipboard.writeText(window.location.href)}>
                   <Share2 size={16} />
-                  Share
+                  Sdílet
                 </Button>
               </div>
             </div>
@@ -220,13 +241,13 @@ export default function Watch() {
                 onClick={() => setDescOpen((v) => !v)}
                 className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-muted hover:text-text"
               >
-                {descOpen ? 'Show less' : 'Show more'}
+                {descOpen ? 'Zobrazit méně' : 'Zobrazit více'}
                 <ChevronDown size={14} className={descOpen ? 'rotate-180 transition' : 'transition'} />
               </button>
             </div>
 
             <div className="space-y-3">
-              <h3 className="font-heading text-sm font-semibold">Comments</h3>
+              <h3 className="font-heading text-sm font-semibold">Komentáře</h3>
               <div className="space-y-3">
                 {comments.map((c) => (
                   <div key={c.id} className="flex gap-3 rounded-2xl border border-border/10 bg-surface p-4">
@@ -242,7 +263,7 @@ export default function Watch() {
                     </div>
                   </div>
                 ))}
-                {comments.length === 0 ? <div className="text-sm text-muted">No comments yet.</div> : null}
+                {comments.length === 0 ? <div className="text-sm text-muted">Zatím žádné komentáře.</div> : null}
               </div>
             </div>
           </>
@@ -251,7 +272,7 @@ export default function Watch() {
 
       <aside className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-heading text-sm font-semibold">Up next</h3>
+          <h3 className="font-heading text-sm font-semibold">Další videa</h3>
           <IconButton aria-label="Refresh" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <RotateCw size={18} />
           </IconButton>

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import type { Tab } from './types'
-import { FileVideo, Sparkles, Upload } from 'lucide-react'
+import { FileVideo, Settings, Sparkles, Upload } from 'lucide-react'
 
 export function StudioSidebar({
   tab,
@@ -45,6 +45,18 @@ export function StudioSidebar({
           <div className="flex items-center gap-2">
             <FileVideo size={16} />
             Videos
+          </div>
+        </button>
+        <button
+          onClick={() => onTab('settings')}
+          className={cn(
+            'w-full rounded-xl border border-border/10 px-3 py-2 text-left text-sm font-semibold transition',
+            tab === 'settings' ? 'bg-white/5 text-text' : 'bg-surface text-muted hover:bg-surface2 hover:text-text',
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <Settings size={16} />
+            Settings
           </div>
         </button>
       </div>

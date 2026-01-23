@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth'
+import { useModalStore } from '@/store/modal'
 import { Logo } from '@/components/Logo'
 import { cn } from '@/lib/utils'
 import { LoginForm } from '@/pages/auth/LoginForm'
@@ -11,9 +12,10 @@ type Mode = 'login' | 'register'
 export default function Auth() {
   const nav = useNavigate()
   const [params] = useSearchParams()
-  const returnTo = params.get('returnTo') || '/studio'
+  const returnTo = params.get('returnTo') || '/'
 
   const { user } = useAuthStore()
+  const { openChannelCreation } = useModalStore()
   const [mode, setMode] = useState<Mode>('login')
 
   const subtitle = useMemo(() => {
@@ -23,6 +25,11 @@ export default function Auth() {
   useEffect(() => {
     if (user) nav(returnTo)
   }, [user, nav, returnTo])
+
+  const onRegisterDone = () => {
+    openChannelCreation('welcome')
+    nav('/')
+  }
 
   return (
     <div className="min-h-[calc(100dvh-56px)] grid place-items-center py-10 animate-fadeUp">
@@ -60,7 +67,7 @@ export default function Auth() {
             <LoginForm onDone={() => nav(returnTo)} />
           </div>
         ) : (
-          <RegisterWizard onDone={() => nav(returnTo)} onSwitchToLogin={() => setMode('login')} />
+          <RegisterWizard onDone={onRegisterDone} onSwitchToLogin={() => setMode('login')} />
         )}
       </div>
     </div>

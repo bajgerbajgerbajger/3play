@@ -7,6 +7,7 @@ import { sampleSources } from '@/pages/studio/types'
 import { StudioSidebar } from '@/pages/studio/StudioSidebar'
 import { UploadPanel } from '@/pages/studio/UploadPanel'
 import { VideosPanel } from '@/pages/studio/VideosPanel'
+import { SettingsPanel } from '@/pages/studio/SettingsPanel'
 import { VideoEditor } from '@/pages/studio/VideoEditor'
 
 export default function Studio() {
@@ -16,6 +17,21 @@ export default function Studio() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<StudioVideo[]>([])
+
+  // Multi-upload state
+  type UploadItem = {
+    id: string
+    file: File
+    progress: number
+    status: 'pending' | 'uploading' | 'done' | 'error'
+    error?: string
+  }
+  const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([])
+  
+  // Single upload form state (kept for metadata editing of active upload or simple mode)
+  // For now, we will simplify: We upload files first, then they appear in the list as "Processing/Ready".
+  // But user wants "multiple upload".
+  // Let's change UploadPanel to just accept files and add them to queue.
 
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadDesc, setUploadDesc] = useState('')
@@ -399,7 +415,7 @@ export default function Studio() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] animate-fadeUp">
-      <StudioSidebar tab={tab} readyCount={readyCount} onTab={setTab} />
+      <StudioSidebar tab={tab} readyCount={readyCount} onTab={(t) => { setTab(t); setSelected(null); }} />
 
       <section className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -421,29 +437,104 @@ export default function Studio() {
         {error ? <div className="rounded-xl border border-border/10 bg-surface p-4 text-sm text-muted">{error}</div> : null}
 
         {tab === 'upload' ? (
-          <UploadPanel
-            title={uploadTitle}
-            description={uploadDesc}
-            type={uploadType}
-            sourceUrl={uploadSource}
-            file={uploadFile}
-            creating={creating}
-            progress={uploadProgress}
-            onTitle={setUploadTitle}
-            onDescription={setUploadDesc}
-            onType={setUploadType}
-            onSourceUrl={setUploadSource}
-            onFileSelect={setUploadFile}
-            onCreate={createUpload}
-            
-            // New Props
-            uploadMode={uploadMode}
-            onUploadMode={setUploadMode}
-            embedCode={uploadEmbedCode}
-            onEmbedCode={setUploadEmbedCode}
-            thumbnailFile={uploadThumbnail}
-            onThumbnailSelect={setUploadThumbnail}
-          />
+          <div className="space-y-6">
+            <UploadPanel
+              title={uploadTitle}
+              description={uploadDesc}
+              type={uploadType}
+              sourceUrl={uploadSource}
+              // Modified props for multi-upload
+              onFilesSelect={(files) => {
+                  if (!files) return
+                  // Process multiple files
+                  const newItems: UploadItem[] = Array.from(files).map(file => {
+                      if (file.size > 2 * 1024 * 1024 * 1024) {
+                          alert(`Soubor ${file.name} je příliš velký (>2GB)`)
+                          return null
+                      }
+                      return {
+                        id: Math.random().toString(36).slice(2),
+                        file,
+                        progress: 0,
+                        status: 'pending',
+                        title: file.name.replace(/\.[^/.]+$/, "")
+                      }
+                  }).filter(Boolean) as UploadItem[]
+                  
+                  setUploadQueue(prev => [...prev, ...newItems])
+                  setCreating(true) // Show queue
+              }}
+              file={null} // We don't use single file prop anymore for display
+              creating={creating}
+              progress={0}
+              onTitle={setUploadTitle}
+              onDescription={setUploadDesc}
+              onType={setUploadType}
+              onSourceUrl={setUploadSource}
+              // onFileSelect removed in favor of onFilesSelect
+              onCreate={createUpload}
+              
+              uploadMode={uploadMode}
+              onUploadMode={setUploadMode}
+              embedCode={uploadEmbedCode}
+              onEmbedCode={setUploadEmbedCode}
+              thumbnailFile={uploadThumbnail}
+              onThumbnailSelect={setUploadThumbnail}
+            />
+
+            {/* Active Uploads Queue */}
+            {uploadQueue.length > 0 && (
+              <div className="space-y-3">
+                {uploadQueue.map(item => (
+                  <div key={item.id} className="rounded-2xl border border-border/10 bg-surface p-4 animate-fadeUp">
+                      <div className="flex items-center justify-between mb-2">
+                          <div className="font-bold flex items-center gap-2">
+                              {item.status === 'uploading' && <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />}
+                              {item.status === 'done' && <div className="w-2 h-2 rounded-full bg-green-500" />}
+                              {item.status === 'error' && <div className="w-2 h-2 rounded-full bg-red-500" />}
+                              {item.status === 'pending' && <div className="w-2 h-2 rounded-full bg-muted" />}
+                              {item.title}
+                          </div>
+                          <div className="text-sm font-mono">{item.status === 'error' ? 'Error' : `${item.progress}%`}</div>
+                      </div>
+                      {item.status === 'error' ? (
+                        <div className="text-xs text-red-400">{item.error}</div>
+                      ) : (
+                        <div className="h-2 w-full bg-surface2 rounded-full overflow-hidden">
+                            <div 
+                                className={cn(
+                                  "h-full transition-all duration-300 ease-out relative",
+                                  item.status === 'done' ? "bg-green-500" : "bg-brand"
+                                )}
+                                style={{ width: `${item.progress}%` }}
+                            >
+                                {item.status === 'uploading' && (
+                                  <div className="absolute inset-0 bg-white/20 animate-[shimmer_1s_infinite]" />
+                                )}
+                            </div>
+                        </div>
+                      )}
+                  </div>
+                ))}
+                {uploadQueue.some(i => i.status === 'done') && (
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={() => {
+                        setUploadQueue(prev => prev.filter(i => i.status !== 'done'))
+                        if (uploadQueue.every(i => i.status === 'done')) {
+                          setTab('videos')
+                        }
+                      }}
+                    >
+                      Vyčistit hotové
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : tab === 'settings' ? (
+          <SettingsPanel />
         ) : (
           <VideosPanel loading={loading} items={items} selectedId={selected?.id || null} onSelect={(v) => setSelected(v)} />
         )}

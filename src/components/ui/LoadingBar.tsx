@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export function LoadingBar() {
+  const { pathname } = useLocation();
   const [loadingCount, setLoadingCount] = useState(0);
   const [progress, setProgress] = useState(0);
 
@@ -18,32 +20,37 @@ export function LoadingBar() {
   }, []);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
+
     if (loadingCount > 0) {
       // Start/Continue progress
-      setProgress(p => {
-        if (p >= 90) return p;
-        return p + (90 - p) * 0.1;
-      });
+      setProgress(p => (p === 0 ? 10 : p));
       
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setProgress(p => {
           if (p >= 90) return p;
           return p + (90 - p) * 0.1;
         });
       }, 200);
-      
-      return () => clearInterval(interval);
     } else {
       // Complete
-      if (progress > 0) {
-        setProgress(100);
-        const t = setTimeout(() => setProgress(0), 400);
-        return () => clearTimeout(t);
-      }
+      setProgress(p => (p > 0 ? 100 : 0));
+      const t = setTimeout(() => setProgress(0), 400);
+      return () => clearTimeout(t);
     }
-  }, [loadingCount, progress]);
+    
+    return () => clearInterval(interval);
+  }, [loadingCount]);
 
   if (progress === 0) return null;
+
+  // Show only on specific pages/actions
+  const shouldShow = 
+    pathname.startsWith('/watch/') || 
+    pathname.startsWith('/channel/') || 
+    pathname.startsWith('/auth');
+
+  if (!shouldShow) return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent pointer-events-none">

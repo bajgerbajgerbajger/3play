@@ -7,6 +7,7 @@ export type AuthUser = {
   handle: string
   displayName: string
   avatarUrl: string
+  channelId?: string
 }
 
 type AuthState = {
@@ -27,6 +28,7 @@ type AuthState = {
     consentContact: boolean
     consentMarketing: boolean
     consentVersion: string
+    gender: 'male' | 'female' | 'other'
   }) => Promise<void>
   requestCode: (input: { email: string }) => Promise<string | null>
   verifyCode: (input: { email: string; verificationCode: string }) => Promise<void>

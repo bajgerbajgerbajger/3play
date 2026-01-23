@@ -135,11 +135,12 @@ router.patch('/channel', async (req: Request, res: Response) => {
   await dbConnect()
   const auth = (req as Request & { auth: { handle: string } }).auth
   
-  const { displayName, bio, avatarUrl, bannerUrl } = (req.body || {}) as {
+  const { displayName, bio, avatarUrl, bannerUrl, phone } = (req.body || {}) as {
     displayName?: string
     bio?: string
     avatarUrl?: string
     bannerUrl?: string
+    phone?: string
   }
 
   if (displayName && displayName.trim().length < 2) {
@@ -153,8 +154,9 @@ router.patch('/channel', async (req: Request, res: Response) => {
       $set: {
         ...(displayName && { displayName }),
         ...(bio !== undefined && { bio }),
-        ...(avatarUrl && { avatarUrl }),
-        ...(bannerUrl && { bannerUrl }),
+        ...(avatarUrl !== undefined && { avatarUrl }),
+        ...(bannerUrl !== undefined && { bannerUrl }),
+        ...(phone !== undefined && { phone }),
       }
     },
     { new: true }
@@ -299,32 +301,6 @@ router.post('/videos/:videoId/publish', async (req: Request, res: Response) => {
   
   await v.save()
   res.status(200).json({ success: true, video: v })
-})
-
-router.patch('/channel', async (req: Request, res: Response) => {
-  await dbConnect()
-  const auth = (req as Request & { auth: { handle: string } }).auth
-  const channel = await Profile.findOne({ handle: auth.handle })
-  
-  if (!channel) {
-    res.status(403).json({ success: false, error: 'No channel profile' })
-    return
-  }
-
-  const { displayName, bio, bannerUrl, avatarUrl } = (req.body || {}) as {
-    displayName?: string
-    bio?: string
-    bannerUrl?: string
-    avatarUrl?: string
-  }
-
-  if (typeof displayName === 'string') channel.displayName = displayName
-  if (typeof bio === 'string') channel.bio = bio
-  if (typeof bannerUrl === 'string') channel.bannerUrl = bannerUrl
-  if (typeof avatarUrl === 'string') channel.avatarUrl = avatarUrl
-  
-  await channel.save()
-  res.status(200).json({ success: true, channel })
 })
 
 export default router

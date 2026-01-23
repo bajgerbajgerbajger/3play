@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Logo } from '@/components/Logo'
 import { useAuthStore } from '@/store/auth'
 import { StepAccount } from './register/StepAccount'
+import { StepConsents } from './register/StepConsents'
 import { StepVerifyEmail } from './register/StepVerifyEmail'
 import { StepPhone } from './register/StepPhone'
 import { StepReview } from './register/StepReview'
@@ -82,19 +83,24 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
     else if (confirmPassword !== password) e.confirmPassword = 'Hesla se neshodují'
     const h = handle.trim()
     if (!h || h === '@') e.handle = 'Zadej handle'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+  function validateStep2(): boolean {
+    const e: FieldErrors = {}
     if (!termsAccepted) e.terms = 'Je potřeba souhlasit s Podmínkami'
     if (!privacyAccepted) e.privacy = 'Je potřeba souhlasit se Zásadami soukromí'
     setErrors(e)
     return Object.keys(e).length === 0
   }
-  function validateStep2(): boolean {
+  function validateStep3(): boolean {
     const e: FieldErrors = {}
     if (!verificationCode.trim()) e.verificationCode = 'Zadej ověřovací kód'
     else if (!/^\d{6}$/.test(verificationCode.trim())) e.verificationCode = 'Kód má 6 číslic'
     setErrors(e)
     return Object.keys(e).length === 0
   }
-  function validateStep3(): boolean {
+  function validateStep4(): boolean {
     const e: FieldErrors = {}
     if (!phone.trim()) e.phone = 'Zadej telefon'
     else if (!isPhoneValid(phone.trim())) e.phone = 'Neplatné číslo (ideálně +420…)'
@@ -103,15 +109,21 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
     return Object.keys(e).length === 0
   }
 
-  async function onStep1Next() {
+  function onStep1Next() {
     clearErrors()
     if (!validateStep1()) return
+    go(2)
+  }
+
+  async function onStep2Next() {
+    clearErrors()
+    if (!validateStep2()) return
     setBusy(true)
     try {
       const dev = await requestCode({ email: email.trim() })
       setDevCodeHint(dev)
       setResendCooldown(45)
-      go(2)
+      go(3)
     } catch (e2: unknown) {
       setTopError(e2 instanceof Error ? e2.message : 'Nepodařilo se odeslat kód')
     } finally {
@@ -135,13 +147,13 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
     }
   }
 
-  async function onStep2Next() {
+  async function onStep3Next() {
     clearErrors()
-    if (!validateStep2()) return
+    if (!validateStep3()) return
     setBusy(true)
     try {
       await verifyCode({ email: email.trim(), verificationCode: verificationCode.trim() })
-      go(3)
+      go(4)
     } catch (e2: unknown) {
       setTopError(e2 instanceof Error ? e2.message : 'Ověření selhalo')
     } finally {
@@ -149,10 +161,10 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
     }
   }
 
-  function onStep3Next() {
+  function onStep4Next() {
     clearErrors()
-    if (!validateStep3()) return
-    go(4)
+    if (!validateStep4()) return
+    go(5)
   }
 
   async function onFinish() {
@@ -230,8 +242,6 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
                     password={password}
                     confirmPassword={confirmPassword}
                     handle={handle}
-                    termsAccepted={termsAccepted}
-                    privacyAccepted={privacyAccepted}
                     pwScore={pwScore}
                     errors={errors}
                     busy={busy}
@@ -241,12 +251,24 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
                     onPassword={setPassword}
                     onConfirmPassword={setConfirmPassword}
                     onHandle={setHandle}
-                    onTerms={setTermsAccepted}
-                    onPrivacy={setPrivacyAccepted}
+                    gender={gender}
+                    onGender={setGender}
                     onNext={onStep1Next}
                   />
                 ) : null}
                 {step === 2 ? (
+                  <StepConsents
+                    termsAccepted={termsAccepted}
+                    privacyAccepted={privacyAccepted}
+                    busy={busy}
+                    errors={errors}
+                    onTerms={setTermsAccepted}
+                    onPrivacy={setPrivacyAccepted}
+                    onBack={() => go(1)}
+                    onNext={onStep2Next}
+                  />
+                ) : null}
+                {step === 3 ? (
                   <StepVerifyEmail
                     verificationCode={verificationCode}
                     devCodeHint={devCodeHint}
@@ -257,12 +279,12 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
                     onResend={onResend}
                     onBack={() => {
                       clearErrors()
-                      go(1)
+                      go(2)
                     }}
-                    onNext={onStep2Next}
+                    onNext={onStep3Next}
                   />
                 ) : null}
-                {step === 3 ? (
+                {step === 4 ? (
                   <StepPhone
                     phone={phone}
                     consentContact={consentContact}
@@ -272,18 +294,18 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
                     onPhone={setPhone}
                     onConsentContact={setConsentContact}
                     onConsentMarketing={setConsentMarketing}
-                    onBack={() => go(2)}
-                    onNext={onStep3Next}
+                    onBack={() => go(3)}
+                    onNext={onStep4Next}
                   />
                 ) : null}
-                {step === 4 ? (
+                {step === 5 ? (
                   <StepReview
                     displayName={displayName}
                     email={email.trim()}
                     phone={normalizePhone(phone)}
                     handle={handle.trim()}
                     busy={busy}
-                    onBack={() => go(3)}
+                    onBack={() => go(4)}
                     onFinish={onFinish}
                   />
                 ) : null}

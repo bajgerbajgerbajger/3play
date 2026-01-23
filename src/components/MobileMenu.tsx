@@ -12,11 +12,14 @@ import {
   ChevronDown, 
   ChevronUp,
   Settings,
-  Video
+  Video,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { Button } from './ui/Button';
 import { useAuthStore } from '@/store/auth';
+import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 
 interface MobileMenuProps {
@@ -26,6 +29,7 @@ interface MobileMenuProps {
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { user, logout } = useAuthStore();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [gamesOpen, setGamesOpen] = useState(true);
 
@@ -52,7 +56,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
           />
 
           {/* Drawer */}
@@ -61,7 +65,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col bg-surface/90 backdrop-blur-xl border-r border-border/10 shadow-2xl md:hidden"
+            className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col bg-surface/90 backdrop-blur-xl border-r border-border/10 shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border/10">
@@ -112,6 +116,17 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+
+              {/* Settings Section */}
+              <div className="space-y-1">
+                 <button 
+                  onClick={toggleTheme}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg font-medium hover:bg-white/5 transition-colors"
+                >
+                  {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                  <span>{isDark ? 'Světlý režim' : 'Tmavý režim'}</span>
+                </button>
               </div>
 
               {/* User Section */}

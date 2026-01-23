@@ -16,7 +16,7 @@ export type StudioVideo = {
   updatedAt: string
 }
 
-export type Tab = 'upload' | 'videos'
+export type Tab = 'upload' | 'videos' | 'settings'
 
 export const sampleSources = [
   {

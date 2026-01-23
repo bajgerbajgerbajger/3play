@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { VideoCard, type VideoListItem } from '@/components/video/VideoCard'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Input } from '@/components/ui/Input'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { Search } from 'lucide-react'
+import { useAuthStore } from '@/store/auth'
+import { WelcomeModal } from '@/components/WelcomeModal'
 
 type Sort = 'latest' | 'popular'
 
@@ -13,10 +16,31 @@ export default function Home() {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') || ''
   const sort = (params.get('sort') as Sort) || 'latest'
+  const isWelcome = params.get('welcome') === 'true'
 
+  const { user, token } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<VideoListItem[]>([])
+  
+  const [showWelcome, setShowWelcome] = useState(false)
+
+  // Check for channel on welcome
+  useEffect(() => {
+    if (isWelcome && user && token) {
+       // Check if user already has a channel to avoid showing modal unnecessarily
+       apiFetch('/api/channels/me/channel', { token })
+         .then(() => {
+            // Has channel, remove welcome param
+            params.delete('welcome')
+            setParams(params)
+         })
+         .catch(() => {
+            // No channel (404), show welcome modal
+            setShowWelcome(true)
+         })
+    }
+  }, [isWelcome, user, token])
 
   const title = useMemo(() => {
     if (q.trim()) return `Results for “${q.trim()}”`
@@ -47,10 +71,14 @@ export default function Home() {
 
   return (
     <div className="space-y-6 animate-fadeUp">
+      <Helmet>
+        <title>{q.trim() ? `${q.trim()} - 3Play` : '3Play - Creator-first Video Platform'}</title>
+        <meta name="description" content="3Play is a creator-first, high-performance video platform. Watch, share, and upload videos with ease." />
+      </Helmet>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="font-heading text-xl font-bold tracking-tight">{title}</h1>
-          <div className="text-sm text-muted">Fast, clean, creator-first video.</div>
+          <div className="text-sm text-muted">Rychlá, čistá, tvůrčí video platforma.</div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -63,7 +91,7 @@ export default function Home() {
               setParams(params)
             }}
           >
-            Latest
+            Nejnovější
           </button>
           <button
             className={cn(
@@ -75,7 +103,7 @@ export default function Home() {
               setParams(params)
             }}
           >
-            Popular
+            Populární
           </button>
         </div>
       </div>
@@ -84,7 +112,7 @@ export default function Home() {
         <div className="relative">
           <Input
             aria-label="Search"
-            placeholder="Search videos and channels"
+            placeholder="Hledat videa a kanály"
             className="pl-9"
             defaultValue={q}
             onKeyDown={(e) => {
@@ -104,7 +132,7 @@ export default function Home() {
 
       {error ? (
         <div className="rounded-xl border border-border/10 bg-surface p-4">
-          <div className="text-sm font-semibold">Couldn’t load videos</div>
+          <div className="text-sm font-semibold">Nelze načíst videa</div>
           <div className="mt-1 text-sm text-muted">{error}</div>
         </div>
       ) : null}
@@ -125,7 +153,7 @@ export default function Home() {
                 </div>
               </div>
             ))
-          : items.map((v) => <VideoCard key={v.id} video={v} />)}
+          : items.map((v, i) => <VideoCard key={`${v.id}-${i}`} video={v} />)}
       </div>
     </div>
   )

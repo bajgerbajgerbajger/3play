@@ -21,10 +21,17 @@ export function formatTimeAgo(iso: string | null) {
   if (!Number.isFinite(ts)) return ''
   const diff = Math.max(0, Date.now() - ts)
   const mins = Math.floor(diff / 60000)
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 1) return 'Právě teď'
+  if (mins < 60) return `před ${mins} min`
   const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
+  if (hrs < 24) return `před ${hrs} hod`
   const days = Math.floor(hrs / 24)
-  return `${days}d ago`
+  if (days < 7) return `před ${days} dny`
+  const weeks = Math.floor(days / 7)
+  if (weeks < 4) return `před ${weeks} týdny`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `před ${months} měsíci`
+  const years = Math.floor(days / 365)
+  return `před ${years} lety`
 }
 

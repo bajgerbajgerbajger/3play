@@ -9,11 +9,14 @@ import express, {
 } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import compression from 'compression'
+import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
 import authRoutes from './routes/auth.js'
 import videoRoutes from './routes/videos.js'
 import channelRoutes from './routes/channels.js'
 import studioRoutes from './routes/studio.js'
+import subscriptionRoutes from './routes/subscriptions.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -27,6 +30,16 @@ dotenv.config()
 
 const app: express.Application = express()
 
+// General Rate Limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+app.use(limiter)
+app.use(compression())
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }))
@@ -42,6 +55,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/videos', videoRoutes)
 app.use('/api/channels', channelRoutes)
 app.use('/api/studio', studioRoutes)
+app.use('/api/subscriptions', subscriptionRoutes)
 
 /**
  * health

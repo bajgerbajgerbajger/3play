@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { apiFetch } from '@/lib/api'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
@@ -7,6 +8,7 @@ import { VideoCard, type VideoListItem } from '@/components/video/VideoCard'
 import { formatCompactNumber } from '@/lib/format'
 import { useAuthStore } from '@/store/auth'
 import { ChannelEditor } from '@/components/channel/ChannelEditor'
+import { SubscribeButton } from '@/components/channel/SubscribeButton'
 import { Pencil } from 'lucide-react'
 
 type ChannelInfo = {
@@ -61,6 +63,16 @@ export default function Channel() {
 
   return (
     <div className="space-y-6 animate-fadeUp">
+      {channel ? (
+        <Helmet>
+          <title>{channel.displayName} - 3Play</title>
+          <meta name="description" content={channel.bio || `Check out ${channel.displayName} on 3Play.`} />
+          <meta property="og:title" content={channel.displayName} />
+          <meta property="og:description" content={channel.bio || `Check out ${channel.displayName} on 3Play.`} />
+          <meta property="og:image" content={channel.avatarUrl} />
+          <meta property="og:type" content="profile" />
+        </Helmet>
+      ) : null}
       {loading ? (
         <div className="space-y-4">
           <Skeleton className="h-[180px] w-full rounded-2xl" />
@@ -85,7 +97,7 @@ export default function Channel() {
                   <div>
                     <h1 className="font-heading text-xl font-bold tracking-tight">{channel.displayName}</h1>
                     <div className="mt-1 text-sm text-muted">
-                      {channel.handle} • {formatCompactNumber(channel.subscribers)} subscribers • {formatCompactNumber(channel.totalViews)} views
+                      {channel.handle} • {formatCompactNumber(channel.subscribers)} odběratelů • {formatCompactNumber(channel.totalViews)} zhlédnutí
                     </div>
                     {channel.bio ? <div className="mt-2 max-w-2xl text-sm text-text">{channel.bio}</div> : null}
                   </div>
@@ -93,10 +105,14 @@ export default function Channel() {
                 {isOwner ? (
                   <Button variant="secondary" onClick={() => setIsEditing(true)}>
                     <Pencil size={16} />
-                    Edit Channel
+                    Upravit kanál
                   </Button>
                 ) : (
-                  <Button>Subscribe</Button>
+                  <SubscribeButton 
+                    channelId={channel.id} 
+                    initialCount={channel.subscribers}
+                    onToggle={(newCount) => setChannel(prev => prev ? ({ ...prev, subscribers: newCount }) : null)}
+                  />
                 )}
               </div>
             </div>
@@ -119,8 +135,8 @@ export default function Channel() {
       ) : null}
 
       <div className="flex items-center justify-between">
-        <h2 className="font-heading text-lg font-semibold">Videos</h2>
-        {channel ? <div className="text-xs text-muted">{channel.videoCount} published</div> : null}
+        <h2 className="font-heading text-lg font-semibold">Videa</h2>
+        {channel ? <div className="text-xs text-muted">{channel.videoCount} zveřejněno</div> : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

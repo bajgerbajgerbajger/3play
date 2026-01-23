@@ -1,7 +1,9 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
+import { useState, useEffect } from 'react'
+import { countries } from './countries'
 import type { FieldErrors } from './utils'
 
 export function StepPhone({
@@ -27,18 +29,67 @@ export function StepPhone({
   onBack: () => void
   onNext: () => void
 }) {
+  const [country, setCountry] = useState(countries[0])
+  const [localNumber, setLocalNumber] = useState('')
+
+  useEffect(() => {
+    // Try to parse existing phone
+    if (phone) {
+      const clean = phone.replace(/\s+/g, '')
+      const found = countries.find(c => clean.startsWith(c.dial))
+      if (found) {
+        setCountry(found)
+        setLocalNumber(clean.slice(found.dial.length))
+      } else {
+        setLocalNumber(phone)
+      }
+    }
+  }, []) // run once on mount
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const c = countries.find(x => x.dial === e.target.value) || countries[0]
+    setCountry(c)
+    updateParent(c.dial, localNumber)
+  }
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/[^0-9]/g, '')
+    setLocalNumber(val)
+    updateParent(country.dial, val)
+  }
+
+  const updateParent = (prefix: string, num: string) => {
+    onPhone(`${prefix} ${num}`)
+  }
+
   return (
     <div className="space-y-3">
       <div>
         <div className="mb-1 text-xs font-semibold text-muted">Telefon</div>
-        <Input
-          value={phone}
-          onChange={(e) => onPhone(e.target.value)}
-          placeholder="+420 777 000 000"
-          inputMode="tel"
-          autoComplete="tel"
-          className={cn(errors.phone ? 'border-red-500/30 focus-visible:ring-red-500/40' : null)}
-        />
+        <div className="flex gap-2">
+          <div className="relative shrink-0">
+            <select
+              className="h-10 w-[110px] appearance-none rounded-lg border border-border/10 bg-surface px-3 pr-8 text-sm outline-none transition focus:border-brand/50 focus:ring-2 focus:ring-brand/20"
+              value={country.dial}
+              onChange={handleCountryChange}
+            >
+              {countries.map(c => (
+                <option key={c.code} value={c.dial}>
+                  {c.flag} {c.dial}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-3 h-4 w-4 text-muted pointer-events-none" />
+          </div>
+          <Input
+            value={localNumber}
+            onChange={handleNumberChange}
+            placeholder="777 000 000"
+            inputMode="tel"
+            autoComplete="tel"
+            className={cn(errors.phone ? 'border-red-500/30 focus-visible:ring-red-500/40' : null)}
+          />
+        </div>
         {errors.phone ? <div className="mt-1 text-xs text-red-200">{errors.phone}</div> : <div className="mt-1 text-xs text-muted">Použijeme jen pro bezpečnost a obnovení přístupu.</div>}
       </div>
 

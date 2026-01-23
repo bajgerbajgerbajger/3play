@@ -10,6 +10,7 @@ export function StepAccount({
   password,
   confirmPassword,
   handle,
+  gender,
   termsAccepted,
   privacyAccepted,
   pwScore,
@@ -21,6 +22,7 @@ export function StepAccount({
   onPassword,
   onConfirmPassword,
   onHandle,
+  onGender,
   onTerms,
   onPrivacy,
   onNext,
@@ -31,6 +33,7 @@ export function StepAccount({
   password: string
   confirmPassword: string
   handle: string
+  gender?: 'male' | 'female' | 'other'
   termsAccepted: boolean
   privacyAccepted: boolean
   pwScore: number
@@ -42,6 +45,7 @@ export function StepAccount({
   onPassword: (v: string) => void
   onConfirmPassword: (v: string) => void
   onHandle: (v: string) => void
+  onGender?: (v: 'male' | 'female' | 'other') => void
   onTerms: (v: boolean) => void
   onPrivacy: (v: boolean) => void
   onNext: () => void
