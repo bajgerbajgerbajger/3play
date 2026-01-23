@@ -20,7 +20,11 @@ function sortVideos(list: any[], sort: string | null) {
 }
 
 router.get('/', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   
   // Try to seed if empty (fire and forget to avoid timeout on cold start)
   seedDatabase().catch(err => console.error('Seed failed:', err))

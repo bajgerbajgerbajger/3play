@@ -8,7 +8,11 @@ const router = Router()
 
 // Toggle subscription
 router.post('/toggle', requireAuth, async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const { channelId } = req.body // Expecting Profile ID
   const subscriberId = (req as any).user.id // User ID of the subscriber
 
@@ -62,7 +66,11 @@ router.post('/toggle', requireAuth, async (req: Request, res: Response) => {
 
 // Check status
 router.get('/status/:channelId', requireAuth, async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const { channelId } = req.params
   const subscriberId = (req as any).user.id
 

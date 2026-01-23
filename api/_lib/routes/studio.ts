@@ -123,7 +123,11 @@ router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'th
 })
 
 router.get('/me', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const auth = (req as Request & { auth: { sub: string; handle: string } }).auth
   // auth.sub is user.id. We need to find profile by user handle or link.
   // In our model, User.handle == Profile.handle.
@@ -132,7 +136,11 @@ router.get('/me', async (req: Request, res: Response) => {
 })
 
 router.patch('/channel', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const auth = (req as Request & { auth: { handle: string } }).auth
   
   const { displayName, bio, avatarUrl, bannerUrl, phone } = (req.body || {}) as {
@@ -171,7 +179,11 @@ router.patch('/channel', async (req: Request, res: Response) => {
 })
 
 router.get('/videos', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const auth = (req as Request & { auth: { handle: string } }).auth
   const channel = await Profile.findOne({ handle: auth.handle })
   
@@ -190,7 +202,11 @@ router.get('/videos', async (req: Request, res: Response) => {
 })
 
 router.post('/videos', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const auth = (req as Request & { auth: { handle: string } }).auth
   const channel = await Profile.findOne({ handle: auth.handle })
   
@@ -239,7 +255,11 @@ router.post('/videos', async (req: Request, res: Response) => {
 })
 
 router.patch('/videos/:videoId', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const auth = (req as Request & { auth: { handle: string } }).auth
   const channel = await Profile.findOne({ handle: auth.handle })
   
@@ -276,7 +296,11 @@ router.patch('/videos/:videoId', async (req: Request, res: Response) => {
 })
 
 router.post('/videos/:videoId/publish', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const auth = (req as Request & { auth: { handle: string } }).auth
   const channel = await Profile.findOne({ handle: auth.handle })
   

@@ -78,7 +78,11 @@ router.use('/request-code', codeLimiter)
 router.use('/verify-code', codeLimiter)
 
 router.post('/request-code', async (req: Request, res: Response): Promise<void> => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
 
   const { email, _gotcha } = (req.body || {}) as { email?: string; _gotcha?: string }
 
@@ -132,7 +136,11 @@ router.post('/request-code', async (req: Request, res: Response): Promise<void> 
 })
 
 router.post('/verify-code', async (req: Request, res: Response): Promise<void> => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
 
   const { email, verificationCode, _gotcha } = (req.body || {}) as {
     email?: string
@@ -182,7 +190,11 @@ router.post('/verify-code', async (req: Request, res: Response): Promise<void> =
  * POST /api/auth/register
  */
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
 
   const { email, password, displayName, handle, verificationCode, acceptTerms, phone, consentContact, consentMarketing, consentVersion, gender, _gotcha } = (req.body || {}) as {
     email?: string
@@ -313,7 +325,11 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
  * POST /api/auth/login
  */
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
 
   const { email, password } = (req.body || {}) as { email?: string; password?: string }
   if (!email || !password) {
@@ -360,7 +376,11 @@ router.post('/logout', async (req: Request, res: Response): Promise<void> => {
 })
 
 router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void> => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
 
   const auth = (req as Request & { auth: { sub: string } }).auth
   const user = await User.findOne({ id: auth.sub })

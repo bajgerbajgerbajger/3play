@@ -14,7 +14,11 @@ function localNormalizeHandle(input: string) {
 }
 
 router.post('/', requireAuth, async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const userId = (req as any).auth.sub
   const { handle, displayName, description } = req.body || {}
 
@@ -60,7 +64,11 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 })
 
 router.get('/:handle', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const { handle } = req.params
   // Handle in DB is stored with @ or not?
   // Our seed data has @. User input might not.
@@ -91,7 +99,11 @@ router.get('/:handle', async (req: Request, res: Response) => {
 })
 
 router.get('/:handle/videos', async (req: Request, res: Response) => {
-  await dbConnect()
+  const db = await dbConnect()
+  if (!db) {
+    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
+    return
+  }
   const { handle } = req.params
   const sort = typeof req.query.sort === 'string' ? req.query.sort : 'latest'
   
