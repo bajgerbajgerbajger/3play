@@ -29,7 +29,8 @@ export function StepPhone({
   onBack: () => void
   onNext: () => void
 }) {
-  const [country, setCountry] = useState(countries[0])
+  type Country = typeof countries[number]
+  const [country, setCountry] = useState<Country>(countries[0])
   const [localNumber, setLocalNumber] = useState('')
 
   useEffect(() => {

@@ -11,7 +11,7 @@ import { TrustPanel } from './register/TrustPanel'
 import type { FieldErrors } from './register/utils'
 import { isEmailValid, isPhoneValid, normalizePhone, scorePassword, suggestHandle } from './register/utils'
 
-type Step = 1 | 2 | 3 | 4
+type Step = 1 | 2 | 3 | 4 | 5
 
 const stepVariants = {
   initial: (dir: number) => ({ opacity: 0, x: dir > 0 ? 24 : -24 }),
@@ -34,6 +34,7 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [handle, setHandle] = useState('@newcreator')
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | undefined>(undefined)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
 
@@ -182,6 +183,7 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
         consentContact,
         consentMarketing,
         consentVersion: 'v1',
+        gender: gender || 'other',
       })
       onDone()
     } catch (e2: unknown) {
@@ -242,6 +244,9 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
                     password={password}
                     confirmPassword={confirmPassword}
                     handle={handle}
+                    gender={gender}
+                    termsAccepted={termsAccepted}
+                    privacyAccepted={privacyAccepted}
                     pwScore={pwScore}
                     errors={errors}
                     busy={busy}
@@ -251,8 +256,9 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
                     onPassword={setPassword}
                     onConfirmPassword={setConfirmPassword}
                     onHandle={setHandle}
-                    gender={gender}
                     onGender={setGender}
+                    onTerms={setTermsAccepted}
+                    onPrivacy={setPrivacyAccepted}
                     onNext={onStep1Next}
                   />
                 ) : null}
