@@ -147,6 +147,9 @@
       function hide(){ 
         if (!el) return;
         
+        // Immediate click-through to allow interaction even if animation is playing
+        el.style.pointerEvents = "none";
+        
         // Ensure we respect the minimum timer
         const elapsed = performance.now() - t0; 
         const remaining = Math.max(0, MIN_SHOW_MS - elapsed);
@@ -158,7 +161,7 @@
 
           // Remove intro DOM element after exit animation
           setTimeout(() => { 
-            el.remove(); 
+            if (el) el.remove(); 
           }, EXIT_MS);
         }, remaining);
       } 
@@ -174,7 +177,7 @@
       // Fallback in case app fails to load
       setTimeout(() => {
         if (!doneCalled) done();
-      }, 8000);
+      }, 5000);
 
     })(); 
     </script>

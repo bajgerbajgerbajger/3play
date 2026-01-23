@@ -137,6 +137,16 @@ export default function Home() {
         </div>
       ) : null}
 
+      {!loading && !error && items.length === 0 ? (
+        <div className="col-span-full py-12 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface2 text-muted">
+            <Video size={32} />
+          </div>
+          <h3 className="text-lg font-semibold">Žádná videa</h3>
+          <p className="text-muted">Zatím tu nic není. Buď první a nahraj video!</p>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {loading
           ? Array.from({ length: 12 }).map((_, i) => (
