@@ -8,7 +8,7 @@ import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { Search, Video } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
-import { WelcomeModal } from '@/components/WelcomeModal'
+import { useModalStore } from '@/store/modal'
 
 type Sort = 'latest' | 'popular'
 
@@ -19,28 +19,27 @@ export default function Home() {
   const isWelcome = params.get('welcome') === 'true'
 
   const { user, token } = useAuthStore()
+  const { openChannelCreation } = useModalStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<VideoListItem[]>([])
-  
-  const [showWelcome, setShowWelcome] = useState(false)
 
   // Check for channel on welcome
   useEffect(() => {
-    if (isWelcome && user && token) {
-       // Check if user already has a channel to avoid showing modal unnecessarily
-       apiFetch('/api/channels/me/channel', { token })
-         .then(() => {
-            // Has channel, remove welcome param
-            params.delete('welcome')
-            setParams(params)
-         })
-         .catch(() => {
-            // No channel (404), show welcome modal
-            setShowWelcome(true)
-         })
-    }
-  }, [isWelcome, user, token])
+    if (!isWelcome || !user || !token) return
+
+    apiFetch('/api/channels/me/channel', { token })
+      .then(() => {
+        setParams((prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('welcome')
+          return next
+        })
+      })
+      .catch(() => {
+        openChannelCreation('welcome')
+      })
+  }, [isWelcome, user, token, setParams, openChannelCreation])
 
   const title = useMemo(() => {
     if (q.trim()) return `Results for “${q.trim()}”`

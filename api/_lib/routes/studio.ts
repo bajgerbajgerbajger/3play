@@ -11,6 +11,7 @@ import { cloudinary } from '../lib/cloudinary.js'
 
 const router = Router()
 
+
 // Configure Storage
 let storage: multer.StorageEngine
 
@@ -85,7 +86,7 @@ router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'th
     if (files['file']?.[0]) {
       const file = files['file'][0]
       url = file.path
-      const fileData = file as any
+      const fileData = file as Partial<{ duration: number }>
       
       // Default thumbnail from video
       thumbnailUrl = url
@@ -96,7 +97,7 @@ router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'th
          } else {
            thumbnailUrl = url + '.jpg'
          }
-         if (fileData.duration) {
+         if (typeof fileData.duration === 'number') {
            duration = fileData.duration
          }
       }
@@ -225,13 +226,13 @@ router.post('/videos', async (req: Request, res: Response) => {
     embedCode?: string
   }
 
+
   if (!title || title.trim().length < 3) {
     res.status(400).json({ success: false, error: 'Title is required' })
     return
   }
 
   const id = `v-${crypto.randomBytes(3).toString('hex')}`
-  const now = new Date().toISOString()
   
   const draft = await Video.create({
     id,
@@ -316,6 +317,7 @@ router.post('/videos/:videoId/publish', async (req: Request, res: Response) => {
     res.status(404).json({ success: false, error: 'Video not found' })
     return
   }
+
   
   // We don't really have "processing" status with Cloudinary direct upload in this flow,
   // but if we did, check here.

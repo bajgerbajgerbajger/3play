@@ -1,6 +1,28 @@
 import mongoose from 'mongoose'
 import { LocalModel } from '../lib/local-db-adapter.js'
 
+export type VideoDoc = {
+  id: string
+  ownerId: string
+  title: string
+  description?: string
+  type: 'video' | 'movie' | 'episode'
+  visibility: 'draft' | 'unlisted' | 'published'
+  status: 'uploading' | 'processing' | 'ready' | 'failed'
+  thumbnailUrl?: string
+  sourceUrl?: string
+  embedCode?: string
+  durationSeconds: number
+  views: number
+  likes: number
+  dislikes: number
+  likedBy: string[]
+  dislikedBy: string[]
+  publishedAt?: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
 const VideoSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   ownerId: { type: String, required: true, ref: 'Profile' }, // Reference by string ID
@@ -37,4 +59,4 @@ const Model = process.env.MONGODB_URI
   ? (mongoose.models.Video || mongoose.model('Video', VideoSchema))
   : new LocalModel('videos')
 
-export default Model as mongoose.Model<any>
+export default Model as mongoose.Model<VideoDoc>

@@ -1,6 +1,24 @@
 import mongoose from 'mongoose'
 import { LocalModel } from '../lib/local-db-adapter.js'
 
+export type ProfileDoc = {
+  id: string
+  userId?: string
+  handle: string
+  displayName: string
+  avatarUrl?: string
+  bannerUrl?: string
+  bio?: string
+  subscribers: number
+  phone?: string
+  consentContact?: boolean
+  consentMarketing?: boolean
+  consentVersion?: string
+  consentedAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
 const ProfileSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   userId: { type: String, unique: true, sparse: true }, // Link to User.id
@@ -21,4 +39,4 @@ const Model = process.env.MONGODB_URI
   ? (mongoose.models.Profile || mongoose.model('Profile', ProfileSchema))
   : new LocalModel('profiles')
 
-export default Model as mongoose.Model<any>
+export default Model as mongoose.Model<ProfileDoc>

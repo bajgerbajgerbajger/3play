@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/store/auth'
 import type { StudioVideo, Tab } from '@/pages/studio/types'
-import { sampleSources } from '@/pages/studio/types'
 import { StudioSidebar } from '@/pages/studio/StudioSidebar'
 import { UploadPanel } from '@/pages/studio/UploadPanel'
 import { VideosPanel } from '@/pages/studio/VideosPanel'
@@ -147,7 +146,31 @@ export default function Studio() {
       let finalSourceUrl = uploadSource
       let finalThumbnailUrl = undefined
       let finalDuration = 0
-      let finalEmbedCode = uploadMode === 'embed' ? uploadEmbedCode : undefined
+      const finalEmbedCode = uploadMode === 'embed' ? (() => {
+        const raw = uploadEmbedCode.trim()
+        if (!raw) {
+          throw new Error('Embed kód je prázdný')
+        }
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(raw, 'text/html')
+        const iframe = doc.querySelector('iframe')
+        if (!iframe) throw new Error('Embed musí obsahovat <iframe>')
+        const src = iframe.getAttribute('src') || ''
+        if (!src || !/^https?:\/\//i.test(src) || /^javascript:/i.test(src)) {
+          throw new Error('Neplatný src atribut v <iframe>')
+        }
+        iframe.setAttribute('src', src)
+        iframe.setAttribute('frameborder', '0')
+        iframe.setAttribute('allowfullscreen', '')
+        iframe.setAttribute('webkitAllowFullScreen', '')
+        iframe.setAttribute('mozallowfullscreen', '')
+        iframe.setAttribute('scrolling', 'no')
+        iframe.setAttribute('loading', 'lazy')
+        iframe.setAttribute('referrerpolicy', 'no-referrer')
+        iframe.setAttribute('width', '100%')
+        iframe.setAttribute('height', '100%')
+        return iframe.outerHTML
+      })() : undefined
       
       let thumbnailToUpload = uploadThumbnail
       
@@ -161,8 +184,20 @@ export default function Studio() {
           }
       }
 
-      // Helper to upload a single file to Cloudinary
-      const uploadToCloudinary = async (file: File, folder: string, apiKey: string, timestamp: number, signature: string, cloudName: string) => {
+      type CloudinaryUploadResponse = {
+        secure_url?: string
+        duration?: number
+        resource_type?: string
+      }
+
+      const uploadToCloudinary = async (
+        file: File,
+        folder: string,
+        apiKey: string,
+        timestamp: number,
+        signature: string,
+        cloudName: string,
+      ): Promise<CloudinaryUploadResponse> => {
          const CHUNK_SIZE = 6 * 1024 * 1024 // 6MB
          const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`
 
@@ -175,7 +210,7 @@ export default function Studio() {
             formData.append('signature', signature)
             formData.append('folder', folder)
 
-            return new Promise<any>((resolve, reject) => {
+           return new Promise<CloudinaryUploadResponse>((resolve, reject) => {
                 const xhr = new XMLHttpRequest()
                 xhr.open('POST', url)
                 
@@ -189,7 +224,8 @@ export default function Studio() {
 
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(JSON.parse(xhr.responseText))
+                        const response = JSON.parse(xhr.responseText) as CloudinaryUploadResponse
+                        resolve(response)
                     } else {
                         reject(new Error(`Cloudinary upload failed: ${xhr.responseText}`))
                     }
@@ -203,7 +239,7 @@ export default function Studio() {
          const uniqueUploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
          const total = file.size
          let start = 0
-         let result: any
+         let result: CloudinaryUploadResponse | undefined
 
          while (start < total) {
              const end = Math.min(start + CHUNK_SIZE, total)
@@ -216,7 +252,7 @@ export default function Studio() {
              formData.append('signature', signature)
              formData.append('folder', folder)
              
-             await new Promise((resolve, reject) => {
+             await new Promise<void>((resolve, reject) => {
                  const xhr = new XMLHttpRequest()
                  xhr.open('POST', url)
                  
@@ -228,12 +264,11 @@ export default function Studio() {
                  
                  xhr.onload = () => {
                      if (xhr.status >= 200 && xhr.status < 300) {
-                         // Cloudinary returns the full response on the last chunk
-                         const response = JSON.parse(xhr.responseText)
+                         const response = JSON.parse(xhr.responseText) as CloudinaryUploadResponse
                          if (end >= total) {
                              result = response
                          }
-                         resolve(response)
+                         resolve()
                      } else {
                          reject(new Error(`Chunk upload failed: ${xhr.responseText}`))
                      }
@@ -258,7 +293,7 @@ export default function Studio() {
              start = end
          }
          
-         return result
+         return result ?? {}
       }
 
       const sigData = await apiFetch<{
@@ -301,42 +336,43 @@ export default function Studio() {
           }
       } else {
           // Local Mode
-          // We use the single endpoint for both now (multipart)
-          const t = window.setInterval(() => {
-              setUploadProgress((p) => Math.min(95, p + Math.random() * 14))
-          }, 180)
-          
-          try {
-               const formData = new FormData()
-               if (uploadMode === 'file' && uploadFile) {
-                   formData.append('file', uploadFile)
-               }
-               if (thumbnailToUpload) {
-                   formData.append('thumbnail', thumbnailToUpload)
-               }
-               
-               const data = await apiFetch<{
-                 success: boolean
-                 error?: string
-                 url: string
-                 duration?: number
-                 thumbnailUrl?: string
-               }>('/api/studio/upload', {
-                method: 'POST',
-                token,
-                body: formData
-              })
-              if (!data.success) throw new Error(data.error || 'Upload failed')
-              
-              if (uploadMode === 'file' && uploadFile) {
-                  finalSourceUrl = data.url
-                  finalDuration = data.duration || 0
-              }
-              if (data.thumbnailUrl) {
-                  finalThumbnailUrl = data.thumbnailUrl
-              }
-          } finally {
-              window.clearInterval(t)
+          // Only call upload endpoint if we actually have a file or thumbnail to send
+          const shouldUpload = (uploadMode === 'file' && !!uploadFile) || !!thumbnailToUpload
+
+          if (shouldUpload) {
+            const t = window.setInterval(() => {
+                setUploadProgress((p) => Math.min(95, p + Math.random() * 14))
+            }, 180)
+            try {
+                 const formData = new FormData()
+                 if (uploadMode === 'file' && uploadFile) {
+                     formData.append('file', uploadFile)
+                 }
+                 if (thumbnailToUpload) {
+                     formData.append('thumbnail', thumbnailToUpload)
+                 }
+                 const data = await apiFetch<{
+                   success: boolean
+                   error?: string
+                   url: string
+                   duration?: number
+                   thumbnailUrl?: string
+                 }>('/api/studio/upload', {
+                  method: 'POST',
+                  token,
+                  body: formData
+                })
+                if (!data.success) throw new Error(data.error || 'Upload failed')
+                if (uploadMode === 'file' && uploadFile) {
+                    finalSourceUrl = data.url
+                    finalDuration = data.duration || 0
+                }
+                if (data.thumbnailUrl) {
+                    finalThumbnailUrl = data.thumbnailUrl
+                }
+            } finally {
+                window.clearInterval(t)
+            }
           }
       }
 
@@ -473,7 +509,7 @@ export default function Studio() {
               }}
               file={null} // We don't use single file prop anymore for display
               creating={creating}
-              progress={0}
+              progress={uploadProgress}
               onTitle={setUploadTitle}
               onDescription={setUploadDesc}
               onType={setUploadType}

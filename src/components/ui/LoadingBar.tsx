@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 export function LoadingBar() {
-  const { pathname } = useLocation();
   const [loadingCount, setLoadingCount] = useState(0);
   const [progress, setProgress] = useState(0);
 

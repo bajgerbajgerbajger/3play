@@ -11,7 +11,6 @@ import {
   LogOut, 
   ChevronDown, 
   ChevronUp,
-  Settings,
   Video,
   Sun,
   Moon

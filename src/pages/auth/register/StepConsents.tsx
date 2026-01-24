@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, ScrollText } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import type { FieldErrors } from './utils'

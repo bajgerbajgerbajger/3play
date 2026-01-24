@@ -34,8 +34,8 @@ const registerLimiter = rateLimit({
 })
 
 // Antivirus / Input Sanitization Check
-function isSafeInput(str: any) {
-  if (typeof str !== 'string') return true // Let validation handle types
+function isSafeInput(str: unknown) {
+  if (typeof str !== 'string') return true
   // Basic XSS and malicious pattern check
   if (/<script\b[^>]*>([\s\S]*?)<\/script>/gm.test(str)) return false
   if (/javascript:/i.test(str)) return false
@@ -196,7 +196,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
-  const { email, password, displayName, handle, verificationCode, acceptTerms, phone, consentContact, consentMarketing, consentVersion, gender, _gotcha } = (req.body || {}) as {
+  const { email, password, displayName, handle, verificationCode, acceptTerms, phone, consentContact, consentVersion, gender, _gotcha } = (req.body || {}) as {
     email?: string
     password?: string
     displayName?: string
@@ -205,7 +205,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     acceptTerms?: boolean
     phone?: string
     consentContact?: boolean
-    consentMarketing?: boolean
     consentVersion?: string
     gender?: 'male' | 'female' | 'other'
     _gotcha?: string // Honeypot field
@@ -278,7 +277,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   await codeDoc.save()
 
   const userId = `u-${Math.random().toString(16).slice(2, 10)}`
-  const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
   
   let avatarPrompt = 'flat geometric avatar icon, readable number 3 with play triangle motif, minimal, sharp edges, red accent, dark background, vector style'
   if (gender === 'male') {

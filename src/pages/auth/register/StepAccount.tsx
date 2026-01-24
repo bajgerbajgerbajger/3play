@@ -76,6 +76,20 @@ export function StepAccount({
       </div>
 
       <div>
+        <div className="mb-1 text-xs font-semibold text-muted">Pohlaví (volitelné)</div>
+        <select
+          value={gender || ''}
+          onChange={(e) => onGender?.(e.target.value as 'male' | 'female' | 'other')}
+          className="h-10 w-full rounded-lg border border-border/10 bg-surface px-3 text-sm outline-none transition focus:border-brand/50 focus:ring-2 focus:ring-brand/20"
+        >
+          <option value="">Neuvádět</option>
+          <option value="male">Muž</option>
+          <option value="female">Žena</option>
+          <option value="other">Jiné</option>
+        </select>
+      </div>
+
+      <div>
         <div className="mb-1 text-xs font-semibold text-muted">Email</div>
         <Input
           value={email}
@@ -174,4 +188,3 @@ export function StepAccount({
     </div>
   )
 }
-

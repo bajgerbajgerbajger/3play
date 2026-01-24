@@ -2,7 +2,7 @@ export interface UserActivity {
   type: 'search' | 'watch' | 'view_category' | 'game_play' | 'page_view';
   content: string; // e.g., "sci-fi movies", "Interstellar", "games/chess"
   timestamp: number;
-  details?: any;
+  details?: unknown;
 }
 
 export interface UserProfile {
@@ -62,7 +62,7 @@ export class BehaviorTracker {
     }
   }
 
-  public track(type: UserActivity['type'], content: string, details?: any) {
+  public track(type: UserActivity['type'], content: string, details?: unknown) {
     const activity: UserActivity = {
       type,
       content,

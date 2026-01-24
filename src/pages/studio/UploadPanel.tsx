@@ -47,6 +47,36 @@ export function UploadPanel({
   onThumbnailSelect: (v: File | null) => void
 }) {
   const progressText = useMemo(() => `${Math.round(progress)}%`, [progress])
+  const sanitizedPreview = useMemo(() => {
+    const raw = (embedCode || '').trim()
+    if (!raw) return { html: '', error: 'Prázdný embed kód' }
+    try {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(raw, 'text/html')
+      const iframe = doc.querySelector('iframe')
+      if (!iframe) return { html: '', error: 'Embed musí obsahovat <iframe>' }
+      const src = iframe.getAttribute('src') || ''
+      if (!src || !/^https?:\/\//i.test(src) || /^javascript:/i.test(src)) {
+        return { html: '', error: 'Neplatný src atribut v <iframe>' }
+      }
+      // Reset attributes to safe whitelist
+      iframe.setAttribute('src', src)
+      iframe.setAttribute('frameborder', '0')
+      iframe.setAttribute('allowfullscreen', '')
+      iframe.setAttribute('webkitAllowFullScreen', '')
+      iframe.setAttribute('mozallowfullscreen', '')
+      iframe.setAttribute('scrolling', 'no')
+      iframe.setAttribute('loading', 'lazy')
+      iframe.setAttribute('referrerpolicy', 'no-referrer')
+      // Enforce 100% sizing
+      iframe.setAttribute('width', '100%')
+      iframe.setAttribute('height', '100%')
+      // Return only the iframe element
+      return { html: iframe.outerHTML, error: undefined }
+    } catch {
+      return { html: '', error: 'Nelze zpracovat embed kód' }
+    }
+  }, [embedCode])
   return (
     <div className="rounded-2xl border border-border/10 bg-surface p-5">
       <div className="flex items-center gap-3">
@@ -167,6 +197,19 @@ export function UploadPanel({
                         placeholder={'<iframe src="..." ...></iframe>'}
                         className="min-h-[80px] w-full rounded-[12px] border border-border/10 bg-surface px-3 py-2 text-sm text-text placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg font-mono text-xs"
                       />
+                      <div className="mt-3">
+                        <div className="text-xs text-muted mb-1">Náhled</div>
+                        {sanitizedPreview.error ? (
+                          <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-200">
+                            {sanitizedPreview.error}
+                          </div>
+                        ) : (
+                          <div
+                            className="aspect-video w-full [&>iframe]:h-full [&>iframe]:w-full rounded-xl border border-border/10 overflow-hidden"
+                            dangerouslySetInnerHTML={{ __html: sanitizedPreview.html }}
+                          />
+                        )}
+                      </div>
                 </div>
             )}
         </div>
@@ -192,7 +235,7 @@ export function UploadPanel({
         </div>
 
         <div className="mt-2 flex justify-end">
-          <Button onClick={onCreate} disabled={creating || (!title) || (uploadMode === 'file' && !file && !sourceUrl) || (uploadMode === 'embed' && !embedCode)}>
+          <Button onClick={onCreate} disabled={creating || (!title) || (uploadMode === 'file' && !file && !sourceUrl) || (uploadMode === 'embed' && (!!sanitizedPreview.error || !embedCode))}>
              {creating ? (
                  <>
                    <Loader2 size={16} className="animate-spin mr-2" />

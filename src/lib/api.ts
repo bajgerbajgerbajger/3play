@@ -21,7 +21,8 @@ export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit &
   }
   if (init?.token) headers.set('Authorization', `Bearer ${init.token}`)
 
-  const timeout = init?.timeout ?? 15000 // 15s default timeout
+  const DEFAULT_TIMEOUT = (typeof import.meta !== 'undefined' && (import.meta as unknown as { env?: { PROD?: boolean } }).env?.PROD) ? 45000 : 15000
+  const timeout = init?.timeout ?? DEFAULT_TIMEOUT
   const controller = new AbortController()
   const id = setTimeout(() => controller.abort(), timeout)
 

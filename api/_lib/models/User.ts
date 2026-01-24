@@ -1,6 +1,23 @@
 import mongoose from 'mongoose'
 import { LocalModel } from '../lib/local-db-adapter.js'
 
+export type UserDoc = {
+  id: string
+  email: string
+  handle: string
+  displayName: string
+  avatarUrl?: string
+  gender?: 'male' | 'female' | 'other'
+  passwordHash: string
+  emailVerified: boolean
+  role: 'user' | 'admin'
+  lastLogin?: Date
+  resetPasswordToken?: string
+  resetPasswordExpires?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
 const UserSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
@@ -20,4 +37,4 @@ const Model = process.env.MONGODB_URI
   ? (mongoose.models.User || mongoose.model('User', UserSchema))
   : new LocalModel('users')
 
-export default Model as mongoose.Model<any>
+export default Model as mongoose.Model<UserDoc>

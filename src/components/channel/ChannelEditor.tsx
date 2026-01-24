@@ -5,15 +5,18 @@ import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/store/auth'
 import { X, Upload, Loader2 } from 'lucide-react'
 
+type ChannelProfile = {
+  displayName: string
+  bio: string
+  avatarUrl: string
+  bannerUrl: string
+  phone?: string
+}
+
 type ChannelEditorProps = {
-  initialData: {
-    displayName: string
-    bio: string
-    avatarUrl: string
-    bannerUrl: string
-  }
+  initialData: ChannelProfile
   onClose: () => void
-  onUpdate: (data: any) => void
+  onUpdate: (data: ChannelProfile) => void
 }
 
 export function ChannelEditor({ initialData, onClose, onUpdate }: ChannelEditorProps) {
@@ -60,7 +63,7 @@ export function ChannelEditor({ initialData, onClose, onUpdate }: ChannelEditorP
     setSaving(true)
     setError(null)
     try {
-      const d = await apiFetch<{ success: true; channel: any }>('/api/studio/channel', {
+      const d = await apiFetch<{ success: true; channel: ChannelProfile }>('/api/studio/channel', {
         method: 'PATCH',
         token,
         body: JSON.stringify({ displayName, bio, avatarUrl, bannerUrl }),

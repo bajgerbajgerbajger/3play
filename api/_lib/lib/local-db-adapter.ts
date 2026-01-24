@@ -7,8 +7,9 @@ const __dirname = path.dirname(__filename)
 // Navigate from api/_lib/lib/local-db-adapter.ts to api/_lib/data/db.json
 const DB_PATH = path.resolve(__dirname, '../data/db.json')
 
+type DBRecord = Record<string, unknown>
 interface DBData {
-  [key: string]: any[]
+  [key: string]: DBRecord[]
 }
 
 // Basic ID generator
@@ -17,25 +18,27 @@ const generateId = (prefix: string = '') => {
 }
 
 // Helper to check if object matches query
-function matchesQuery(item: any, query: any): boolean {
+function matchesQuery(item: DBRecord, query: Record<string, unknown>): boolean {
   if (!query || typeof query !== 'object') return true
 
   for (const key in query) {
     const qVal = query[key]
 
     if (key === '$or') {
-      if (!Array.isArray(qVal)) return false
-      if (!qVal.some((sub) => matchesQuery(item, sub))) return false
+      const arr = qVal as unknown
+      if (!Array.isArray(arr)) return false
+      if (!arr.some((sub) => matchesQuery(item, sub as Record<string, unknown>))) return false
       continue
     }
 
     if (key === '$and') {
-      if (!Array.isArray(qVal)) return false
-      if (!qVal.every((sub) => matchesQuery(item, sub))) return false
+      const arr = qVal as unknown
+      if (!Array.isArray(arr)) return false
+      if (!arr.every((sub) => matchesQuery(item, sub as Record<string, unknown>))) return false
       continue
     }
 
-    const iVal = item?.[key]
+    const iVal = (item as Record<string, unknown>)?.[key]
 
     if (qVal instanceof RegExp) {
       if (typeof iVal !== 'string') return false
@@ -43,9 +46,10 @@ function matchesQuery(item: any, query: any): boolean {
       continue
     }
 
-    if (qVal && typeof qVal === 'object') {
-      if ('$in' in qVal) {
-        const list = (qVal as any).$in
+    if (qVal && typeof qVal === 'object' && !Array.isArray(qVal)) {
+      const obj = qVal as Record<string, unknown>
+      if ('$in' in obj) {
+        const list = obj.$in as unknown
         if (!Array.isArray(list)) return false
         if (!list.includes(iVal)) return false
         continue
@@ -67,7 +71,7 @@ async function getDB(): Promise<DBData> {
     const data = await fs.readFile(DB_PATH, 'utf-8')
     cachedDB = JSON.parse(data)
     return cachedDB!
-  } catch (err) {
+  } catch {
     // If file doesn't exist, return empty structure
     cachedDB = { users: [], videos: [], profiles: [], codes: [], comments: [] }
     return cachedDB!
@@ -83,74 +87,80 @@ async function saveDB(data: DBData) {
   }
 }
 
-export class LocalModel {
+type HydratedDoc<T extends DBRecord> = T & {
+  save: () => Promise<HydratedDoc<T> | null>
+  toObject: () => T
+}
+
+export class LocalModel<T extends DBRecord = DBRecord> {
   collectionName: string
 
   constructor(collectionName: string) {
     this.collectionName = collectionName
   }
 
-  async countDocuments(query: any = {}) {
+  async countDocuments(query: Record<string, unknown> = {}) {
     const items = await this.find(query)
     return items.length
   }
 
   // Helper to convert raw data to "document" with save() method
-  _hydrate(item: any) {
+  _hydrate(item: T | null): HydratedDoc<T> | null {
     if (!item) return null
-    const self = this
+    const collectionName = this.collectionName
     return {
       ...item,
       // Mongoose-like methods
       save: async function() {
         const db = await getDB()
-        const list = db[self.collectionName] || []
-        const idx = list.findIndex((i: any) => i.id === this.id || i._id === this._id)
+        const list = (db[collectionName] || []) as DBRecord[]
+        const idx = list.findIndex((i: DBRecord) => (i as Record<string, unknown>).id === (this as unknown as Record<string, unknown>).id || (i as Record<string, unknown>)._id === (this as unknown as Record<string, unknown>)._id)
         
         // Remove save method before writing to JSON
-        const { save, ...dataToSave } = this
+        const { save: _save, ...dataToSave } = this as unknown as Record<string, unknown>
         
         if (idx >= 0) {
           list[idx] = dataToSave
         } else {
           list.push(dataToSave)
         }
-        db[self.collectionName] = list
+        db[collectionName] = list
         await saveDB(db)
-        return self._hydrate(list[idx >= 0 ? idx : list.length - 1])
+        const saved = list[idx >= 0 ? idx : list.length - 1] as T
+        return (new LocalModel<T>(collectionName))._hydrate(saved)
       },
       toObject: function() {
-        const { save, toObject, ...rest } = this
-        return rest
+        const { save: _save, toObject: _toObject, ...rest } = this as unknown as Record<string, unknown>
+        return rest as T
       }
     }
   }
 
-  async findOne(query: any) {
+  async findOne(query: Record<string, unknown>) {
     const db = await getDB()
-    const list = db[this.collectionName] || []
-    const item = list.find((i: any) => matchesQuery(i, query))
-    return this._hydrate(item)
+    const list = (db[this.collectionName] || []) as DBRecord[]
+    const item = list.find((i: DBRecord) => matchesQuery(i, query)) as T | undefined
+    return this._hydrate(item ?? null)
   }
 
-  async find(query: any = {}) {
+  async find(query: Record<string, unknown> = {}) {
     const db = await getDB()
-    const list = db[this.collectionName] || []
-    const items = list.filter((i: any) => matchesQuery(i, query))
-    return items.map(i => this._hydrate(i))
+    const list = (db[this.collectionName] || []) as DBRecord[]
+    const items = list.filter((i: DBRecord) => matchesQuery(i, query)) as T[]
+    return items.map(i => this._hydrate(i)!)
   }
 
   async findById(id: string) {
     return this.findOne({ id })
   }
 
-  async create(data: any) {
+  async create(data: T) {
     const db = await getDB()
-    const list = db[this.collectionName] || []
+    const list = (db[this.collectionName] || []) as DBRecord[]
     
     const newItem = {
       ...data,
-      id: data.id || generateId(),
+      id: (data as Record<string, unknown>).id || generateId(),
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -158,16 +168,16 @@ export class LocalModel {
     list.push(newItem)
     db[this.collectionName] = list
     await saveDB(db)
-    return this._hydrate(newItem)
+    return this._hydrate(newItem as T)
   }
 
   // Basic implementation of findOneAndUpdate for EmailVerificationCode
-  async findOneAndUpdate(query: any, update: any, options: any = {}) {
+  async findOneAndUpdate(query: Record<string, unknown>, update: Record<string, unknown>, options: Record<string, unknown> = {}) {
     let doc = await this.findOne(query)
     
-    if (!doc && options.upsert) {
+    if (!doc && (options as Record<string, unknown>).upsert) {
       // Merge query and update to create new
-      const newData = { ...query, ...update }
+      const newData = { ...query, ...update } as T
       return this.create(newData)
     }
 
@@ -175,17 +185,17 @@ export class LocalModel {
       // Apply updates
       Object.assign(doc, update)
       // If there are $set operators (common in Mongoose), handle them
-      if (update.$set) {
-        Object.assign(doc, update.$set)
+      if ((update as Record<string, unknown>).$set) {
+        Object.assign(doc as Record<string, unknown>, (update as Record<string, unknown>).$set as Record<string, unknown>)
       }
       
       // Save logic is manual here since we are mocking
       const db = await getDB()
-      const list = db[this.collectionName] || []
-      const idx = list.findIndex((i: any) => matchesQuery(i, query))
+      const list = (db[this.collectionName] || []) as DBRecord[]
+      const idx = list.findIndex((i: DBRecord) => matchesQuery(i, query))
       
       if (idx >= 0) {
-        const { save, ...dataToSave } = doc
+        const { save: _save, ...dataToSave } = doc as unknown as Record<string, unknown>
         list[idx] = dataToSave
         db[this.collectionName] = list
         await saveDB(db)

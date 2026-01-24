@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth'
 import { useModalStore } from '@/store/modal'
 import { apiFetch } from '@/lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, BellRing } from 'lucide-react'
+import { BellRing } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SubscribeButtonProps {

@@ -11,8 +11,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input"; 
 import { Button } from "@/components/ui/Button"; 
 import { MobileMenu } from "@/components/MobileMenu"; 
-import { SmartAgent } from "@/components/agents/SmartAgent"; 
-import { Search, Sun, Moon, User, LogOut, Video, CircleUserRound, Menu, MessageSquare } from "lucide-react"; 
+import { Search, User, LogOut, Video, CircleUserRound, Menu, MessageSquare } from "lucide-react"; 
 import { useEffect, useState } from "react"; 
 import { useAuthStore } from "@/store/auth"; 
 
@@ -25,7 +24,7 @@ import Ludo from "@/pages/games/Ludo";
 import Chess from "@/pages/games/Chess"; 
 
 export default function App() { 
-  const { isDark, toggleTheme } = useTheme(); 
+  const { isDark } = useTheme(); 
   const { user, init, hydrated, logout } = useAuthStore(); 
   const [menuOpen, setMenuOpen] = useState(false); 
   const [mobileNavOpen, setMobileNavOpen] = useState(false); 

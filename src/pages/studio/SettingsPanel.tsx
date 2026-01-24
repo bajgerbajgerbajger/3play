@@ -26,11 +26,19 @@ export function SettingsPanel() {
     loadProfile()
   }, [token])
 
+  type ChannelProfile = {
+    displayName: string
+    bio: string
+    phone: string
+    avatarUrl: string
+    bannerUrl: string
+  }
+
   async function loadProfile() {
     try {
       setLoading(true)
       // Use existing endpoint that returns channel profile
-      const data = await apiFetch<{ success: boolean; channel: any }>('/api/studio/me', { token })
+      const data = await apiFetch<{ success: boolean; channel: ChannelProfile | null }>('/api/studio/me', { token })
       if (data.channel) {
         setFormData({
           displayName: data.channel.displayName || '',
@@ -40,8 +48,7 @@ export function SettingsPanel() {
           bannerUrl: data.channel.bannerUrl || ''
         })
       }
-    } catch (err) {
-      console.error(err)
+    } catch {
       setError('Failed to load profile')
     } finally {
       setLoading(false)

@@ -45,7 +45,7 @@ export function StepPhone({
         setLocalNumber(phone)
       }
     }
-  }, []) // run once on mount
+  }, [phone])
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const c = countries.find(x => x.dial === e.target.value) || countries[0]

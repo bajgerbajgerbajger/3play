@@ -9,23 +9,27 @@ import Comment from '../models/Comment.js'
 const router = Router()
 
 // Helper to sort videos since we might get mixed results
-function sortVideos(list: any[], sort: string | null) {
+function sortVideos<T extends { publishedAt?: string | Date | null; views: number }>(list: T[], sort: string | null): T[] {
+  const toTime = (v: string | Date | null | undefined) => {
+    if (!v) return 0
+    if (typeof v === 'string') {
+      const t = Date.parse(v)
+      return Number.isNaN(t) ? 0 : t
+    }
+    return v.getTime()
+  }
   if (sort === 'latest') {
-    return list.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''))
+    return list.sort((a, b) => toTime(b.publishedAt) - toTime(a.publishedAt))
   }
   if (sort === 'popular') {
     return list.sort((a, b) => b.views - a.views)
   }
-  return list.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''))
+  return list.sort((a, b) => toTime(b.publishedAt) - toTime(a.publishedAt))
 }
 
 router.get('/', async (req: Request, res: Response) => {
-  const db = await dbConnect()
-  if (!db) {
-    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
-    return
-  }
-  
+  // Ensure DB connection before any queries (Mongoose buffering disabled)
+  await dbConnect()
   // Try to seed if empty (fire and forget to avoid timeout on cold start)
   seedDatabase().catch(err => console.error('Seed failed:', err))
 
@@ -33,7 +37,7 @@ router.get('/', async (req: Request, res: Response) => {
   const sort = typeof req.query.sort === 'string' ? req.query.sort : null
   const limit = typeof req.query.limit === 'string' ? Number(req.query.limit) : 24
 
-  let filter: any = { visibility: 'published', status: 'ready' }
+  let filter: Record<string, unknown> = { visibility: 'published', status: 'ready' }
   
   if (query) {
     const qRegex = new RegExp(query, 'i')
@@ -136,7 +140,7 @@ router.post('/:videoId/engagement', requireAuth, async (req: Request, res: Respo
     return
   }
 
-  const userId = (req as any).auth.sub
+  const userId = (req as Request & { auth: { sub: string } }).auth.sub
   
   if (action === 'like') {
     if (v.likedBy.includes(userId)) {

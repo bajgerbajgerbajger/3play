@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, ChevronRight } from 'lucide-react';
+import { Send, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { cn } from '@/lib/utils';
@@ -87,8 +87,7 @@ export function SmartAgent() {
   
   const [messages, setMessages] = useState<Message[]>([]);
 
-  // Only show for registered users
-  if (!user) return null;
+  // Always call hooks; UI below is gated by user
 
   // Proactive behavior
   useEffect(() => {
@@ -189,35 +188,38 @@ export function SmartAgent() {
 
   return (
     <>
-      <AgentCharacter 
-        onClick={() => {
-          setIsOpen(!isOpen);
-          setAgentMessage(null); // Clear notification on click
-        }} 
-        isThinking={isTyping} 
-        message={agentMessage}
-      />
+      {user ? (
+        <AgentCharacter 
+          onClick={() => {
+            setIsOpen(!isOpen);
+            setAgentMessage(null);
+          }} 
+          isThinking={isTyping} 
+          message={agentMessage}
+        />
+      ) : null}
 
       {/* Sidebar */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop for mobile */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
-            />
-            
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 right-0 z-40 w-full max-w-[400px] border-l border-border/10 bg-surface/95 shadow-2xl backdrop-blur-xl md:w-[400px]"
-            >
+      {user ? (
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              {/* Backdrop for mobile */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsOpen(false)}
+                className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
+              />
+              
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed inset-y-0 right-0 z-40 w-full max-w-[400px] border-l border-border/10 bg-surface/95 shadow-2xl backdrop-blur-xl md:w-[400px]"
+              >
               <div className="flex h-full flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-border/10 p-4">
@@ -286,11 +288,11 @@ export function SmartAgent() {
                   </div>
                 </div>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      ) : null}
     </>
   );
 }
-

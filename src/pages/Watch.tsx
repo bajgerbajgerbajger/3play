@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet-async'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
-import { SubscribeButton } from '@/components/channel/SubscribeButton'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCompactNumber, formatTimeAgo } from '@/lib/format'
 import { type VideoListItem } from '@/components/video/VideoCard'
@@ -89,8 +88,7 @@ export default function Watch() {
       .finally(() => {
         if (!alive) return
         setLoading(false)
-        // Signal that the page content is ready (hides the intro loader if present)
-        ;(window as any).IntroLoader?.done()
+        // Intro loader removed
       })
     return () => {
       alive = false
