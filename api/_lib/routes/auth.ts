@@ -6,7 +6,6 @@ import { Router, type Request, type Response } from 'express'
 import rateLimit from 'express-rate-limit'
 import { signToken, requireAuth } from '../lib/auth.js'
 import { verifyPassword, hashPassword } from '../data/sample.js'
-import { sendVerificationEmail } from '../lib/email.js'
 import dbConnect from '../lib/db.js'
 import User from '../models/User.js'
 import Profile from '../models/Profile.js'
@@ -34,32 +33,14 @@ const registerLimiter = rateLimit({
 })
 
 // Antivirus / Input Sanitization Check
-function isSafeInput(str: unknown) {
-  if (typeof str !== 'string') return true
+function isSafeInput(str: any) {
+  if (typeof str !== 'string') return true // Let validation handle types
   // Basic XSS and malicious pattern check
   if (/<script\b[^>]*>([\s\S]*?)<\/script>/gm.test(str)) return false
   if (/javascript:/i.test(str)) return false
   if (/\b(on\w+)=/i.test(str)) return false // e.g. onclick=
   if (/\.\.\//.test(str)) return false // Directory traversal
   return true
-}
-
-function normalizeHandle(input: string) {
-  const raw = String(input || '').trim()
-  const noAt = raw.replace(/^@+/, '')
-  return `@${noAt.toLowerCase()}`
-}
-
-function normalizePhone(input: string) {
-  const raw = String(input || '').trim()
-  const keepPlus = raw.startsWith('+')
-  const digits = raw.replace(/[\s\-()]/g, '')
-  const normalized = keepPlus ? `+${digits.replace(/^\+/, '')}` : digits
-  return normalized
-}
-
-function isValidPhone(normalized: string) {
-  return /^\+?[0-9]{7,15}$/.test(normalized)
 }
 
 // Apply Rate Limits
@@ -75,10 +56,9 @@ const codeLimiter = rateLimit({
 })
 
 router.use('/request-code', codeLimiter)
-router.use('/verify-code', codeLimiter)
 
 router.post('/request-code', async (req: Request, res: Response): Promise<void> => {
-  try { await dbConnect() } catch (err) { void err }
+  await dbConnect()
 
   const { email, _gotcha } = (req.body || {}) as { email?: string; _gotcha?: string }
 
@@ -97,80 +77,15 @@ router.post('/request-code', async (req: Request, res: Response): Promise<void> 
   const code = Math.floor(100000 + Math.random() * 900000).toString()
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
-  try {
-    await EmailVerificationCode.findOneAndUpdate(
-      { email: normalizedEmail, used: false },
-      { email: normalizedEmail, code, expiresAt, used: false, attempts: 0 },
-      { upsert: true, new: true },
-    )
-  } catch (err) {
-    console.error('DB Error saving verification code:', err)
-    // Don't fail completely if DB is slow, just try to send email
-  }
+  await EmailVerificationCode.findOneAndUpdate(
+    { email: normalizedEmail, used: false },
+    { email: normalizedEmail, code, expiresAt, used: false, attempts: 0 },
+    { upsert: true, new: true },
+  )
 
-  // Set a timeout for email sending to prevent long loading states
-  const emailPromise = sendVerificationEmail(normalizedEmail, code)
-  const timeoutPromise = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 5000))
-
-  const sent = await Promise.race([emailPromise, timeoutPromise]).catch(err => {
-    console.error('Email send failed:', err)
-    return false
-  })
-
-  // Always return devCode in non-production or if email failed/timed out
-  // This ensures the user is never stuck
-  const allowDevCode = true 
-
-  if (!sent || allowDevCode) {
-    console.log('Verification code for', normalizedEmail, 'is', code)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Dev email verification code for', normalizedEmail, 'is', code)
     res.status(200).json({ success: true, devCode: code })
-    return
-  }
-
-  // If email sent successfully, don't return code
-  res.status(200).json({ success: true })
-})
-
-router.post('/verify-code', async (req: Request, res: Response): Promise<void> => {
-  try { await dbConnect() } catch (err) { void err }
-
-  const { email, verificationCode, _gotcha } = (req.body || {}) as {
-    email?: string
-    verificationCode?: string
-    _gotcha?: string
-  }
-
-  if (_gotcha) {
-    res.status(200).json({ success: false, error: 'Verification failed security check.' })
-    return
-  }
-
-  if (!email || !verificationCode) {
-    res.status(400).json({ success: false, error: 'Email and code are required' })
-    return
-  }
-
-  const normalizedEmail = String(email).trim().toLowerCase()
-  const codeDoc = await EmailVerificationCode.findOne({ email: normalizedEmail, used: false })
-
-  if (!codeDoc || !codeDoc.code || codeDoc.code !== verificationCode) {
-    if (codeDoc) {
-      codeDoc.attempts = Number(codeDoc.attempts || 0) + 1
-      if (codeDoc.attempts >= 5) {
-        codeDoc.used = true
-      }
-      await codeDoc.save()
-      if (codeDoc.used) {
-        res.status(429).json({ success: false, error: 'Too many invalid attempts. Request a new code.' })
-        return
-      }
-    }
-    res.status(400).json({ success: false, error: 'Invalid verification code' })
-    return
-  }
-
-  if (codeDoc.expiresAt && codeDoc.expiresAt.getTime() < Date.now()) {
-    res.status(400).json({ success: false, error: 'Verification code has expired' })
     return
   }
 
@@ -182,23 +97,15 @@ router.post('/verify-code', async (req: Request, res: Response): Promise<void> =
  * POST /api/auth/register
  */
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
-  const db = await dbConnect()
-  if (!db) {
-    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
-    return
-  }
+  await dbConnect()
 
-  const { email, password, displayName, handle, verificationCode, acceptTerms, phone, consentContact, consentVersion, gender, _gotcha } = (req.body || {}) as {
+  const { email, password, displayName, handle, verificationCode, acceptTerms, _gotcha } = (req.body || {}) as {
     email?: string
     password?: string
     displayName?: string
     handle?: string
     verificationCode?: string
     acceptTerms?: boolean
-    phone?: string
-    consentContact?: boolean
-    consentVersion?: string
-    gender?: 'male' | 'female' | 'other'
     _gotcha?: string // Honeypot field
   }
 
@@ -210,7 +117,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   }
 
   // 2. Input Validation
-  if (!email || !password || !displayName || !handle || !verificationCode || !phone || !consentVersion) {
+  if (!email || !password || !displayName || !handle || !verificationCode) {
     res.status(400).json({ success: false, error: 'Missing required fields' })
     return
   }
@@ -220,34 +127,23 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
-  if (!consentContact) {
-    res.status(400).json({ success: false, error: 'You must accept the security contact consent to continue' })
-    return
-  }
-
   // 3. Antivirus / Safety Check
-  if (!isSafeInput(displayName) || !isSafeInput(handle) || !isSafeInput(email) || !isSafeInput(consentVersion)) {
+  if (!isSafeInput(displayName) || !isSafeInput(handle) || !isSafeInput(email)) {
     res.status(400).json({ success: false, error: 'Input contains unsafe characters.' })
     return
   }
 
-  const normalizedHandle = normalizeHandle(handle)
+  const normalizedHandle = handle.startsWith('@') ? handle : `@${handle}`
   const normalizedEmail = String(email).trim().toLowerCase()
-  const normalizedPhone = normalizePhone(phone)
-
-  if (!isValidPhone(normalizedPhone)) {
-    res.status(400).json({ success: false, error: 'Invalid phone number' })
-    return
-  }
   
   // 4. Persistence Check
-  const existingEmail = await User.findOne({ email: normalizedEmail })
+  const existingEmail = await User.findOne({ email: new RegExp(`^${normalizedEmail}$`, 'i') })
   if (existingEmail) {
     res.status(409).json({ success: false, error: 'Email already registered' })
     return
   }
 
-  const existingHandle = await User.findOne({ handle: normalizedHandle })
+  const existingHandle = await User.findOne({ handle: new RegExp(`^${normalizedHandle}$`, 'i') })
   if (existingHandle) {
     res.status(409).json({ success: false, error: 'Handle already taken' })
     return
@@ -269,33 +165,41 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   await codeDoc.save()
 
   const userId = `u-${Math.random().toString(16).slice(2, 10)}`
+  const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
   
-  let avatarPrompt = 'flat geometric avatar icon, readable number 3 with play triangle motif, minimal, sharp edges, red accent, dark background, vector style'
-  if (gender === 'male') {
-    avatarPrompt = 'flat geometric avatar icon, young man character, minimal, sharp edges, blue and red accent, dark background, vector style'
-  } else if (gender === 'female') {
-    avatarPrompt = 'flat geometric avatar icon, young woman character, minimal, sharp edges, pink and red accent, dark background, vector style'
-  }
+  const avatarUrl = `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
+    'flat geometric avatar icon, readable number 3 with play triangle motif, minimal, sharp edges, red accent, dark background, vector style',
+  )}&image_size=square`
 
-  const avatarUrl = `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(avatarPrompt)}&image_size=square`
-
-  const user = await User.create({
+  const user = new User({
     id: userId,
     email: normalizedEmail,
     handle: normalizedHandle,
     displayName,
     avatarUrl,
-    gender,
     passwordHash: hashPassword(password),
     emailVerified: true,
   })
+  
+  await user.save()
 
-  // Create a channel profile for the new user - DEPRECATED: User creates channel manually later
-  // await Profile.create({ ... })
+  // Create a channel profile for the new user
+  const profile = new Profile({
+    id: profileId,
+    userId: user.id,
+    handle: normalizedHandle,
+    displayName,
+    avatarUrl,
+    bannerUrl: `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
+      'wide banner, abstract tech background, dark theme, minimal geometric shapes, subtle gradient',
+    )}&image_size=landscape_16_9`,
+    bio: `Welcome to ${displayName}'s channel`,
+    subscribers: 0,
+  })
+  
+  await profile.save()
 
   const token = signToken({ id: user.id, email: user.email, handle: user.handle })
-  
-  // Return null channelId for new users
   res.status(200).json({
     success: true,
     token,
@@ -305,7 +209,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
-      channelId: undefined,
     },
   })
 })
@@ -315,11 +218,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
  * POST /api/auth/login
  */
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
-  const db = await dbConnect()
-  if (!db) {
-    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
-    return
-  }
+  await dbConnect()
 
   const { email, password } = (req.body || {}) as { email?: string; password?: string }
   if (!email || !password) {
@@ -327,8 +226,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     return
   }
   
-  const normalizedEmail = String(email).trim().toLowerCase()
-  const user = await User.findOne({ email: normalizedEmail })
+  const user = await User.findOne({ email: new RegExp(`^${email}$`, 'i') })
   
   if (!user || !verifyPassword(password, user.passwordHash)) {
     res.status(401).json({ success: false, error: 'Invalid credentials' })
@@ -339,9 +237,6 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   user.lastLogin = new Date()
   await user.save()
   
-  // Fetch channel if exists
-  const channel = await Profile.findOne({ userId: user.id })
-
   const token = signToken({ id: user.id, email: user.email, handle: user.handle })
   res.status(200).json({
     success: true,
@@ -352,7 +247,6 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
-      channelId: channel?.id,
     },
   })
 })
@@ -366,11 +260,7 @@ router.post('/logout', async (req: Request, res: Response): Promise<void> => {
 })
 
 router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void> => {
-  const db = await dbConnect()
-  if (!db) {
-    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
-    return
-  }
+  await dbConnect()
 
   const auth = (req as Request & { auth: { sub: string } }).auth
   const user = await User.findOne({ id: auth.sub })
@@ -379,9 +269,6 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
     res.status(401).json({ success: false, error: 'Unauthorized' })
     return
   }
-
-  const channel = await Profile.findOne({ userId: user.id })
-
   res.status(200).json({
     success: true,
     user: {
@@ -390,7 +277,6 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
-      channelId: channel?.id,
     },
   })
 })

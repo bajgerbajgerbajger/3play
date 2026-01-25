@@ -24,8 +24,7 @@ async function createAdmin() {
 
   if (!user) {
     console.log('User not found, creating new admin...')
-    // Use create() instead of new User() to support both Mongoose and LocalModel
-    user = await User.create({
+    user = new User({
       id: `u-${Math.random().toString(16).slice(2, 10)}`,
       email,
       handle,
@@ -39,8 +38,9 @@ async function createAdmin() {
     console.log('User found, updating credentials and role...')
     user.passwordHash = hashPassword(password)
     user.role = 'admin'
-    await user.save()
   }
+
+  await user.save()
 
   console.log('----------------------------------------')
   console.log('Admin Access Configured Successfully')

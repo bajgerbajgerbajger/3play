@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/store/auth'
 import type { StudioVideo, Tab } from '@/pages/studio/types'
+import { sampleSources } from '@/pages/studio/types'
 import { StudioSidebar } from '@/pages/studio/StudioSidebar'
 import { UploadPanel } from '@/pages/studio/UploadPanel'
 import { VideosPanel } from '@/pages/studio/VideosPanel'
-import { SettingsPanel } from '@/pages/studio/SettingsPanel'
 import { VideoEditor } from '@/pages/studio/VideoEditor'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/Button'
 
 export default function Studio() {
   const nav = useNavigate()
@@ -19,30 +17,11 @@ export default function Studio() {
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<StudioVideo[]>([])
 
-  // Multi-upload state
-  type UploadItem = {
-    id: string
-    file: File
-    title: string
-    progress: number
-    status: 'pending' | 'uploading' | 'done' | 'error'
-    error?: string
-  }
-  const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([])
-  
-  // Single upload form state (kept for metadata editing of active upload or simple mode)
-  // For now, we will simplify: We upload files first, then they appear in the list as "Processing/Ready".
-  // But user wants "multiple upload".
-  // Let's change UploadPanel to just accept files and add them to queue.
-
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadDesc, setUploadDesc] = useState('')
   const [uploadType, setUploadType] = useState<'video' | 'movie' | 'episode'>('video')
-  const [uploadMode, setUploadMode] = useState<'file' | 'embed'>('file')
   const [uploadSource, setUploadSource] = useState<string>('')
-  const [uploadEmbedCode, setUploadEmbedCode] = useState<string>('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
-  const [uploadThumbnail, setUploadThumbnail] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [creating, setCreating] = useState(false)
   const [selected, setSelected] = useState<StudioVideo | null>(null)
@@ -80,300 +59,44 @@ export default function Studio() {
     return () => window.clearInterval(t)
   }, [token])
 
-  // Helper to generate thumbnail from video file
-  const generateThumbnail = async (videoFile: File): Promise<File> => {
-      return new Promise((resolve, reject) => {
-          const video = document.createElement('video')
-          video.preload = 'metadata'
-          video.src = URL.createObjectURL(videoFile)
-          video.muted = true
-          
-          video.onloadedmetadata = () => {
-              // Seek to 1s or middle if short
-              video.currentTime = Math.min(1, video.duration / 2)
-          }
-          
-          video.onseeked = () => {
-              const canvas = document.createElement('canvas')
-              canvas.width = video.videoWidth
-              canvas.height = video.videoHeight
-              const ctx = canvas.getContext('2d')
-              if (!ctx) {
-                  reject(new Error('Could not get canvas context'))
-                  return
-              }
-              ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-              canvas.toBlob((blob) => {
-                  if (blob) {
-                      const file = new File([blob], "thumbnail.jpg", { type: "image/jpeg" })
-                      resolve(file)
-                  } else {
-                      reject(new Error('Thumbnail generation failed'))
-                  }
-                  URL.revokeObjectURL(video.src)
-              }, 'image/jpeg', 0.8)
-          }
-          
-          video.onerror = () => {
-              URL.revokeObjectURL(video.src)
-              reject(new Error('Video load error'))
-          }
-      })
-  }
-
   async function createUpload() {
     if (!token) return
     if (uploadTitle.trim().length < 3) {
       setError('Title must be at least 3 characters')
       return
     }
-    
-    if (uploadMode === 'file' && !uploadFile && !uploadSource.trim()) {
+    if (!uploadFile && !uploadSource.trim()) {
       setError('Please select a file or enter a source URL')
       return
-    }
-
-    if (uploadMode === 'embed' && !uploadEmbedCode.trim()) {
-        setError('Please enter the embed code')
-        return
     }
 
     setError(null)
     setCreating(true)
     setUploadProgress(0)
-
+    const t = window.setInterval(() => {
+      setUploadProgress((p) => Math.min(95, p + Math.random() * 14))
+    }, 180)
     try {
       let finalSourceUrl = uploadSource
       let finalThumbnailUrl = undefined
       let finalDuration = 0
-      const finalEmbedCode = uploadMode === 'embed' ? (() => {
-        const raw = uploadEmbedCode.trim()
-        if (!raw) {
-          throw new Error('Embed kód je prázdný')
-        }
-        const parser = new DOMParser()
-        const doc = parser.parseFromString(raw, 'text/html')
-        const iframe = doc.querySelector('iframe')
-        if (!iframe) throw new Error('Embed musí obsahovat <iframe>')
-        const src = iframe.getAttribute('src') || ''
-        if (!src || !/^https:\/\//i.test(src) || /^javascript:/i.test(src)) {
-          throw new Error('Neplatný src atribut v <iframe>')
-        }
-        iframe.setAttribute('src', src)
-        iframe.setAttribute('frameborder', '0')
-        iframe.setAttribute('allowfullscreen', '')
-        iframe.setAttribute('webkitAllowFullScreen', '')
-        iframe.setAttribute('mozallowfullscreen', '')
-        iframe.setAttribute('scrolling', 'no')
-        iframe.setAttribute('loading', 'lazy')
-        iframe.setAttribute('referrerpolicy', 'no-referrer')
-        iframe.setAttribute('width', '100%')
-        iframe.setAttribute('height', '100%')
-        return iframe.outerHTML
-      })() : undefined
-      
-      let thumbnailToUpload = uploadThumbnail
-      
-      // Auto-generate thumbnail if missing and we have a video file
-      if (uploadMode === 'file' && uploadFile && !thumbnailToUpload) {
-          try {
-              thumbnailToUpload = await generateThumbnail(uploadFile)
-          } catch (err) {
-              console.warn('Failed to generate thumbnail:', err)
-              // Continue without thumbnail
-          }
-      }
 
-      type CloudinaryUploadResponse = {
-        secure_url?: string
-        duration?: number
-        resource_type?: string
-      }
-
-      const uploadToCloudinary = async (
-        file: File,
-        folder: string,
-        apiKey: string,
-        timestamp: number,
-        signature: string,
-        cloudName: string,
-      ): Promise<CloudinaryUploadResponse> => {
-         const CHUNK_SIZE = 6 * 1024 * 1024 // 6MB
-         const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`
-
-         // Standard upload for small files
-         if (file.size <= CHUNK_SIZE) {
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('api_key', apiKey)
-            formData.append('timestamp', String(timestamp))
-            formData.append('signature', signature)
-            formData.append('folder', folder)
-
-           return new Promise<CloudinaryUploadResponse>((resolve, reject) => {
-                const xhr = new XMLHttpRequest()
-                xhr.open('POST', url)
-                
-                if (file === uploadFile) {
-                   xhr.upload.onprogress = (e) => {
-                       if (e.lengthComputable) {
-                           setUploadProgress(Math.round((e.loaded / e.total) * 100))
-                       }
-                   }
-                }
-
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        const response = JSON.parse(xhr.responseText) as CloudinaryUploadResponse
-                        resolve(response)
-                    } else {
-                        reject(new Error(`Cloudinary upload failed: ${xhr.responseText}`))
-                    }
-                }
-                xhr.onerror = () => reject(new Error('Network error during upload'))
-                xhr.send(formData)
-            })
-         }
-
-         // Chunked upload for large files
-         const uniqueUploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-         const total = file.size
-         let start = 0
-         let result: CloudinaryUploadResponse | undefined
-
-         while (start < total) {
-             const end = Math.min(start + CHUNK_SIZE, total)
-             const chunk = file.slice(start, end)
-             
-             const formData = new FormData()
-             formData.append('file', chunk)
-             formData.append('api_key', apiKey)
-             formData.append('timestamp', String(timestamp))
-             formData.append('signature', signature)
-             formData.append('folder', folder)
-             
-             await new Promise<void>((resolve, reject) => {
-                 const xhr = new XMLHttpRequest()
-                 xhr.open('POST', url)
-                 
-                 // Content-Range: bytes start-end/total
-                 // end is inclusive index (byte pos), so end-1
-                 const rangeEnd = end - 1
-                 xhr.setRequestHeader('X-Unique-Upload-Id', uniqueUploadId)
-                 xhr.setRequestHeader('Content-Range', `bytes ${start}-${rangeEnd}/${total}`)
-                 
-                 xhr.onload = () => {
-                     if (xhr.status >= 200 && xhr.status < 300) {
-                         const response = JSON.parse(xhr.responseText) as CloudinaryUploadResponse
-                         if (end >= total) {
-                             result = response
-                         }
-                         resolve()
-                     } else {
-                         reject(new Error(`Chunk upload failed: ${xhr.responseText}`))
-                     }
-                 }
-                 
-                 xhr.onerror = () => reject(new Error('Network error during chunk upload'))
-                 
-                 if (file === uploadFile) {
-                    xhr.upload.onprogress = (e) => {
-                        if (e.lengthComputable) {
-                            // e.loaded is bytes loaded for *this chunk*
-                            // Total loaded = start + e.loaded
-                            const totalLoaded = start + e.loaded
-                            setUploadProgress(Math.round((totalLoaded / total) * 100))
-                        }
-                    }
-                 }
-                 
-                 xhr.send(formData)
-             })
-             
-             start = end
-         }
-         
-         return result ?? {}
-      }
-
-      const sigData = await apiFetch<{
-        mode: string
-        folder: string
-        apiKey: string
-        timestamp: number
-        signature: string
-        cloudName: string
-      }>('/api/studio/upload-signature', { token })
-
-      if (sigData.mode === 'cloud') {
-           // Cloudinary Mode
-           
-           // 1. Upload Thumbnail if exists
-           if (thumbnailToUpload) {
-               // We need a separate signature for thumbnail if we want to be strict, but usually same works if logic allows.
-               // Actually, the signature is bound to timestamp and folder.
-               // We can reuse if we don't change parameters too much, but ideally we should get fresh signature or just reuse parameters.
-               // Our backend signs { timestamp, folder }.
-               // So we can reuse.
-               const thumbResp = await uploadToCloudinary(thumbnailToUpload, sigData.folder, sigData.apiKey, sigData.timestamp, sigData.signature, sigData.cloudName)
-               finalThumbnailUrl = thumbResp.secure_url
-           }
-
-           // 2. Upload Video if exists
-          if (uploadMode === 'file' && uploadFile) {
-              const vidResp = await uploadToCloudinary(uploadFile, sigData.folder, sigData.apiKey, sigData.timestamp, sigData.signature, sigData.cloudName)
-              finalSourceUrl = vidResp.secure_url
-              finalDuration = vidResp.duration || 0
-              
-              // If no custom thumbnail, try to use video thumbnail
-              if (!finalThumbnailUrl) {
-                  if (vidResp.resource_type === 'video' || finalSourceUrl.match(/\.(mp4|mov|avi|webm|mkv)$/i)) {
-                      finalThumbnailUrl = finalSourceUrl.replace(/\.[^/.]+$/, ".jpg")
-                  } else {
-                      finalThumbnailUrl = finalSourceUrl
-                  }
-              }
-          }
-      } else {
-          // Local Mode
-          // Only call upload endpoint if we actually have a file or thumbnail to send
-          const shouldUpload = (uploadMode === 'file' && !!uploadFile) || !!thumbnailToUpload
-
-          if (shouldUpload) {
-            const t = window.setInterval(() => {
-                setUploadProgress((p) => Math.min(95, p + Math.random() * 14))
-            }, 180)
-            try {
-                 const formData = new FormData()
-                 if (uploadMode === 'file' && uploadFile) {
-                     formData.append('file', uploadFile)
-                 }
-                 if (thumbnailToUpload) {
-                     formData.append('thumbnail', thumbnailToUpload)
-                 }
-                 const data = await apiFetch<{
-                   success: boolean
-                   error?: string
-                   url: string
-                   duration?: number
-                   thumbnailUrl?: string
-                 }>('/api/studio/upload', {
-                  method: 'POST',
-                  token,
-                  body: formData
-                })
-                if (!data.success) throw new Error(data.error || 'Upload failed')
-                if (uploadMode === 'file' && uploadFile) {
-                    finalSourceUrl = data.url
-                    finalDuration = data.duration || 0
-                }
-                if (data.thumbnailUrl) {
-                    finalThumbnailUrl = data.thumbnailUrl
-                }
-            } finally {
-                window.clearInterval(t)
-            }
-          }
+      if (uploadFile) {
+        const formData = new FormData()
+        formData.append('file', uploadFile)
+        
+        const res = await fetch('/api/studio/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.error || 'Upload failed')
+        finalSourceUrl = data.url
+        finalThumbnailUrl = data.thumbnailUrl
+        finalDuration = data.duration || 0
       }
 
       const d = await apiFetch<{ success: true; video: StudioVideo }>('/api/studio/videos', {
@@ -385,8 +108,7 @@ export default function Studio() {
           type: uploadType,
           sourceUrl: finalSourceUrl,
           thumbnailUrl: finalThumbnailUrl,
-          duration: finalDuration,
-          embedCode: finalEmbedCode
+          duration: finalDuration
         }),
       })
       setUploadProgress(100)
@@ -397,12 +119,10 @@ export default function Studio() {
       setUploadDesc('')
       setUploadType('video')
       setUploadFile(null)
-      setUploadThumbnail(null)
-      setUploadEmbedCode('')
-      setUploadMode('file')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed')
     } finally {
+      window.clearInterval(t)
       setCreating(false)
       window.setTimeout(() => setUploadProgress(0), 800)
     }
@@ -445,11 +165,14 @@ export default function Studio() {
     }
     const formData = new FormData()
     formData.append('file', file)
-    const data = await apiFetch<{ success?: boolean; thumbnailUrl?: string; error?: string }>('/api/studio/upload', {
+    const res = await fetch('/api/studio/upload', {
       method: 'POST',
-      token,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: formData,
     })
+    const data = (await res.json()) as { success?: boolean; thumbnailUrl?: string; error?: string }
     if (!data.success || !data.thumbnailUrl) {
       throw new Error(data.error || 'Thumbnail upload failed')
     }
@@ -458,7 +181,7 @@ export default function Studio() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] animate-fadeUp">
-      <StudioSidebar tab={tab} readyCount={readyCount} onTab={(t) => { setTab(t); setSelected(null); }} />
+      <StudioSidebar tab={tab} readyCount={readyCount} onTab={setTab} />
 
       <section className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -480,104 +203,21 @@ export default function Studio() {
         {error ? <div className="rounded-xl border border-border/10 bg-surface p-4 text-sm text-muted">{error}</div> : null}
 
         {tab === 'upload' ? (
-          <div className="space-y-6">
-            <UploadPanel
-              title={uploadTitle}
-              description={uploadDesc}
-              type={uploadType}
-              sourceUrl={uploadSource}
-              // Modified props for multi-upload
-              onFilesSelect={(files) => {
-                  if (!files) return
-                  // Process multiple files
-                  const newItems: UploadItem[] = Array.from(files).map(file => {
-                      if (file.size > 2 * 1024 * 1024 * 1024) {
-                          alert(`Soubor ${file.name} je příliš velký (>2GB)`)
-                          return null
-                      }
-                      return {
-                        id: Math.random().toString(36).slice(2),
-                        file,
-                        progress: 0,
-                        status: 'pending',
-                        title: file.name.replace(/\.[^/.]+$/, "")
-                      }
-                  }).filter(Boolean) as UploadItem[]
-                  
-                  setUploadQueue(prev => [...prev, ...newItems])
-                  setCreating(true) // Show queue
-              }}
-              file={null} // We don't use single file prop anymore for display
-              creating={creating}
-              progress={uploadProgress}
-              onTitle={setUploadTitle}
-              onDescription={setUploadDesc}
-              onType={setUploadType}
-              onSourceUrl={setUploadSource}
-              // onFileSelect removed in favor of onFilesSelect
-              onCreate={createUpload}
-              
-              uploadMode={uploadMode}
-              onUploadMode={setUploadMode}
-              embedCode={uploadEmbedCode}
-              onEmbedCode={setUploadEmbedCode}
-              thumbnailFile={uploadThumbnail}
-              onThumbnailSelect={setUploadThumbnail}
-            />
-
-            {/* Active Uploads Queue */}
-            {uploadQueue.length > 0 && (
-              <div className="space-y-3">
-                {uploadQueue.map(item => (
-                  <div key={item.id} className="rounded-2xl border border-border/10 bg-surface p-4 animate-fadeUp">
-                      <div className="flex items-center justify-between mb-2">
-                          <div className="font-bold flex items-center gap-2">
-                              {item.status === 'uploading' && <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />}
-                              {item.status === 'done' && <div className="w-2 h-2 rounded-full bg-green-500" />}
-                              {item.status === 'error' && <div className="w-2 h-2 rounded-full bg-red-500" />}
-                              {item.status === 'pending' && <div className="w-2 h-2 rounded-full bg-muted" />}
-                              {item.title}
-                          </div>
-                          <div className="text-sm font-mono">{item.status === 'error' ? 'Error' : `${item.progress}%`}</div>
-                      </div>
-                      {item.status === 'error' ? (
-                        <div className="text-xs text-red-400">{item.error}</div>
-                      ) : (
-                        <div className="h-2 w-full bg-surface2 rounded-full overflow-hidden">
-                            <div 
-                                className={cn(
-                                  "h-full transition-all duration-300 ease-out relative",
-                                  item.status === 'done' ? "bg-green-500" : "bg-brand"
-                                )}
-                                style={{ width: `${item.progress}%` }}
-                            >
-                                {item.status === 'uploading' && (
-                                  <div className="absolute inset-0 bg-white/20 animate-[shimmer_1s_infinite]" />
-                                )}
-                            </div>
-                        </div>
-                      )}
-                  </div>
-                ))}
-                {uploadQueue.some(i => i.status === 'done') && (
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={() => {
-                        setUploadQueue(prev => prev.filter(i => i.status !== 'done'))
-                        if (uploadQueue.every(i => i.status === 'done')) {
-                          setTab('videos')
-                        }
-                      }}
-                    >
-                      Vyčistit hotové
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ) : tab === 'settings' ? (
-          <SettingsPanel />
+          <UploadPanel
+            title={uploadTitle}
+            description={uploadDesc}
+            type={uploadType}
+            sourceUrl={uploadSource}
+            file={uploadFile}
+            creating={creating}
+            progress={uploadProgress}
+            onTitle={setUploadTitle}
+            onDescription={setUploadDesc}
+            onType={setUploadType}
+            onSourceUrl={setUploadSource}
+            onFileSelect={setUploadFile}
+            onCreate={createUpload}
+          />
         ) : (
           <VideosPanel loading={loading} items={items} selectedId={selected?.id || null} onSelect={(v) => setSelected(v)} />
         )}
