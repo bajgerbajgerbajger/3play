@@ -315,6 +315,7 @@ export function addVideo(video: Video) {
 }
 
 export function updateVideo(video: Video) {
+  void video
   // Assuming video is a reference from the array, it's already updated in memory.
   // We just need to trigger save.
   saveData()

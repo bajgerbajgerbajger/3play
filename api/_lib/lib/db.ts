@@ -14,7 +14,7 @@ if (!MONGODB_URI) {
  */
 type Cached = { conn: mongoose.Mongoose | null; promise: Promise<mongoose.Mongoose> | null }
 const g = globalThis as unknown as { mongoose?: Cached }
-let cached: Cached = g.mongoose ?? { conn: null, promise: null }
+const cached: Cached = g.mongoose ?? { conn: null, promise: null }
 if (!g.mongoose) {
   g.mongoose = cached
 }

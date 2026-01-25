@@ -1,8 +1,12 @@
 import { v2 as cloudinary } from 'cloudinary'
 import * as multerStorageCloudinary from 'multer-storage-cloudinary'
+import type { Request } from 'express'
+import type { StorageEngine } from 'multer'
 
 // Handle CloudinaryStorage export which might be a default export or named export depending on environment
-const CloudinaryStorage = (multerStorageCloudinary as any).CloudinaryStorage || (multerStorageCloudinary as any).default?.CloudinaryStorage || multerStorageCloudinary.default
+type CloudinaryCtor = new (opts: object) => StorageEngine
+const ms = multerStorageCloudinary as unknown as { CloudinaryStorage?: CloudinaryCtor; default?: { CloudinaryStorage?: CloudinaryCtor } }
+const CloudinaryStorage = ms.CloudinaryStorage || ms.default?.CloudinaryStorage
 
 // Configure Cloudinary
 cloudinary.config({
@@ -11,9 +15,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-const storage = new CloudinaryStorage({
+if (!CloudinaryStorage) {
+  throw new Error('CloudinaryStorage not available')
+}
+
+const storage: StorageEngine = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (req: any, file: any) => {
+  params: async (req: Request, file: Express.Multer.File) => {
     const isVideo = file.mimetype.startsWith('video/')
     return {
       folder: '3play-uploads',

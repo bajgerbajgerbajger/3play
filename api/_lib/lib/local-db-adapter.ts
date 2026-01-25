@@ -118,6 +118,7 @@ export class LocalModel<T extends DBRecord = DBRecord> {
         
         // Remove save method before writing to JSON
         const { save: _save, ...dataToSave } = this as unknown as Record<string, unknown>
+        void _save
         
         if (idx >= 0) {
           list[idx] = dataToSave
@@ -131,6 +132,8 @@ export class LocalModel<T extends DBRecord = DBRecord> {
       },
       toObject: function() {
         const { save: _save, toObject: _toObject, ...rest } = this as unknown as Record<string, unknown>
+        void _save
+        void _toObject
         return rest as T
       }
     }
@@ -173,7 +176,7 @@ export class LocalModel<T extends DBRecord = DBRecord> {
 
   // Basic implementation of findOneAndUpdate for EmailVerificationCode
   async findOneAndUpdate(query: Record<string, unknown>, update: Record<string, unknown>, options: Record<string, unknown> = {}) {
-    let doc = await this.findOne(query)
+    const doc = await this.findOne(query)
     
     if (!doc && (options as Record<string, unknown>).upsert) {
       // Merge query and update to create new
@@ -196,6 +199,7 @@ export class LocalModel<T extends DBRecord = DBRecord> {
       
       if (idx >= 0) {
         const { save: _save, ...dataToSave } = doc as unknown as Record<string, unknown>
+        void _save
         list[idx] = dataToSave
         db[this.collectionName] = list
         await saveDB(db)

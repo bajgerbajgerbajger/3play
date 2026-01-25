@@ -56,7 +56,7 @@ export function UploadPanel({
       const iframe = doc.querySelector('iframe')
       if (!iframe) return { html: '', error: 'Embed musí obsahovat <iframe>' }
       const src = iframe.getAttribute('src') || ''
-      if (!src || !/^https?:\/\//i.test(src) || /^javascript:/i.test(src)) {
+      if (!src || !/^https:\/\//i.test(src) || /^javascript:/i.test(src)) {
         return { html: '', error: 'Neplatný src atribut v <iframe>' }
       }
       // Reset attributes to safe whitelist

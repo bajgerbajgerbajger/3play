@@ -78,11 +78,7 @@ router.use('/request-code', codeLimiter)
 router.use('/verify-code', codeLimiter)
 
 router.post('/request-code', async (req: Request, res: Response): Promise<void> => {
-  const db = await dbConnect()
-  if (!db) {
-    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
-    return
-  }
+  try { await dbConnect() } catch (err) { void err }
 
   const { email, _gotcha } = (req.body || {}) as { email?: string; _gotcha?: string }
 
@@ -136,11 +132,7 @@ router.post('/request-code', async (req: Request, res: Response): Promise<void> 
 })
 
 router.post('/verify-code', async (req: Request, res: Response): Promise<void> => {
-  const db = await dbConnect()
-  if (!db) {
-    res.status(500).json({ success: false, error: 'Chybí konfigurace databáze (MONGODB_URI)' })
-    return
-  }
+  try { await dbConnect() } catch (err) { void err }
 
   const { email, verificationCode, _gotcha } = (req.body || {}) as {
     email?: string

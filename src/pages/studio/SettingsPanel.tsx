@@ -71,7 +71,7 @@ export function SettingsPanel() {
       await init()
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
-    } catch (err) {
+    } catch {
       setError('Failed to save changes')
     } finally {
       setSaving(false)

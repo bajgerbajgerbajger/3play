@@ -156,7 +156,7 @@ export default function Studio() {
         const iframe = doc.querySelector('iframe')
         if (!iframe) throw new Error('Embed musí obsahovat <iframe>')
         const src = iframe.getAttribute('src') || ''
-        if (!src || !/^https?:\/\//i.test(src) || /^javascript:/i.test(src)) {
+        if (!src || !/^https:\/\//i.test(src) || /^javascript:/i.test(src)) {
           throw new Error('Neplatný src atribut v <iframe>')
         }
         iframe.setAttribute('src', src)
