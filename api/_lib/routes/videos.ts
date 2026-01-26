@@ -36,8 +36,29 @@ router.get('/', async (req: Request, res: Response) => {
   const query = typeof req.query.q === 'string' ? req.query.q.trim() : ''
   const sort = typeof req.query.sort === 'string' ? req.query.sort : null
   const limit = typeof req.query.limit === 'string' ? Number(req.query.limit) : 24
-
+  
   let filter: Record<string, unknown> = { visibility: 'published', status: 'ready' }
+
+  // Subscriptions Filter
+  if (sort === 'subscriptions') {
+    const token = getAuthToken(req)
+    if (!token) {
+       res.status(401).json({ success: false, error: 'Unauthorized' })
+       return
+    }
+    const payload = verifyToken(token)
+    if (!payload) {
+       res.status(401).json({ success: false, error: 'Invalid token' })
+       return
+    }
+    
+    // Find all channels user is subscribed to
+    const Subscription = (await import('../models/Subscription.js')).default
+    const subs = await Subscription.find({ subscriberId: payload.sub })
+    const channelIds = subs.map(s => s.channelId)
+    
+    filter.ownerId = { $in: channelIds }
+  }
   
   if (query) {
     const qRegex = new RegExp(query, 'i')

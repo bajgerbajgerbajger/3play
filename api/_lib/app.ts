@@ -35,6 +35,12 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 app.use('/uploads', express.static(path.resolve('uploads')))
 
+// Serve frontend static files
+const distPath = path.join(__dirname, '../../dist')
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+}
+
 /**
  * API Routes
  */
@@ -72,13 +78,25 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
 })
 
 /**
- * 404 handler
+ * SPA Fallback & 404 handler
  */
 app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: 'API not found',
-  })
+  // API 404
+  if (req.path.startsWith('/api')) {
+    res.status(404).json({
+      success: false,
+      error: 'API not found',
+    })
+    return
+  }
+
+  // SPA Fallback
+  const indexFile = path.join(distPath, 'index.html')
+  if (fs.existsSync(indexFile)) {
+    res.sendFile(indexFile)
+  } else {
+    res.status(404).send('Not Found')
+  }
 })
 
 export default app

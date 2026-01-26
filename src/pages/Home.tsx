@@ -104,6 +104,18 @@ export default function Home() {
           >
             Populární
           </button>
+          <button
+            className={cn(
+              'h-9 rounded-[10px] border border-border/10 px-3 text-sm font-semibold transition',
+              sort === 'subscriptions' ? 'bg-white/5 text-text' : 'bg-surface text-muted hover:text-text hover:bg-surface2',
+            )}
+            onClick={() => {
+              params.set('sort', 'subscriptions')
+              setParams(params)
+            }}
+          >
+            Odebírané
+          </button>
         </div>
       </div>
 
@@ -141,8 +153,22 @@ export default function Home() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface2 text-muted">
             <Video size={32} />
           </div>
-          <h3 className="text-lg font-semibold">Žádná videa</h3>
-          <p className="text-muted">Zatím tu nic není. Buď první a nahraj video!</p>
+          {sort === 'subscriptions' && !user ? (
+             <>
+                <h3 className="text-lg font-semibold">Přihlaste se</h3>
+                <p className="text-muted">Pro zobrazení odebíraných videí se musíte přihlásit.</p>
+             </>
+          ) : sort === 'subscriptions' ? (
+             <>
+                <h3 className="text-lg font-semibold">Žádná videa</h3>
+                <p className="text-muted">Zatím neodebíráte žádné kanály s videi.</p>
+             </>
+          ) : (
+            <>
+               <h3 className="text-lg font-semibold">Žádná videa</h3>
+               <p className="text-muted">Zatím tu nic není. Buď první a nahraj video!</p>
+            </>
+          )}
         </div>
       ) : null}
 

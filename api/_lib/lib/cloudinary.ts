@@ -15,20 +15,19 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-if (!CloudinaryStorage) {
-  throw new Error('CloudinaryStorage not available')
+let storage: StorageEngine | undefined
+if (CloudinaryStorage && process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req: Request, file: Express.Multer.File) => {
+      const isVideo = file.mimetype.startsWith('video/')
+      return {
+        folder: '3play-uploads',
+        resource_type: isVideo ? 'video' : 'image',
+        public_id: `upload-${Date.now()}-${Math.round(Math.random() * 1E9)}`,
+      }
+    },
+  })
 }
-
-const storage: StorageEngine = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req: Request, file: Express.Multer.File) => {
-    const isVideo = file.mimetype.startsWith('video/')
-    return {
-      folder: '3play-uploads',
-      resource_type: isVideo ? 'video' : 'image',
-      public_id: `upload-${Date.now()}-${Math.round(Math.random() * 1E9)}`,
-    }
-  },
-})
 
 export { cloudinary, storage }

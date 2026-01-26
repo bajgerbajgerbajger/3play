@@ -1,10 +1,19 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom"; 
 import { HelmetProvider } from "react-helmet-async";
-import Home from "@/pages/Home"; 
-import Watch from "@/pages/Watch"; 
-import Channel from "@/pages/Channel"; 
-import Studio from "@/pages/Studio"; 
-import Auth from "@/pages/Auth"; 
+import { lazy, Suspense, useEffect, useState } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+const Home = lazy(() => import("@/pages/Home"));
+const Watch = lazy(() => import("@/pages/Watch"));
+const Channel = lazy(() => import("@/pages/Channel"));
+const Studio = lazy(() => import("@/pages/Studio"));
+const Auth = lazy(() => import("@/pages/Auth"));
+
+// Games 
+const Prsi = lazy(() => import("@/pages/games/Prsi"));
+const Ludo = lazy(() => import("@/pages/games/Ludo"));
+const Chess = lazy(() => import("@/pages/games/Chess"));
+
 import { Logo } from "@/components/Logo"; 
 import { useTheme } from "@/hooks/useTheme"; 
 import { IconButton } from "@/components/ui/IconButton"; 
@@ -12,16 +21,10 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button"; 
 import { MobileMenu } from "@/components/MobileMenu"; 
 import { Search, User, LogOut, Video, CircleUserRound, Menu, MessageSquare } from "lucide-react"; 
-import { useEffect, useState } from "react"; 
 import { useAuthStore } from "@/store/auth"; 
 
 import { LoadingBar } from "@/components/ui/LoadingBar"; 
 import { WelcomeModal } from "@/components/WelcomeModal"; 
-
-// Games 
-import Prsi from "@/pages/games/Prsi"; 
-import Ludo from "@/pages/games/Ludo"; 
-import Chess from "@/pages/games/Chess"; 
 
 export default function App() { 
   const { isDark } = useTheme(); 
@@ -49,109 +52,117 @@ export default function App() {
   const tone: 'dark' | 'light' = isDark ? 'dark' : 'light'; 
 
   return ( 
-    <HelmetProvider>
-      <Router> 
-        <LoadingBar /> 
-        <WelcomeModal /> 
-        <div className="min-h-dvh flex flex-col bg-bg text-text"> 
-          <header className="sticky top-0 z-40 border-b border-border/10 bg-surface/80 backdrop-blur supports-[backdrop-filter]:bg-surface/60"> 
-            <div className="container flex h-14 items-center gap-4"> 
-              <div> 
-                <IconButton aria-label="Menu" onClick={() => setMobileNavOpen(true)}> 
-                  <Menu size={20} /> 
-                </IconButton> 
-              </div> 
-              <Link to="/" className="flex items-center gap-3"> 
-                <Logo variant="horizontal" tone={tone} className="h-10" /> 
-              </Link> 
-              <div className="flex-1" /> 
-              <div className="hidden md:flex w-[380px] items-center gap-2"> 
-                <div className="relative w-full"> 
-                  <Input 
-                    aria-label="Search" 
-                    placeholder="Search videos and channels" 
-                    className="pl-9" 
-                    value={query} 
-                    onChange={(e) => setQuery(e.target.value)} 
-                    onKeyDown={(e) => { 
-                      if (e.key !== 'Enter') return; 
-                      const next = query.trim(); 
-                      window.location.href = next ? `/?q=${encodeURIComponent(next)}&sort=latest` : '/'; 
-                    }} 
-                  /> 
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" /> 
+    <ErrorBoundary>
+      <HelmetProvider>
+        <Router> 
+          <LoadingBar /> 
+          <WelcomeModal /> 
+          <div className="min-h-dvh flex flex-col bg-bg text-text"> 
+            <header className="sticky top-0 z-40 border-b border-border/10 bg-surface/80 backdrop-blur supports-[backdrop-filter]:bg-surface/60"> 
+              <div className="container flex h-14 items-center gap-4"> 
+                <div> 
+                  <IconButton aria-label="Menu" onClick={() => setMobileNavOpen(true)}> 
+                    <Menu size={20} /> 
+                  </IconButton> 
+                </div> 
+                <Link to="/" className="flex items-center gap-3"> 
+                  <Logo variant="horizontal" tone={tone} className="h-10" /> 
+                </Link> 
+                <div className="flex-1" /> 
+                <div className="hidden md:flex w-[380px] items-center gap-2"> 
+                  <div className="relative w-full"> 
+                    <Input 
+                      aria-label="Search" 
+                      placeholder="Search videos and channels" 
+                      className="pl-9" 
+                      value={query} 
+                      onChange={(e) => setQuery(e.target.value)} 
+                      onKeyDown={(e) => { 
+                        if (e.key !== 'Enter') return; 
+                        const next = query.trim(); 
+                        window.location.href = next ? `/?q=${encodeURIComponent(next)}&sort=latest` : '/'; 
+                      }} 
+                    /> 
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" /> 
+                  </div> 
+                </div> 
+                <div className="flex items-center gap-2"> 
+                  <IconButton aria-label="Chat"> 
+                    <MessageSquare size={18} /> 
+                  </IconButton> 
+                  {hydrated && user ? ( 
+                    <div className="relative" data-user-menu> 
+                      <IconButton 
+                        aria-label="Account" 
+                        onClick={() => setMenuOpen((v) => !v)} 
+                        className="overflow-hidden" 
+                      > 
+                        <img src={user.avatarUrl} alt={user.displayName} className="h-10 w-10 object-cover" /> 
+                      </IconButton> 
+                      {menuOpen ? ( 
+                        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border/10 bg-surface shadow-soft"> 
+                          <div className="px-3 py-2 border-b border-border/10"> 
+                            <div className="text-sm font-semibold">{user.displayName}</div> 
+                            <div className="text-xs text-muted">{user.handle}</div> 
+                          </div> 
+                          <Link to={`/channel/${encodeURIComponent(user.handle)}`} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5"> 
+                            <CircleUserRound size={16} /> 
+                            Channel 
+                          </Link> 
+                          <Link to="/studio" className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5"> 
+                            <Video size={16} /> 
+                            Studio 
+                          </Link> 
+                          <button 
+                            onClick={() => { 
+                              logout(); 
+                              setMenuOpen(false); 
+                            }} 
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5" 
+                          > 
+                            <LogOut size={16} /> 
+                            Sign out 
+                          </button> 
+                        </div> 
+                      ) : null} 
+                    </div> 
+                  ) : ( 
+                    <Link to="/auth">
+                      <Button variant="primary" size="sm" className="gap-2">
+                        <User size={16} />
+                        Sign in
+                      </Button>
+                    </Link> 
+                  )} 
                 </div> 
               </div> 
-              <div className="flex items-center gap-2"> 
-                <IconButton aria-label="Chat"> 
-                  <MessageSquare size={18} /> 
-                </IconButton> 
-                {hydrated && user ? ( 
-                  <div className="relative" data-user-menu> 
-                    <IconButton 
-                      aria-label="Account" 
-                      onClick={() => setMenuOpen((v) => !v)} 
-                      className="overflow-hidden" 
-                    > 
-                      <img src={user.avatarUrl} alt={user.displayName} className="h-10 w-10 object-cover" /> 
-                    </IconButton> 
-                    {menuOpen ? ( 
-                      <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border/10 bg-surface shadow-soft"> 
-                        <div className="px-3 py-2 border-b border-border/10"> 
-                          <div className="text-sm font-semibold">{user.displayName}</div> 
-                          <div className="text-xs text-muted">{user.handle}</div> 
-                        </div> 
-                        <Link to={`/channel/${encodeURIComponent(user.handle)}`} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5"> 
-                          <CircleUserRound size={16} /> 
-                          Channel 
-                        </Link> 
-                        <Link to="/studio" className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5"> 
-                          <Video size={16} /> 
-                          Studio 
-                        </Link> 
-                        <button 
-                          onClick={() => { 
-                            logout(); 
-                            setMenuOpen(false); 
-                          }} 
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5" 
-                        > 
-                          <LogOut size={16} /> 
-                          Sign out 
-                        </button> 
-                      </div> 
-                    ) : null} 
-                  </div> 
-                ) : ( 
-                  <Link to="/auth">
-                    <Button variant="primary" size="sm" className="gap-2">
-                      <User size={16} />
-                      Sign in
-                    </Button>
-                  </Link> 
-                )} 
-              </div> 
+            </header> 
+
+            <div className="flex-1 flex flex-col"> 
+              <Suspense fallback={
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+              }>
+                <Routes> 
+                  <Route path="/" element={<Home />} /> 
+                  <Route path="/watch/:videoId" element={<Watch />} /> 
+                  <Route path="/channel/:handle" element={<Channel />} /> 
+                  <Route path="/studio/*" element={<Studio />} /> 
+                  <Route path="/auth" element={<Auth />} /> 
+                  
+                  {/* Games */} 
+                  <Route path="/games/prsi" element={<Prsi />} /> 
+                  <Route path="/games/ludo" element={<Ludo />} /> 
+                  <Route path="/games/chess" element={<Chess />} /> 
+                </Routes> 
+              </Suspense>
             </div> 
-          </header> 
 
-          <div className="flex-1 flex flex-col"> 
-            <Routes> 
-              <Route path="/" element={<Home />} /> 
-              <Route path="/watch/:videoId" element={<Watch />} /> 
-              <Route path="/channel/:handle" element={<Channel />} /> 
-              <Route path="/studio/*" element={<Studio />} /> 
-              <Route path="/auth" element={<Auth />} /> 
-              
-              {/* Games */} 
-              <Route path="/games/prsi" element={<Prsi />} /> 
-              <Route path="/games/ludo" element={<Ludo />} /> 
-              <Route path="/games/chess" element={<Chess />} /> 
-            </Routes> 
-          </div> 
-
-          <MobileMenu isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-        </div>
-      </Router>
-    </HelmetProvider>
+            <MobileMenu isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
+          </div>
+        </Router>
+      </HelmetProvider>
+    </ErrorBoundary>
   );
 }

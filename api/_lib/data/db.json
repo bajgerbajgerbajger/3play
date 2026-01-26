@@ -6,7 +6,8 @@
       "handle": "@newcreator",
       "displayName": "New Creator",
       "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20readable%20number%203%20with%20play%20triangle%20motif%2C%20minimal%2C%20sharp%20edges%2C%20red%20accent%2C%20dark%20background%2C%20vector%20style&image_size=square",
-      "passwordHash": "0d5f86139d46aacfb66cc4a2779da13f:993decbd32215439a821152470a7090dc1bfdfc049a39bb6d5153e068c0767e0b722fd543ad178820a686ea499b94417683fc9feab158e4f17e9406b454a0c31"
+      "passwordHash": "730017415d3e32d48c29de3bf672f925:bcfc5ab1b1314f63a49603c418941a80612618a0ba25eb88d6734a29070a68fb14e4ce3315fd7c8ebec194507ea5cede05335df26ceceb71d68dd9b371c0ef29",
+      "lastLogin": "2026-01-26T03:00:19.936Z"
     },
     {
       "id": "u-aurora",
@@ -57,21 +58,21 @@
   ],
   "videos": [
     {
-      "id": "v-001",
+      "id": "v-004",
       "ownerId": "p-aurora",
-      "title": "3Play UI System: Dark-first, Minimal, Fast",
-      "description": "A practical walkthrough of building a dark-mode-first design system with real components, fast interactions, and a premium feel.",
+      "title": "Performance Playbook: Streaming UI at 60fps",
+      "description": "Tech-focused breakdown: rendering budgets, skeletons, and perceived speed on modern media platforms.",
       "visibility": "published",
       "status": "ready",
-      "thumbnailUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=video%20thumbnail%2C%20high%20contrast%2C%20readable%20title%20text%20%22Dark-first%20UI%22%2C%20creator%20portrait%20on%20left%2C%20cinematic%20lighting%2C%20minimal%20tech%2C%20red%20accents%2C%20clean%20typography%2C%20flat%20overlay&image_size=landscape_16_9",
-      "sourceUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-      "durationSeconds": 536,
-      "views": 182342,
-      "likes": 12840,
-      "dislikes": 402,
+      "thumbnailUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=video%20thumbnail%2C%20title%20%2260fps%20Playbook%22%2C%20tech%20graphs%2C%20minimal%20UI%2C%20dark%20theme%2C%20red%20accent%2C%20crisp%20typography%2C%20high%20contrast&image_size=landscape_16_9",
+      "sourceUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "durationSeconds": 596,
+      "views": 512302,
+      "likes": 44210,
+      "dislikes": 918,
       "likedBy": [],
       "dislikedBy": [],
-      "publishedAt": "2026-01-10T21:54:31.025Z",
+      "publishedAt": "2025-12-27T21:54:31.027Z",
       "createdAt": "2026-01-16T21:54:31.027Z",
       "updatedAt": "2026-01-16T21:54:31.027Z"
     },
@@ -163,6 +164,18 @@
       "message": "Fast motion with restraint is the whole game. Nice.",
       "createdAt": "2026-01-16T21:39:31.027Z",
       "likes": 33
+    }
+  ],
+  "codes": [
+    {
+      "email": "bajgerizzz@gmail.com",
+      "used": false,
+      "code": "885034",
+      "expiresAt": "2026-01-26T02:52:38.808Z",
+      "attempts": 0,
+      "id": "wqgbeuy5",
+      "createdAt": "2026-01-26T02:42:38.812Z",
+      "updatedAt": "2026-01-26T02:42:38.812Z"
     }
   ]
 }

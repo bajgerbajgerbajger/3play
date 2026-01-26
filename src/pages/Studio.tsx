@@ -22,6 +22,9 @@ export default function Studio() {
   const [uploadType, setUploadType] = useState<'video' | 'movie' | 'episode'>('video')
   const [uploadSource, setUploadSource] = useState<string>('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadMode, setUploadMode] = useState<'file' | 'embed'>('file')
+  const [embedCode, setEmbedCode] = useState<string>('')
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [creating, setCreating] = useState(false)
   const [selected, setSelected] = useState<StudioVideo | null>(null)
@@ -65,9 +68,16 @@ export default function Studio() {
       setError('Title must be at least 3 characters')
       return
     }
-    if (!uploadFile && !uploadSource.trim()) {
-      setError('Please select a file or enter a source URL')
-      return
+    if (uploadMode === 'file') {
+      if (!uploadFile && !uploadSource.trim()) {
+        setError('Please select a file or enter a source URL')
+        return
+      }
+    } else {
+      if (!embedCode.trim()) {
+        setError('Please provide a valid embed code')
+        return
+      }
     }
 
     setError(null)
@@ -81,22 +91,27 @@ export default function Studio() {
       let finalThumbnailUrl = undefined
       let finalDuration = 0
 
-      if (uploadFile) {
-        const formData = new FormData()
-        formData.append('file', uploadFile)
-        
-        const res = await fetch('/api/studio/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
-        })
-        const data = await res.json()
-        if (!data.success) throw new Error(data.error || 'Upload failed')
-        finalSourceUrl = data.url
-        finalThumbnailUrl = data.thumbnailUrl
-        finalDuration = data.duration || 0
+      if (uploadMode === 'file') {
+        if (uploadFile || thumbnailFile) {
+          const formData = new FormData()
+          if (uploadFile) formData.append('file', uploadFile)
+          if (thumbnailFile) formData.append('thumbnail', thumbnailFile)
+          
+          const res = await fetch('/api/studio/upload', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          })
+          const data = await res.json()
+          if (!data.success) throw new Error(data.error || 'Upload failed')
+          if (data.url) finalSourceUrl = data.url
+          if (data.thumbnailUrl) finalThumbnailUrl = data.thumbnailUrl
+          finalDuration = data.duration || 0
+        }
+      } else {
+        finalSourceUrl = ''
       }
 
       const d = await apiFetch<{ success: true; video: StudioVideo }>('/api/studio/videos', {
@@ -108,7 +123,8 @@ export default function Studio() {
           type: uploadType,
           sourceUrl: finalSourceUrl,
           thumbnailUrl: finalThumbnailUrl,
-          duration: finalDuration
+          duration: finalDuration,
+          embedCode: uploadMode === 'embed' ? embedCode : undefined
         }),
       })
       setUploadProgress(100)
@@ -119,6 +135,10 @@ export default function Studio() {
       setUploadDesc('')
       setUploadType('video')
       setUploadFile(null)
+      setUploadSource('')
+      setEmbedCode('')
+      setThumbnailFile(null)
+      setUploadMode('file')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed')
     } finally {
@@ -215,8 +235,14 @@ export default function Studio() {
             onDescription={setUploadDesc}
             onType={setUploadType}
             onSourceUrl={setUploadSource}
-            onFileSelect={setUploadFile}
+            onFilesSelect={(files) => setUploadFile(files?.[0] || null)}
             onCreate={createUpload}
+            uploadMode={uploadMode}
+            onUploadMode={setUploadMode}
+            embedCode={embedCode}
+            onEmbedCode={setEmbedCode}
+            thumbnailFile={thumbnailFile}
+            onThumbnailSelect={(f) => setThumbnailFile(f)}
           />
         ) : (
           <VideosPanel loading={loading} items={items} selectedId={selected?.id || null} onSelect={(v) => setSelected(v)} />
