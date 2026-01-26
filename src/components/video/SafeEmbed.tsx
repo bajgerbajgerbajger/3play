@@ -47,7 +47,21 @@ export function SafeEmbed({ code, className }: { code: string; className?: strin
           </style>
         </head>
         <body>
-          ${code}
+          <div style="width: 100%; height: 100%;">
+            ${code}
+          </div>
+          <script>
+            // Auto-fix iframes inside srcdoc
+            window.onload = function() {
+              var iframes = document.getElementsByTagName('iframe');
+              for (var i = 0; i < iframes.length; i++) {
+                iframes[i].setAttribute('allowfullscreen', 'true');
+                iframes[i].setAttribute('webkitallowfullscreen', 'true');
+                iframes[i].setAttribute('mozallowfullscreen', 'true');
+                iframes[i].setAttribute('referrerpolicy', 'no-referrer');
+              }
+            };
+          </script>
         </body>
       </html>
     `
@@ -62,10 +76,14 @@ export function SafeEmbed({ code, className }: { code: string; className?: strin
         src={directIframeSrc}
         className={className}
         title="Embedded Video"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        // Permissive allow string for all player features
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
         allowFullScreen
-        style={{ border: 'none', width: '100%', height: '100%' }}
+        // Using "no-referrer" can sometimes bypass domain blocks, 
+        // but "unsafe-url" or removing it might be needed for some providers.
+        // We'll use "no-referrer" as it's usually the most successful for HQQ/Netu.
         referrerPolicy="no-referrer"
+        style={{ border: 'none', width: '100%', height: '100%' }}
       />
     )
   }
