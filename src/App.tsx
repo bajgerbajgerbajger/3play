@@ -33,6 +33,13 @@ export default function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false); 
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('q') || ''); 
 
+  // Keep-Alive Ping to prevent Render sleep
+  useEffect(() => {
+    const ping = () => fetch('/api/health').catch(() => null);
+    const interval = setInterval(ping, 10 * 60 * 1000); // 10 minutes
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => { 
     init(); 
   }, [init]); 

@@ -26,6 +26,8 @@ export default function Studio() {
   const [embedCode, setEmbedCode] = useState<string>('')
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadSpeed, setUploadSpeed] = useState('')
+  const [uploadTimeRemaining, setUploadTimeRemaining] = useState('')
   const [creating, setCreating] = useState(false)
   const [selected, setSelected] = useState<StudioVideo | null>(null)
 
@@ -83,9 +85,9 @@ export default function Studio() {
     setError(null)
     setCreating(true)
     setUploadProgress(0)
-    const t = window.setInterval(() => {
-      setUploadProgress((p) => Math.min(95, p + Math.random() * 14))
-    }, 180)
+    setUploadSpeed('')
+    setUploadTimeRemaining('')
+
     try {
       let finalSourceUrl = uploadSource
       let finalThumbnailUrl = undefined
@@ -97,18 +99,68 @@ export default function Studio() {
           if (uploadFile) formData.append('file', uploadFile)
           if (thumbnailFile) formData.append('thumbnail', thumbnailFile)
           
-          const res = await fetch('/api/studio/upload', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            body: formData
+          const startTime = Date.now()
+          
+          const res = await new Promise<any>((resolve, reject) => {
+            const xhr = new XMLHttpRequest()
+            xhr.open('POST', '/api/studio/upload')
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+            
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100
+                setUploadProgress(percentComplete)
+                
+                // Calculate speed and remaining time
+                const elapsedTime = (Date.now() - startTime) / 1000 // seconds
+                if (elapsedTime > 0.5) { // Only calculate after a bit of time
+                   const speedBytesPerSec = e.loaded / elapsedTime
+                   const remainingBytes = e.total - e.loaded
+                   const remainingSeconds = remainingBytes / speedBytesPerSec
+                   
+                   // Format speed
+                   let speedText = ''
+                   if (speedBytesPerSec > 1024 * 1024) {
+                     speedText = `${(speedBytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
+                   } else {
+                     speedText = `${(speedBytesPerSec / 1024).toFixed(0)} KB/s`
+                   }
+                   setUploadSpeed(speedText)
+                   
+                   // Format time
+                   if (remainingSeconds < 60) {
+                     setUploadTimeRemaining(`${Math.ceil(remainingSeconds)}s`)
+                   } else {
+                     const mins = Math.floor(remainingSeconds / 60)
+                     const secs = Math.ceil(remainingSeconds % 60)
+                     setUploadTimeRemaining(`${mins}m ${secs}s`)
+                   }
+                }
+              }
+            }
+            
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                   const data = JSON.parse(xhr.responseText)
+                   resolve(data)
+                } catch (err) {
+                   reject(new Error('Invalid response from server'))
+                }
+              } else {
+                reject(new Error(`Upload failed: ${xhr.statusText}`))
+              }
+            }
+            
+            xhr.onerror = () => reject(new Error('Network error during upload'))
+            
+            xhr.send(formData)
           })
-          const data = await res.json()
-          if (!data.success) throw new Error(data.error || 'Upload failed')
-          if (data.url) finalSourceUrl = data.url
-          if (data.thumbnailUrl) finalThumbnailUrl = data.thumbnailUrl
-          finalDuration = data.duration || 0
+
+          if (!res.success) throw new Error(res.error || 'Upload failed')
+          if (res.url) finalSourceUrl = res.url
+          if (res.thumbnailUrl) finalThumbnailUrl = res.thumbnailUrl
+          finalDuration = res.duration || 0
         }
       } else {
         finalSourceUrl = ''
@@ -142,7 +194,6 @@ export default function Studio() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed')
     } finally {
-      window.clearInterval(t)
       setCreating(false)
       window.setTimeout(() => setUploadProgress(0), 800)
     }

@@ -11,6 +11,8 @@ export function UploadPanel({
   file,
   creating,
   progress,
+  uploadSpeed,
+  timeRemaining,
   onTitle,
   onDescription,
   onType,
@@ -32,6 +34,8 @@ export function UploadPanel({
   file?: File | null
   creating: boolean
   progress: number
+  uploadSpeed?: string
+  timeRemaining?: string
   onTitle: (v: string) => void
   onDescription: (v: string) => void
   onType: (v: 'video' | 'movie' | 'episode') => void
@@ -237,10 +241,17 @@ export function UploadPanel({
         <div className="mt-2 flex justify-end">
           <Button onClick={onCreate} disabled={creating || (!title) || (uploadMode === 'file' && !file && !sourceUrl) || (uploadMode === 'embed' && (!!sanitizedPreview.error || !embedCode))}>
              {creating ? (
-                 <>
-                   <Loader2 size={16} className="animate-spin mr-2" />
-                   Nahrávání {progressText}
-                 </>
+                 <div className="flex flex-col items-end gap-1">
+                   <div className="flex items-center">
+                     <Loader2 size={16} className="animate-spin mr-2" />
+                     Nahrávání {progressText}
+                   </div>
+                   {uploadSpeed && (
+                     <div className="text-[10px] text-white/60 font-mono">
+                       {uploadSpeed} • zbývá {timeRemaining || '...'}
+                     </div>
+                   )}
+                 </div>
              ) : (
                  <>
                    <Upload size={16} className="mr-2" />

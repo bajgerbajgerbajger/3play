@@ -94,6 +94,8 @@ router.get('/', async (req: Request, res: Response) => {
       durationSeconds: v.durationSeconds,
       views: v.views,
       publishedAt: v.publishedAt,
+      embedCode: v.embedCode,
+      sourceUrl: v.sourceUrl,
       channel: owner,
     }
   }))

@@ -9,6 +9,8 @@ export type VideoListItem = {
   durationSeconds: number
   views: number
   publishedAt: string | null
+  embedCode?: string
+  sourceUrl?: string
   channel: {
     id: string
     handle: string
@@ -31,15 +33,39 @@ export function VideoCard({ video, className }: { video: VideoListItem; classNam
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
         <div className="relative aspect-video w-full overflow-hidden bg-surface2">
-          <img
-            src={video.thumbnailUrl}
-            alt={video.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-          />
+          {video.embedCode ? (
+            <div className="absolute inset-0 grid place-items-center text-muted">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-play"
+              >
+                <polygon points="6 3 20 12 6 21 6 3" />
+              </svg>
+            </div>
+          ) : (
+            <img
+              src={video.thumbnailUrl || '/placeholder.jpg'}
+              alt={video.title}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            />
+          )}
           <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-[11px] font-semibold text-white">
             {formatDuration(video.durationSeconds)}
           </div>
+          {(video.sourceUrl?.includes('1080p') || video.sourceUrl?.includes('720p') || video.durationSeconds > 0 || video.embedCode) && (
+            <div className="absolute top-2 right-2 rounded bg-brand/90 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
+              HD
+            </div>
+          )}
         </div>
       </Link>
       <div className="p-3">
