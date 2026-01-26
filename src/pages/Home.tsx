@@ -10,7 +10,7 @@ import { Search, Video } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { useModalStore } from '@/store/modal'
 
-type Sort = 'latest' | 'popular'
+type Sort = 'latest' | 'popular' | 'subscriptions'
 
 export default function Home() {
   const [params, setParams] = useSearchParams()
