@@ -83,7 +83,7 @@ router.post('/request-code', async (req: Request, res: Response): Promise<void> 
     { upsert: true, new: true },
   )
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' || !process.env.RESEND_API_KEY) {
     console.log('Dev email verification code for', normalizedEmail, 'is', code)
     res.status(200).json({ success: true, devCode: code })
     return
