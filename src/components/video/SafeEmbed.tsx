@@ -1,19 +1,31 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 
 export function SafeEmbed({ code, className }: { code: string; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // 1. Check if it is a simple IFRAME tag
+  const directIframeSrc = useMemo(() => {
+    if (!code) return null
+    const trimmed = code.trim()
+    // Simple check: starts with <iframe, has src
+    if (trimmed.toLowerCase().startsWith('<iframe') && !trimmed.toLowerCase().includes('<script')) {
+       const match = trimmed.match(/src=["']([^"']+)["']/)
+       return match ? match[1] : null
+    }
+    return null
+  }, [code])
+
+  // 2. Prepare srcDoc for complex embeds (scripts, divs, etc.)
   const srcDoc = useMemo(() => {
-    if (!code) return ''
+    if (!code || directIframeSrc) return ''
     
-    // Check if it's just a URL, if so, wrap it in an iframe
+    // Check if it's just a URL
     if (code.startsWith('http') && !code.includes('<')) {
       return `
         <!DOCTYPE html>
         <html>
           <head>
-            <style>
-              body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #000; }
-              iframe { border: none; width: 100%; height: 100%; }
-            </style>
+            <style>body,html{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:#000;}iframe{border:none;width:100%;height:100%;}</style>
           </head>
           <body>
             <iframe src="${code}" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe>
@@ -22,16 +34,15 @@ export function SafeEmbed({ code, className }: { code: string; className?: strin
       `
     }
 
-    // It's a complex HTML code (div + script, iframe, etc.)
     return `
       <!DOCTYPE html>
       <html>
         <head>
+          <meta name="referrer" content="no-referrer" />
           <style>
             body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; }
             * { max-width: 100%; }
             iframe { border: none; width: 100% !important; height: 100% !important; position: absolute; top: 0; left: 0; }
-            /* Handle Netu/HQQ specific styling if needed */
             div[id] { width: 100% !important; height: 100% !important; }
           </style>
         </head>
@@ -40,10 +51,26 @@ export function SafeEmbed({ code, className }: { code: string; className?: strin
         </body>
       </html>
     `
-  }, [code])
+  }, [code, directIframeSrc])
 
   if (!code) return null
 
+  // CASE A: Direct Iframe (HQQ, YouTube, etc.) - Render directly to avoid "Client blocked"
+  if (directIframeSrc) {
+    return (
+      <iframe
+        src={directIframeSrc}
+        className={className}
+        title="Embedded Video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+        style={{ border: 'none', width: '100%', height: '100%' }}
+        referrerPolicy="no-referrer"
+      />
+    )
+  }
+
+  // CASE B: Complex Script/Div Embed - Use SrcDoc isolation
   return (
     <iframe
       srcDoc={srcDoc}

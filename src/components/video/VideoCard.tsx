@@ -33,31 +33,21 @@ export function VideoCard({ video, className }: { video: VideoListItem; classNam
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
         <div className="relative aspect-video w-full overflow-hidden bg-surface2">
-          {video.embedCode ? (
-            <div className="absolute inset-0 grid place-items-center text-muted">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-play"
-              >
-                <polygon points="6 3 20 12 6 21 6 3" />
-              </svg>
-            </div>
-          ) : (
-            <img
-              src={video.thumbnailUrl || '/placeholder.jpg'}
-              alt={video.title}
-              loading="lazy"
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-            />
-          )}
+          <img
+            src={video.thumbnailUrl || '/placeholder.jpg'}
+            alt={video.title}
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              if (video.embedCode) {
+                 // For embeds, we might not have a thumbnail yet, so we show a better placeholder
+                 target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'
+              } else {
+                 target.src = '/placeholder.jpg'
+              }
+            }}
+          />
           <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-[11px] font-semibold text-white">
             {formatDuration(video.durationSeconds)}
           </div>

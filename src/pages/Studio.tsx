@@ -93,11 +93,26 @@ export default function Studio() {
       let finalThumbnailUrl = undefined
       let finalDuration = 0
 
-      if (uploadMode === 'file') {
-        if (uploadFile || thumbnailFile) {
+      // 1. Upload Thumbnail if present (regardless of mode)
+      if (thumbnailFile) {
           const formData = new FormData()
-          if (uploadFile) formData.append('file', uploadFile)
-          if (thumbnailFile) formData.append('thumbnail', thumbnailFile)
+          formData.append('thumbnail', thumbnailFile)
+          
+          // We reuse the /upload endpoint but only for thumbnail
+          const res = await fetch('/api/studio/upload', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+          })
+          const data = await res.json()
+          if (!data.success) throw new Error(data.error || 'Thumbnail upload failed')
+          finalThumbnailUrl = data.thumbnailUrl
+      }
+
+      // 2. Upload Video File if in file mode
+      if (uploadMode === 'file' && uploadFile) {
+          const formData = new FormData()
+          formData.append('file', uploadFile)
           
           const startTime = Date.now()
           
@@ -112,13 +127,12 @@ export default function Studio() {
                 setUploadProgress(percentComplete)
                 
                 // Calculate speed and remaining time
-                const elapsedTime = (Date.now() - startTime) / 1000 // seconds
-                if (elapsedTime > 0.5) { // Only calculate after a bit of time
+                const elapsedTime = (Date.now() - startTime) / 1000 
+                if (elapsedTime > 0.5) { 
                    const speedBytesPerSec = e.loaded / elapsedTime
                    const remainingBytes = e.total - e.loaded
                    const remainingSeconds = remainingBytes / speedBytesPerSec
                    
-                   // Format speed
                    let speedText = ''
                    if (speedBytesPerSec > 1024 * 1024) {
                      speedText = `${(speedBytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
@@ -127,7 +141,6 @@ export default function Studio() {
                    }
                    setUploadSpeed(speedText)
                    
-                   // Format time
                    if (remainingSeconds < 60) {
                      setUploadTimeRemaining(`${Math.ceil(remainingSeconds)}s`)
                    } else {
@@ -151,19 +164,21 @@ export default function Studio() {
                 reject(new Error(`Upload failed: ${xhr.statusText}`))
               }
             }
-            
             xhr.onerror = () => reject(new Error('Network error during upload'))
-            
             xhr.send(formData)
           })
 
           if (!res.success) throw new Error(res.error || 'Upload failed')
           if (res.url) finalSourceUrl = res.url
-          if (res.thumbnailUrl) finalThumbnailUrl = res.thumbnailUrl
+          // If we didn't upload a custom thumbnail, use the generated one
+          if (!finalThumbnailUrl && res.thumbnailUrl) finalThumbnailUrl = res.thumbnailUrl
           finalDuration = res.duration || 0
-        }
       } else {
-        finalSourceUrl = ''
+         if (uploadMode === 'file') {
+             // sourceUrl is already set to finalSourceUrl
+         } else {
+             finalSourceUrl = ''
+         }
       }
 
       const d = await apiFetch<{ success: true; video: StudioVideo }>('/api/studio/videos', {
@@ -282,6 +297,8 @@ export default function Studio() {
             file={uploadFile}
             creating={creating}
             progress={uploadProgress}
+            uploadSpeed={uploadSpeed}
+            timeRemaining={uploadTimeRemaining}
             onTitle={setUploadTitle}
             onDescription={setUploadDesc}
             onType={setUploadType}
