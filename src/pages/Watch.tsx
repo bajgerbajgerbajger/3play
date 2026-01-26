@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCompactNumber, formatTimeAgo } from '@/lib/format'
 import { type VideoListItem } from '@/components/video/VideoCard'
 import { VideoRow } from '@/components/video/VideoRow'
+import { SafeEmbed } from '@/components/video/SafeEmbed'
 import { useAuthStore } from '@/store/auth'
 import { useModalStore } from '@/store/modal'
 import { ThumbsDown, ThumbsUp, Share2, Bell, ChevronDown, RotateCw, ExternalLink } from 'lucide-react'
@@ -161,14 +162,11 @@ export default function Watch() {
           {loading ? (
             <Skeleton className="aspect-video w-full rounded-none" />
           ) : video ? (
-            video.embedCode || video.sourceUrl.trim().startsWith('<iframe') ? (
-              <div className="group relative aspect-video w-full bg-black">
-                <div
-                  className="h-full w-full [&>iframe]:h-full [&>iframe]:w-full"
-                  dangerouslySetInnerHTML={{ __html: video.embedCode || video.sourceUrl }}
-                />
+            video.embedCode || video.sourceUrl.trim().startsWith('<') ? (
+              <div className="group relative aspect-video w-full bg-black shadow-2xl">
+                <SafeEmbed code={video.embedCode || video.sourceUrl} className="w-full h-full" />
                 {/* Embed Overlay/Badge */}
-                <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-opacity group-hover:opacity-0 pointer-events-none">
+                <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-opacity group-hover:opacity-0 pointer-events-none border border-white/5">
                   <ExternalLink size={12} className="text-brand" />
                   <span>Embed z: {getDomain(video.embedCode || video.sourceUrl)}</span>
                 </div>

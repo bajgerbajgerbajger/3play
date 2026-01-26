@@ -226,6 +226,11 @@ router.post('/videos', async (req: Request, res: Response) => {
     embedCode?: string
   }
 
+  // Allow either file upload (sourceUrl) or embedCode
+  if (!embedCode && (!sourceUrl || sourceUrl.trim().length === 0)) {
+     // Check if it's strictly an embed upload attempt
+     // If not, it might be just missing data
+  }
 
   if (!title || title.trim().length < 3) {
     res.status(400).json({ success: false, error: 'Title is required' })
@@ -243,7 +248,7 @@ router.post('/videos', async (req: Request, res: Response) => {
     visibility: 'draft',
     status: 'ready',
     thumbnailUrl: thumbnailUrl || '',
-    sourceUrl: sourceUrl || '',
+    sourceUrl: sourceUrl || '', // Can be empty if embedCode is present
     embedCode: embedCode || '',
     durationSeconds: duration || 0,
     views: 0,

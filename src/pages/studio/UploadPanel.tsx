@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { CloudUpload, Loader2, Upload, FileVideo, Image as ImageIcon, Code, Link } from 'lucide-react'
+import { SafeEmbed } from '@/components/video/SafeEmbed'
 
 export function UploadPanel({
   title,
@@ -51,36 +52,12 @@ export function UploadPanel({
   onThumbnailSelect: (v: File | null) => void
 }) {
   const progressText = useMemo(() => `${Math.round(progress)}%`, [progress])
-  const sanitizedPreview = useMemo(() => {
+  const previewCode = useMemo(() => {
     const raw = (embedCode || '').trim()
-    if (!raw) return { html: '', error: 'Prázdný embed kód' }
-    try {
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(raw, 'text/html')
-      const iframe = doc.querySelector('iframe')
-      if (!iframe) return { html: '', error: 'Embed musí obsahovat <iframe>' }
-      const src = iframe.getAttribute('src') || ''
-      if (!src || !/^https:\/\//i.test(src) || /^javascript:/i.test(src)) {
-        return { html: '', error: 'Neplatný src atribut v <iframe>' }
-      }
-      // Reset attributes to safe whitelist
-      iframe.setAttribute('src', src)
-      iframe.setAttribute('frameborder', '0')
-      iframe.setAttribute('allowfullscreen', '')
-      iframe.setAttribute('webkitAllowFullScreen', '')
-      iframe.setAttribute('mozallowfullscreen', '')
-      iframe.setAttribute('scrolling', 'no')
-      iframe.setAttribute('loading', 'lazy')
-      iframe.setAttribute('referrerpolicy', 'no-referrer')
-      // Enforce 100% sizing
-      iframe.setAttribute('width', '100%')
-      iframe.setAttribute('height', '100%')
-      // Return only the iframe element
-      return { html: iframe.outerHTML, error: undefined }
-    } catch {
-      return { html: '', error: 'Nelze zpracovat embed kód' }
-    }
+    if (!raw) return null
+    return raw
   }, [embedCode])
+
   return (
     <div className="rounded-2xl border border-border/10 bg-surface p-5">
       <div className="flex items-center gap-3">
@@ -202,16 +179,20 @@ export function UploadPanel({
                         className="min-h-[80px] w-full rounded-[12px] border border-border/10 bg-surface px-3 py-2 text-sm text-text placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg font-mono text-xs"
                       />
                       <div className="mt-3">
-                        <div className="text-xs text-muted mb-1">Náhled</div>
-                        {sanitizedPreview.error ? (
-                          <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-200">
-                            {sanitizedPreview.error}
+                        <div className="text-xs text-muted mb-1 flex items-center justify-between">
+                          <span>Náhled</span>
+                          {embedCode.includes('<script') && (
+                            <span className="text-[10px] bg-brand/20 text-brand px-1.5 py-0.5 rounded font-bold uppercase">Chráněný Embed</span>
+                          )}
+                        </div>
+                        {!previewCode ? (
+                          <div className="aspect-video w-full rounded-xl border border-dashed border-border/20 grid place-items-center text-xs text-muted italic">
+                            Zadejte embed kód pro náhled
                           </div>
                         ) : (
-                          <div
-                            className="aspect-video w-full [&>iframe]:h-full [&>iframe]:w-full rounded-xl border border-border/10 overflow-hidden"
-                            dangerouslySetInnerHTML={{ __html: sanitizedPreview.html }}
-                          />
+                          <div className="aspect-video w-full rounded-xl border border-border/10 overflow-hidden bg-black shadow-lg">
+                            <SafeEmbed code={previewCode} className="w-full h-full" />
+                          </div>
                         )}
                       </div>
                 </div>
@@ -239,7 +220,7 @@ export function UploadPanel({
         </div>
 
         <div className="mt-2 flex justify-end">
-          <Button onClick={onCreate} disabled={creating || (!title) || (uploadMode === 'file' && !file && !sourceUrl) || (uploadMode === 'embed' && (!!sanitizedPreview.error || !embedCode))}>
+          <Button onClick={onCreate} disabled={creating || (!title) || (uploadMode === 'file' && !file && !sourceUrl) || (uploadMode === 'embed' && !embedCode)}>
              {creating ? (
                  <div className="flex flex-col items-end gap-1">
                    <div className="flex items-center">
