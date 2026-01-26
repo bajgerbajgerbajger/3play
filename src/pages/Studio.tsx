@@ -8,9 +8,12 @@ import { StudioSidebar } from '@/pages/studio/StudioSidebar'
 import { UploadPanel } from '@/pages/studio/UploadPanel'
 import { VideosPanel } from '@/pages/studio/VideosPanel'
 import { VideoEditor } from '@/pages/studio/VideoEditor'
+import { UploadProgressModal } from '@/components/studio/UploadProgressModal'
+import { useUploadModal } from '@/store/uploadModal'
 
 export default function Studio() {
   const nav = useNavigate()
+  const uploadModal = useUploadModal()
   const { user, token, hydrated } = useAuthStore()
   const [tab, setTab] = useState<Tab>('upload')
   const [loading, setLoading] = useState(false)
@@ -85,8 +88,11 @@ export default function Studio() {
     setError(null)
     setCreating(true)
     setUploadProgress(0)
-    setUploadSpeed('')
-    setUploadTimeRemaining('')
+    
+    // Initialize Modal
+    uploadModal.reset()
+    uploadModal.open()
+    uploadModal.setStatus('uploading')
 
     try {
       let finalSourceUrl = uploadSource
@@ -95,10 +101,10 @@ export default function Studio() {
 
       // 1. Upload Thumbnail if present (regardless of mode)
       if (thumbnailFile) {
+          uploadModal.setStatus('processing') // Brief processing state for thumb
           const formData = new FormData()
           formData.append('thumbnail', thumbnailFile)
           
-          // We reuse the /upload endpoint but only for thumbnail
           const res = await fetch('/api/studio/upload', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
@@ -111,6 +117,7 @@ export default function Studio() {
 
       // 2. Upload Video File if in file mode
       if (uploadMode === 'file' && uploadFile) {
+          uploadModal.setStatus('uploading')
           const formData = new FormData()
           formData.append('file', uploadFile)
           
@@ -125,6 +132,7 @@ export default function Studio() {
               if (e.lengthComputable) {
                 const percentComplete = (e.loaded / e.total) * 100
                 setUploadProgress(percentComplete)
+                uploadModal.setProgress(percentComplete)
                 
                 // Calculate speed and remaining time
                 const elapsedTime = (Date.now() - startTime) / 1000 
@@ -139,15 +147,19 @@ export default function Studio() {
                    } else {
                      speedText = `${(speedBytesPerSec / 1024).toFixed(0)} KB/s`
                    }
-                   setUploadSpeed(speedText)
                    
+                   let timeText = ''
                    if (remainingSeconds < 60) {
-                     setUploadTimeRemaining(`${Math.ceil(remainingSeconds)}s`)
+                     timeText = `${Math.ceil(remainingSeconds)}s`
                    } else {
                      const mins = Math.floor(remainingSeconds / 60)
                      const secs = Math.ceil(remainingSeconds % 60)
-                     setUploadTimeRemaining(`${mins}m ${secs}s`)
+                     timeText = `${mins}m ${secs}s`
                    }
+                   
+                   setUploadSpeed(speedText)
+                   setUploadTimeRemaining(timeText)
+                   uploadModal.setStats(speedText, timeText)
                 }
               }
             }
@@ -178,9 +190,11 @@ export default function Studio() {
              // sourceUrl is already set to finalSourceUrl
          } else {
              finalSourceUrl = ''
+             uploadModal.setProgress(100) // Immediate 100% for embed
          }
       }
 
+      uploadModal.setStatus('processing')
       const d = await apiFetch<{ success: true; video: StudioVideo }>('/api/studio/videos', {
         method: 'POST',
         token,
@@ -194,7 +208,12 @@ export default function Studio() {
           embedCode: uploadMode === 'embed' ? embedCode : undefined
         }),
       })
+      
       setUploadProgress(100)
+      uploadModal.setProgress(100)
+      uploadModal.setStatus('complete')
+      
+      // Update UI state in background
       setItems((prev) => [d.video, ...prev])
       setTab('videos')
       setSelected(d.video)
@@ -206,8 +225,11 @@ export default function Studio() {
       setEmbedCode('')
       setThumbnailFile(null)
       setUploadMode('file')
+      
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed')
+      const errMsg = e instanceof Error ? e.message : 'Failed'
+      setError(errMsg)
+      uploadModal.setError(errMsg)
     } finally {
       setCreating(false)
       window.setTimeout(() => setUploadProgress(0), 800)
@@ -315,6 +337,8 @@ export default function Studio() {
         ) : (
           <VideosPanel loading={loading} items={items} selectedId={selected?.id || null} onSelect={(v) => setSelected(v)} />
         )}
+
+        <UploadProgressModal />
 
         {selected ? (
           <VideoEditor
