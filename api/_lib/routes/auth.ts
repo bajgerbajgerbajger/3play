@@ -92,6 +92,32 @@ router.post('/request-code', async (req: Request, res: Response): Promise<void> 
   res.status(200).json({ success: true })
 })
 
+router.post('/verify-code', async (req: Request, res: Response): Promise<void> => {
+  await dbConnect()
+
+  const { email, verificationCode } = (req.body || {}) as { email?: string; verificationCode?: string }
+  
+  if (!email || !verificationCode) {
+    res.status(400).json({ success: false, error: 'Email and code required' })
+    return
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase()
+  const codeDoc = await EmailVerificationCode.findOne({ email: normalizedEmail, used: false })
+
+  if (!codeDoc || !codeDoc.code || codeDoc.code !== verificationCode) {
+    res.status(400).json({ success: false, error: 'Invalid verification code' })
+    return
+  }
+
+  if (codeDoc.expiresAt && codeDoc.expiresAt.getTime() < Date.now()) {
+    res.status(400).json({ success: false, error: 'Verification code has expired' })
+    return
+  }
+
+  res.status(200).json({ success: true })
+})
+
 /**
  * User Login
  * POST /api/auth/register
