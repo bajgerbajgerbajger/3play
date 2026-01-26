@@ -9,15 +9,23 @@ Pro tento typ projektu (Node.js + Express + React + MongoDB) je nejvhodnější 
 ### Postup nasazení:
 
 1.  **Vytvořte si účet** na [render.com](https://render.com).
-2.  V dashboardu klikněte na **New +** a vyberte **Blueprints**.
+2.  V dashboardu klikněte na **New +** a vyberte **Web Service**.
 3.  Propojte svůj GitHub účet a vyberte repozitář `3play`.
-4.  Render automaticky detekuje soubor `render.yaml`.
-5.  Budete vyzváni k zadání **Environment Variables** (proměnných prostředí):
-    *   `MONGODB_URI`: Váš připojovací řetězec k MongoDB Atlas.
-    *   `CLOUDINARY_CLOUD_NAME`: Název vašeho cloudu na Cloudinary.
-    *   `CLOUDINARY_API_KEY`: API klíč z Cloudinary.
-    *   `CLOUDINARY_API_SECRET`: API tajný klíč z Cloudinary.
-6.  Klikněte na **Apply**. Render začne aplikaci sestavovat a nasazovat.
+4.  Nastavte následující parametry:
+    *   **Name:** `3play` (nebo libovolné jméno)
+    *   **Environment:** `Node`
+    *   **Region:** Vyberte nejbližší (např. Frankfurt)
+    *   **Branch:** `main`
+    *   **Build Command:** `npm run build`
+    *   **Start Command:** `npm start`
+    *   **Plan:** Free (nebo vyšší pro lepší výkon)
+5.  Dole v sekci **Environment Variables** přidejte následující klíče:
+    *   `NODE_ENV` = `production`
+    *   `MONGODB_URI` = `mongodb+srv://...` (Váš connection string z MongoDB Atlas)
+    *   `CLOUDINARY_CLOUD_NAME` = `...`
+    *   `CLOUDINARY_API_KEY` = `...`
+    *   `CLOUDINARY_API_SECRET` = `...`
+6.  Klikněte na **Create Web Service**. Render začne aplikaci sestavovat a nasazovat.
 
 ### Alternativní metoda: Ruční nastavení (Render/Railway/Heroku)
 
