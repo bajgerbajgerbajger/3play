@@ -13,6 +13,10 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`Server ready on http://${HOST}:${PORT}`);
 });
 
+// Disable timeout for large uploads (Unlimited Video Upload Architecture)
+server.timeout = 0;
+server.keepAliveTimeout = 0;
+
 server.on('error', (err) => {
   console.error('Server failed to start:', err);
   process.exit(1);

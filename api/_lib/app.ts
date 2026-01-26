@@ -28,11 +28,35 @@ dotenv.config()
 const app: express.Application = express()
 
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false, // Disable COEP to allow cross-origin resources
+  crossOriginOpenerPolicy: false, // Disable COOP to allow cross-origin windows
+  xFrameOptions: false, // Disable X-Frame-Options to allow embedding anywhere
+  contentSecurityPolicy: {
+    useDefaults: false,
+    directives: {
+      defaultSrc: ["'self'", "*"], // Allow everything by default
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:", "data:", "https:", "http:", "*"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:", "http:", "*"],
+      imgSrc: ["'self'", "data:", "blob:", "https:", "http:", "*"],
+      mediaSrc: ["'self'", "data:", "blob:", "https:", "http:", "*"],
+      fontSrc: ["'self'", "data:", "https:", "http:", "*"],
+      workerSrc: ["'self'", "blob:", "*"], // Allow blob workers for video processing
+      childSrc: ["'self'", "blob:", "*"], // Allow child frames/workers
+      frameSrc: ["*"], // Allow frames from any source for embedding
+      frameAncestors: ["'self'", "*"], // Allow 3Play to be embedded anywhere
+      connectSrc: ["'self'", "https:", "http:", "*"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: null, // Allow mixed content for HTTP embeds
+    },
+  },
 }))
-app.use(cors())
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(cors({
+  origin: true, // Reflect request origin
+  credentials: true, // Allow cookies
+}))
+app.use(express.json({ limit: '50gb' }))
+app.use(express.urlencoded({ extended: true, limit: '50gb' }))
 app.use('/uploads', express.static(path.resolve('uploads')))
 
 // Serve frontend static files

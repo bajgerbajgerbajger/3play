@@ -12,6 +12,11 @@ export function SafeEmbed({ code, className }: { code: string; className?: strin
        const match = trimmed.match(/src=["']([^"']+)["']/)
        return match ? match[1] : null
     }
+    // Direct URL support for players (HQQ, Netu, etc.)
+    // If it starts with http and has no HTML tags, treat as direct iframe source
+    if (trimmed.startsWith('http') && !trimmed.includes('<')) {
+        return trimmed
+    }
     return null
   }, [code])
 
@@ -76,13 +81,13 @@ export function SafeEmbed({ code, className }: { code: string; className?: strin
         src={directIframeSrc}
         className={className}
         title="Embedded Video"
-        // Permissive allow string for all player features
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+        // Permissive allow string for all player features including protected content
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen; display-capture"
         allowFullScreen
-        // Using "no-referrer" can sometimes bypass domain blocks, 
-        // but "unsafe-url" or removing it might be needed for some providers.
-        // We'll use "no-referrer" as it's usually the most successful for HQQ/Netu.
+        // Using "no-referrer" is critical for HQQ/Netu/protected servers to bypass domain blocks
         referrerPolicy="no-referrer"
+        // Add sandbox with all permissions to ensure scripts work while maintaining isolation
+        sandbox="allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
         style={{ border: 'none', width: '100%', height: '100%' }}
       />
     )
@@ -94,8 +99,9 @@ export function SafeEmbed({ code, className }: { code: string; className?: strin
       srcDoc={srcDoc}
       className={className}
       title="Embedded Video"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen; display-capture"
       allowFullScreen
+      sandbox="allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
       style={{ border: 'none' }}
     />
   )

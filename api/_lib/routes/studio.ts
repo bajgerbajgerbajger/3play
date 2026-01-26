@@ -41,7 +41,7 @@ if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
 const upload = multer({
   storage,
   limits: {
-    fileSize: 1024 * 1024 * 500 // 500MB
+    fileSize: Infinity // Unlimited file size for video uploads
   }
 })
 
@@ -228,11 +228,12 @@ router.post('/videos', async (req: Request, res: Response) => {
 
   // Allow either file upload (sourceUrl) or embedCode
   if (!embedCode && (!sourceUrl || sourceUrl.trim().length === 0)) {
-     // Check if it's strictly an embed upload attempt
-     // If not, it might be just missing data
+     // If both are missing, it's an error
+     res.status(400).json({ success: false, error: 'Source URL or Embed Code is required' })
+     return
   }
 
-  if (!title || title.trim().length < 3) {
+  if (!title || title.trim().length < 1) {
     res.status(400).json({ success: false, error: 'Title is required' })
     return
   }

@@ -162,7 +162,7 @@ export default function Watch() {
           {loading ? (
             <Skeleton className="aspect-video w-full rounded-none" />
           ) : video ? (
-            video.embedCode || video.sourceUrl.trim().startsWith('<') ? (
+            video.embedCode || video.sourceUrl.trim().startsWith('<') || isEmbedUrl(video.sourceUrl) ? (
               <div className="group relative aspect-video w-full bg-black shadow-2xl">
                 <SafeEmbed code={video.embedCode || video.sourceUrl} className="w-full h-full" />
                 {/* Embed Overlay/Badge */}
