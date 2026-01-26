@@ -1,13 +1,21 @@
 /**
  * local server entry file, for local development
  */
+import mongoose from 'mongoose';
 import app from './_lib/app.js';
+import { seedDatabase } from './_lib/lib/seed.js';
+import dbConnect from './_lib/lib/db.js';
 
 /**
  * start server with port
  */
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = '0.0.0.0';
+
+// Connect to DB and Seed on startup
+dbConnect().then(() => {
+  seedDatabase().catch(err => console.error('Seed failed:', err));
+}).catch(err => console.error('DB Connection failed:', err));
 
 const server = app.listen(PORT, HOST, () => {
   console.log(`Server ready on http://${HOST}:${PORT}`);
@@ -38,10 +46,10 @@ const shutdown = (signal: string) => {
   server.close(() => {
     console.log('HTTP server closed');
     // Allow DB connection to close if needed
-    // mongoose.connection.close(false, () => {
-    //   console.log('MongoDB connection closed');
+    mongoose.connection.close(false).then(() => {
+      console.log('MongoDB connection closed');
       process.exit(0);
-    // });
+    });
   });
 
   // Force close after 10s

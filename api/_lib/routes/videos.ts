@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from 'express'
 import { getAuthToken, requireAuth, verifyToken } from '../lib/auth.js'
 import dbConnect from '../lib/db.js'
-import { seedDatabase } from '../lib/seed.js'
 import Video from '../models/Video.js'
 import Profile from '../models/Profile.js'
 import Comment from '../models/Comment.js'
@@ -164,6 +163,11 @@ router.post('/:videoId/engagement', requireAuth, async (req: Request, res: Respo
   }
 
   const userId = (req as Request & { auth: { sub: string } }).auth.sub
+
+  if (!action || !['like', 'dislike'].includes(action)) {
+    res.status(400).json({ success: false, error: 'Invalid action' })
+    return
+  }
   
   if (action === 'like') {
     if (v.likedBy.includes(userId)) {

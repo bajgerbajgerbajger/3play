@@ -15,40 +15,45 @@ const router = Router()
 // Configure Storage
 let storage: multer.StorageEngine
 
-if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
-  // Use Cloudinary
+const hasCloudinaryConfig = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET,
+)
+
+if (hasCloudinaryConfig) {
   const { storage: cloudinaryStorage } = await import('../lib/cloudinary.js')
-  storage = cloudinaryStorage
-} else {
-  // Use Local Storage
+  if (cloudinaryStorage) {
+    storage = cloudinaryStorage
+  }
+}
+
+if (!storage) {
   const uploadDir = path.resolve('uploads')
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true })
   }
-  
+
   storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination(req, file, cb) {
       cb(null, uploadDir)
     },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    filename(req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
       const ext = path.extname(file.originalname)
       cb(null, file.fieldname + '-' + uniqueSuffix + ext)
-    }
+    },
   })
 }
 
 const upload = multer({
   storage,
-  limits: {
-    fileSize: Infinity // Unlimited file size for video uploads
-  }
 })
 
 router.use(requireAuth)
 
 router.post('/upload-signature', (req: Request, res: Response) => {
-  if (!process.env.CLOUDINARY_API_SECRET) {
+  if (!hasCloudinaryConfig) {
     res.json({ mode: 'local' })
     return
   }
@@ -81,7 +86,7 @@ router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'th
   let thumbnailUrl = ''
   let duration = 0
 
-  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
+  if (hasCloudinaryConfig) {
     // Cloudinary Logic
     if (files['file']?.[0]) {
       const file = files['file'][0]

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/store/auth'
 import type { StudioVideo, Tab } from '@/pages/studio/types'
-import { sampleSources } from '@/pages/studio/types'
 import { StudioSidebar } from '@/pages/studio/StudioSidebar'
 import { UploadPanel } from '@/pages/studio/UploadPanel'
 import { VideosPanel } from '@/pages/studio/VideosPanel'
@@ -67,6 +66,14 @@ export default function Studio() {
     return () => window.clearInterval(t)
   }, [token])
 
+  type UploadResponse = {
+    success?: boolean
+    url?: string
+    thumbnailUrl?: string
+    duration?: number
+    error?: string
+  }
+
   async function createUpload() {
     if (!token) return
     if (uploadTitle.trim().length < 3) {
@@ -122,8 +129,8 @@ export default function Studio() {
           formData.append('file', uploadFile)
           
           const startTime = Date.now()
-          
-          const res = await new Promise<any>((resolve, reject) => {
+
+          const res = await new Promise<UploadResponse>((resolve, reject) => {
             const xhr = new XMLHttpRequest()
             xhr.open('POST', '/api/studio/upload')
             xhr.setRequestHeader('Authorization', `Bearer ${token}`)
@@ -167,10 +174,10 @@ export default function Studio() {
             xhr.onload = () => {
               if (xhr.status >= 200 && xhr.status < 300) {
                 try {
-                   const data = JSON.parse(xhr.responseText)
-                   resolve(data)
-                } catch (err) {
-                   reject(new Error('Invalid response from server'))
+                  const data = JSON.parse(xhr.responseText) as UploadResponse
+                  resolve(data)
+                } catch {
+                  reject(new Error('Invalid response from server'))
                 }
               } else {
                 reject(new Error(`Upload failed: ${xhr.statusText}`))

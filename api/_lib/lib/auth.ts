@@ -18,6 +18,10 @@ type TokenPayload = {
 
 const secret = process.env.AUTH_SECRET || 'dev-secret'
 
+if (process.env.NODE_ENV === 'production' && !process.env.AUTH_SECRET) {
+  console.warn('WARNING: Using default AUTH_SECRET in production! Please set AUTH_SECRET environment variable.')
+}
+
 function base64urlEncode(input: Buffer | string) {
   const b = Buffer.isBuffer(input) ? input : Buffer.from(input)
   return b

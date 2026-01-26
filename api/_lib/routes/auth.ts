@@ -33,7 +33,7 @@ const registerLimiter = rateLimit({
 })
 
 // Antivirus / Input Sanitization Check
-function isSafeInput(str: any) {
+function isSafeInput(str: unknown) {
   if (typeof str !== 'string') return true // Let validation handle types
   // Basic XSS and malicious pattern check
   if (/<script\b[^>]*>([\s\S]*?)<\/script>/gm.test(str)) return false

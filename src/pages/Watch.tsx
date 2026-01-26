@@ -179,11 +179,6 @@ export default function Watch() {
             video.embedCode || video.sourceUrl.trim().startsWith('<') || isEmbedUrl(video.sourceUrl) ? (
               <div className="group relative aspect-video w-full bg-black shadow-2xl">
                 <SafeEmbed code={video.embedCode || video.sourceUrl} className="w-full h-full" />
-                {/* Embed Overlay/Badge */}
-                <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-opacity group-hover:opacity-0 pointer-events-none border border-white/5">
-                  <ExternalLink size={12} className="text-brand" />
-                  <span>Embed z: {getDomain(video.embedCode || video.sourceUrl)}</span>
-                </div>
               </div>
             ) : (
               <video

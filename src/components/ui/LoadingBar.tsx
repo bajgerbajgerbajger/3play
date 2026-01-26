@@ -8,9 +8,10 @@ export function LoadingBar() {
   useEffect(() => {
     const onStart = () => setLoadingCount(c => c + 1);
     const onEnd = () => setLoadingCount(c => Math.max(0, c - 1));
-    const onUpload = (e: any) => {
-      if (e.detail?.progress !== undefined) {
-        setUploadProgress(e.detail.progress);
+    const onUpload = (e: Event) => {
+      const customEvent = e as CustomEvent<{ progress: number }>;
+      if (customEvent.detail?.progress !== undefined) {
+        setUploadProgress(customEvent.detail.progress);
       } else {
         setUploadProgress(null);
       }
