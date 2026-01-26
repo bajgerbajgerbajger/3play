@@ -13,6 +13,20 @@ import { useAuthStore } from '@/store/auth'
 import { useModalStore } from '@/store/modal'
 import { ThumbsDown, ThumbsUp, Share2, Bell, ChevronDown, RotateCw, ExternalLink } from 'lucide-react'
 
+// Helper to detect if a URL is likely an embeddable player URL
+function isEmbedUrl(url: string) {
+  if (!url) return false
+  const u = url.toLowerCase().trim()
+  return (
+    u.includes('hqq.ac') || 
+    u.includes('netu.tv') || 
+    u.includes('waaw.to') || 
+    u.includes('youtube.com/embed') || 
+    u.includes('player') ||
+    (!u.match(/\.(mp4|webm|ogg|mov)$/i) && u.startsWith('http')) // If it doesn't end in a video extension, treat as potential embed
+  )
+}
+
 // Helper to get domain from URL
 function getDomain(url: string) {
   try {
