@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { VideoCard, type VideoListItem } from '@/components/video/VideoCard'
 import { Skeleton } from '@/components/ui/Skeleton'

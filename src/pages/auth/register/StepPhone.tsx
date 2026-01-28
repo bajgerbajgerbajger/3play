@@ -2,7 +2,7 @@ import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { countries } from './countries'
 import type { FieldErrors } from './utils'
 
