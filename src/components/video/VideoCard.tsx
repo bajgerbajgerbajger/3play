@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { formatCompactNumber, formatDuration, formatTimeAgo } from '@/lib/format'
@@ -20,7 +20,48 @@ export type VideoListItem = {
   } | null
 }
 
+function getCloudinaryPreviewUrl(sourceUrl?: string, thumbnailUrl?: string): string | null {
+  // Try to use sourceUrl first if it's a Cloudinary video
+  if (sourceUrl && sourceUrl.includes('cloudinary.com') && !sourceUrl.includes('youtube')) {
+    // Inject e_preview:duration_4 after /upload/
+    // Example: https://res.cloudinary.com/xyz/video/upload/v123/id.mp4
+    // Becomes: https://res.cloudinary.com/xyz/video/upload/e_preview:duration_4/v123/id.mp4
+    return sourceUrl.replace(/\/upload\//, '/upload/e_preview:duration_4/')
+  }
+  
+  // Fallback to thumbnail URL if it's Cloudinary (might be a derived image from video)
+  // We can try to switch extension to mp4 and add preview transformation
+  if (thumbnailUrl && thumbnailUrl.includes('cloudinary.com')) {
+    const videoUrl = thumbnailUrl.replace(/\.[^/.]+$/, '.mp4').replace(/\/image\/upload\//, '/video/upload/')
+    return videoUrl.replace(/\/upload\//, '/upload/e_preview:duration_4/')
+  }
+
+  return null
+}
+
 export const VideoCard: React.FC<{ video: VideoListItem; className?: string }> = ({ video, className }) => {
+  const [isHovered, setIsHovered] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    setPreviewUrl(getCloudinaryPreviewUrl(video.sourceUrl, video.thumbnailUrl))
+  }, [video.sourceUrl, video.thumbnailUrl])
+
+  const handleMouseEnter = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(true)
+    }, 600) // Delay to prevent flickering on quick mouse moves
+  }
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current)
+    }
+    setIsHovered(false)
+  }
+
   return (
     <div
       className={cn(
@@ -28,32 +69,60 @@ export const VideoCard: React.FC<{ video: VideoListItem; className?: string }> =
         'hover:bg-surface2 hover:-translate-y-[2px] hover:shadow-soft',
         className,
       )}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <Link
         to={`/watch/${video.id}`}
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
         <div className="relative aspect-video w-full overflow-hidden bg-surface2">
+          {/* Main Thumbnail */}
           <img
             src={video.thumbnailUrl || '/placeholder.jpg'}
             alt={video.title}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            className={cn(
+              "absolute inset-0 h-full w-full object-cover transition duration-300",
+              isHovered && previewUrl ? "opacity-0" : "opacity-100 group-hover:scale-[1.02]"
+            )}
             onError={(e) => {
               const target = e.target as HTMLImageElement
               if (video.embedCode) {
-                 // For embeds, we might not have a thumbnail yet, so we show a better placeholder
                  target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'
               } else {
                  target.src = '/placeholder.jpg'
               }
             }}
           />
-          <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-[11px] font-semibold text-white">
+          
+          {/* Video Preview */}
+          {isHovered && previewUrl && (
+            <video
+              ref={videoRef}
+              src={previewUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover fade-in"
+            />
+          )}
+
+          {/* Duration Badge - Hide on hover if playing */}
+          <div className={cn(
+            "absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-[11px] font-semibold text-white transition-opacity",
+            isHovered && previewUrl ? "opacity-0" : "opacity-100"
+          )}>
             {formatDuration(video.durationSeconds)}
           </div>
+          
+          {/* HD Badge */}
           {(video.sourceUrl?.includes('1080p') || video.sourceUrl?.includes('720p') || video.durationSeconds > 0 || video.embedCode) && (
-            <div className="absolute top-2 right-2 rounded bg-brand/90 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
+            <div className={cn(
+              "absolute top-2 right-2 rounded bg-brand/90 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm transition-opacity",
+              isHovered && previewUrl ? "opacity-0" : "opacity-100"
+            )}>
               HD
             </div>
           )}
