@@ -89,6 +89,8 @@ export default function Watch() {
   const [upNext, setUpNext] = useState<VideoListItem[]>([])
   const [descOpen, setDescOpen] = useState(false)
   const [engaging, setEngaging] = useState<'like' | 'dislike' | null>(null)
+  const [commentText, setCommentText] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
 
   useEffect(() => {
     if (!videoId) return
@@ -156,6 +158,26 @@ export default function Watch() {
       setError(e instanceof Error ? e.message : 'Failed')
     } finally {
       setEngaging(null)
+    }
+  }
+
+  async function postComment(e: React.FormEvent) {
+    e.preventDefault()
+    if (!videoId || !token || !commentText.trim()) return
+
+    try {
+      setSubmittingComment(true)
+      const res = await apiFetch<{ success: true; item: CommentItem }>(`/api/videos/${encodeURIComponent(videoId)}/comments`, {
+        method: 'POST',
+        token,
+        body: JSON.stringify({ message: commentText }),
+      })
+      setComments([res.item, ...comments])
+      setCommentText('')
+    } catch (err) {
+      setError('Nepodařilo se odeslat komentář')
+    } finally {
+      setSubmittingComment(false)
     }
   }
 
