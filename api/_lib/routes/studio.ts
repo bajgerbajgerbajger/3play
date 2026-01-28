@@ -65,13 +65,19 @@ if (hasCloudinaryConfig) {
   const { storage: cloudinaryStorage } = await import('../lib/cloudinary.js')
   if (cloudinaryStorage) {
     storage = cloudinaryStorage
+    console.log('✅ Cloudinary Storage Enabled')
   }
 }
 
 if (!storage) {
+  console.log('⚠️ Cloudinary keys missing. Using local storage (videos might not play if not MP4).')
   const uploadDir = path.resolve('uploads')
   if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true })
+    try {
+      fs.mkdirSync(uploadDir, { recursive: true })
+    } catch (err) {
+      console.error('Failed to create uploads directory:', err)
+    }
   }
 
   storage = multer.diskStorage({

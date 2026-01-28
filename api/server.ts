@@ -1,6 +1,7 @@
 /**
  * local server entry file, for local development
  */
+import 'dotenv/config'; // Load env vars immediately
 import mongoose from 'mongoose';
 import app from './_lib/app.js';
 import { seedDatabase } from './_lib/lib/seed.js';

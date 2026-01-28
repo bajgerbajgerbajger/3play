@@ -6,7 +6,8 @@ import type { StorageEngine } from 'multer'
 // Handle CloudinaryStorage export which might be a default export or named export depending on environment
 type CloudinaryCtor = new (opts: object) => StorageEngine
 const ms = multerStorageCloudinary as unknown as { CloudinaryStorage?: CloudinaryCtor; default?: { CloudinaryStorage?: CloudinaryCtor } }
-const CloudinaryStorage = ms.CloudinaryStorage || ms.default?.CloudinaryStorage
+
+const CloudinaryStorage = ms.CloudinaryStorage || (ms.default as any)?.CloudinaryStorage || ms.default
 
 // Configure Cloudinary
 cloudinary.config({
