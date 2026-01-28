@@ -29,7 +29,8 @@ export function LoadingBar() {
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let animationFrameId: number;
+    let timeoutId: NodeJS.Timeout;
 
     if (uploadProgress !== null) {
       setProgress(uploadProgress);
@@ -40,23 +41,30 @@ export function LoadingBar() {
       // Start/Continue progress
       setProgress(p => (p === 0 ? 10 : p));
       
-      interval = setInterval(() => {
-        setProgress(p => {
-          if (p >= 90) return p;
-          return p + (90 - p) * 0.1;
+      const animate = () => {
+        setProgress(prev => {
+          if (prev >= 90) return prev;
+          // Smooth geometric progression tailored for high refresh rates
+          // Using smaller step for smoother feel
+          return prev + (90 - prev) * 0.02;
         });
-      }, 200);
+        animationFrameId = requestAnimationFrame(animate);
+      };
+      
+      animationFrameId = requestAnimationFrame(animate);
     } else {
       // Complete
       setProgress(p => (p > 0 ? 100 : 0));
-      const t = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         setProgress(0);
         setUploadProgress(null);
       }, 400);
-      return () => clearTimeout(t);
     }
     
-    return () => clearInterval(interval);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      clearTimeout(timeoutId);
+    };
   }, [loadingCount, uploadProgress]);
 
   if (progress === 0) return null;
@@ -64,11 +72,12 @@ export function LoadingBar() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] h-[3px] bg-transparent pointer-events-none">
       <div 
-        className="h-full bg-brand shadow-[0_0_15px_rgba(229,9,20,0.8)] transition-all duration-300 ease-out"
+        className="h-full bg-brand shadow-[0_0_20px_2px_rgba(229,9,20,0.8)]"
         style={{ 
           width: `${progress}%`, 
           opacity: progress === 100 ? 0 : 1,
-          backgroundColor: uploadProgress !== null ? '#ff0000' : undefined // YouTube Red for uploads
+          backgroundColor: uploadProgress !== null ? '#ff0000' : undefined, // YouTube Red for uploads
+          transition: progress === 100 ? 'opacity 0.4s ease-out' : 'none' // Disable width transition for instant reaction
         }}
       />
     </div>

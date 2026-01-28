@@ -19,7 +19,7 @@ export function Logo({
 
   const toneClasses = {
     dark: '',
-    light: 'brightness-0',
+    light: 'invert hue-rotate-180 brightness-75 contrast-125', // Transforms white text to dark while keeping brand colors
     mono: 'grayscale',
   }
 
