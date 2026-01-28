@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const Home = lazy(() => import("@/pages/Home"));
+const Subscriptions = lazy(() => import("@/pages/Subscriptions"));
 const Watch = lazy(() => import("@/pages/Watch"));
 const Channel = lazy(() => import("@/pages/Channel"));
 const Studio = lazy(() => import("@/pages/Studio"));
@@ -153,6 +154,7 @@ export default function App() {
               }>
                 <Routes> 
                   <Route path="/" element={<Home />} /> 
+                  <Route path="/subscriptions" element={<Subscriptions />} /> 
                   <Route path="/watch/:videoId" element={<Watch />} /> 
                   <Route path="/channel/:handle" element={<Channel />} /> 
                   <Route path="/studio/*" element={<Studio />} /> 

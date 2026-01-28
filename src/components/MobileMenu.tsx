@@ -83,6 +83,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               {/* Main Navigation */}
               <div className="space-y-1">
                 <NavItem to="/" icon={<Home size={20} />} label="Domů" onClick={onClose} />
+                <NavItem to="/subscriptions" icon={<Video size={20} />} label="Odebírané" onClick={onClose} />
                 <NavItem to="/?sort=popular" icon={<Flame size={20} />} label="Trendy" onClick={onClose} />
               </div>
 
