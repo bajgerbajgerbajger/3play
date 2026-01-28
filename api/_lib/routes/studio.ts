@@ -315,6 +315,17 @@ router.post('/videos', async (req: Request, res: Response) => {
     return
   }
 
+  // Auto-generate thumbnail URL from Cloudinary source if not provided
+  let finalThumbnailUrl = thumbnailUrl || ''
+  if (!finalThumbnailUrl && sourceUrl && sourceUrl.includes('cloudinary.com') && !sourceUrl.includes('youtube')) {
+      const lastDot = sourceUrl.lastIndexOf('.')
+      if (lastDot !== -1) {
+        finalThumbnailUrl = sourceUrl.substring(0, lastDot) + '.jpg'
+      } else {
+        finalThumbnailUrl = sourceUrl + '.jpg'
+      }
+  }
+
   const id = `v-${crypto.randomBytes(3).toString('hex')}`
   
   const draft = await Video.create({
@@ -325,7 +336,7 @@ router.post('/videos', async (req: Request, res: Response) => {
     type: type || 'video',
     visibility: 'draft',
     status: 'ready',
-    thumbnailUrl: thumbnailUrl || '',
+    thumbnailUrl: finalThumbnailUrl,
     sourceUrl: sourceUrl || '', // Can be empty if embedCode is present
     embedCode: embedCode || '',
     durationSeconds: duration || 0,
