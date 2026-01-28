@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express'
+import crypto from 'crypto'
 import { getAuthToken, requireAuth, verifyToken } from '../lib/auth.js'
 import dbConnect from '../lib/db.js'
 import Video from '../models/Video.js'
