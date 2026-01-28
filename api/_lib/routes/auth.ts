@@ -205,6 +205,9 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     avatarUrl,
     passwordHash: hashPassword(password),
     emailVerified: true,
+    plan: 'free',
+    subscriptionStatus: 'trial',
+    trialEndsAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
   })
   
   await user.save()
@@ -235,6 +238,9 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      plan: user.plan,
+      subscriptionStatus: user.subscriptionStatus,
+      trialEndsAt: user.trialEndsAt,
     },
   })
 })
@@ -273,6 +279,10 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      plan: user.plan || 'free',
+      subscriptionStatus: user.subscriptionStatus || 'inactive',
+      trialEndsAt: user.trialEndsAt,
+      subscriptionEndsAt: user.subscriptionEndsAt,
     },
   })
 })
@@ -303,6 +313,10 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      plan: user.plan || 'free',
+      subscriptionStatus: user.subscriptionStatus || 'inactive',
+      trialEndsAt: user.trialEndsAt,
+      subscriptionEndsAt: user.subscriptionEndsAt,
     },
   })
 })

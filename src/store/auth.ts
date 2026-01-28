@@ -8,6 +8,10 @@ export type AuthUser = {
   displayName: string
   avatarUrl: string
   channelId?: string
+  plan?: 'free' | 'creator' | 'pro'
+  subscriptionStatus?: 'active' | 'inactive' | 'trial'
+  trialEndsAt?: string
+  subscriptionEndsAt?: string
 }
 
 type AuthState = {

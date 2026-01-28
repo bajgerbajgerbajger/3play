@@ -9,6 +9,7 @@ const Watch = lazy(() => import("@/pages/Watch"));
 const Channel = lazy(() => import("@/pages/Channel"));
 const Studio = lazy(() => import("@/pages/Studio"));
 const Auth = lazy(() => import("@/pages/Auth"));
+const ChannelSetup = lazy(() => import("@/pages/onboarding/ChannelSetup"));
 
 // Games
 const Prsi = lazy(() => import("@/pages/games/Prsi"));
@@ -58,6 +59,7 @@ export default function App() {
                   <Route path="/channel/:handle" element={<Channel />} />
                   <Route path="/studio/*" element={<Studio />} />
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/onboarding/setup" element={<ChannelSetup />} />
                   
                   {/* Games */}
                   <Route path="/games/prsi" element={<Prsi />} />

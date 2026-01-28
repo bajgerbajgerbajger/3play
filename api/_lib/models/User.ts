@@ -11,6 +11,10 @@ export type UserDoc = {
   passwordHash: string
   emailVerified: boolean
   role: 'user' | 'admin'
+  plan: 'free' | 'creator' | 'pro'
+  subscriptionStatus: 'active' | 'inactive' | 'trial'
+  trialEndsAt?: Date
+  subscriptionEndsAt?: Date
   lastLogin?: Date
   resetPasswordToken?: string
   resetPasswordExpires?: Date
@@ -28,6 +32,10 @@ const UserSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   emailVerified: { type: Boolean, default: true },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  plan: { type: String, enum: ['free', 'creator', 'pro'], default: 'free' },
+  subscriptionStatus: { type: String, enum: ['active', 'inactive', 'trial'], default: 'inactive' },
+  trialEndsAt: { type: Date },
+  subscriptionEndsAt: { type: Date },
   lastLogin: { type: Date },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },

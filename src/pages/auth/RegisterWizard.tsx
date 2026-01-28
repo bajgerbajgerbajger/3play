@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Logo } from '@/components/Logo'
 import { useAuthStore } from '@/store/auth'
@@ -20,6 +21,7 @@ const stepVariants = {
 }
 
 export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void; onSwitchToLogin: () => void }) {
+  const navigate = useNavigate()
   const { requestCode, verifyCode, register } = useAuthStore()
 
   const [step, setStep] = useState<Step>(1)
@@ -185,7 +187,7 @@ export function RegisterWizard({ onDone, onSwitchToLogin }: { onDone: () => void
         consentVersion: 'v1',
         gender: gender || 'other',
       })
-      onDone()
+      navigate('/onboarding/setup')
     } catch (e2: unknown) {
       console.error('Registration error:', e2)
       const msg = e2 instanceof Error ? e2.message : 'Registrace selhala'

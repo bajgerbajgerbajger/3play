@@ -27,8 +27,8 @@ export default function Auth() {
   }, [user, nav, returnTo])
 
   const onRegisterDone = () => {
-    openChannelCreation('welcome')
-    nav('/')
+    // Redirect to onboarding setup instead of home/studio
+    nav('/onboarding/setup')
   }
 
   return (

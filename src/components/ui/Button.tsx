@@ -32,11 +32,11 @@ export function Button({
         'active:animate-vibrate',
         size === 'sm' ? 'h-9 px-3 text-sm' : 'h-11 px-4 text-sm',
         variant === 'primary' &&
-          'bg-brand text-white hover:bg-brand-hover active:scale-[0.97] active:brightness-95',
+          'bg-brand text-white hover:bg-brand-hover active:scale-[0.97] active:brightness-95 shadow-md hover:shadow-lg hover:shadow-brand/20',
         variant === 'secondary' &&
-          'bg-surface text-text border border-border/10 hover:bg-surface2 active:scale-[0.97]',
+          'bg-surface text-text border border-border/10 hover:bg-surface2 active:scale-[0.97] shadow-sm hover:shadow-md',
         variant === 'ghost' && 'bg-transparent text-text hover:bg-white/5 active:scale-[0.97]',
-        variant === 'danger' && 'bg-red-500 text-white hover:bg-red-400 active:scale-[0.97]',
+        variant === 'danger' && 'bg-red-500 text-white hover:bg-red-400 active:scale-[0.97] shadow-md hover:shadow-lg hover:shadow-red-500/20',
         className,
       )}
     >
