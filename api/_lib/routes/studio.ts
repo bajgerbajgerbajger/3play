@@ -95,7 +95,7 @@ if (!storage) {
 const upload = multer({
   storage,
   limits: {
-    fileSize: 2 * 1024 * 1024 * 1024, // 2GB max file size
+    fileSize: 50 * 1024 * 1024 * 1024, // 50GB max file size
   },
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'file') {
