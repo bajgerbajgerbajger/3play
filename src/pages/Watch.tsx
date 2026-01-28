@@ -62,6 +62,7 @@ type VideoDetail = {
     bannerUrl: string
     bio: string
     subscribers: number
+    userId: string
   } | null
   viewerRating?: 'like' | 'dislike' | 'none'
 }
@@ -69,12 +70,14 @@ type VideoDetail = {
 type CommentItem = {
   id: string
   videoId: string
+  parentId?: string | null
   authorHandle: string
   authorName: string
   authorAvatarUrl: string
   message: string
   createdAt: string
   likes: number
+  pinned: boolean
 }
 
 export default function Watch() {
@@ -93,6 +96,8 @@ export default function Watch() {
   const [submittingComment, setSubmittingComment] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
   const [subscribing, setSubscribing] = useState(false)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
 
   useEffect(() => {
     if (!videoId) return
@@ -208,24 +213,101 @@ export default function Watch() {
     }
   }
 
-  async function postComment(e: React.FormEvent) {
+  async function handlePin(commentId: string) {
+    if (!token || !videoId) return
+    try {
+      const res = await apiFetch<{ success: true; pinned: boolean }>(`/api/videos/${encodeURIComponent(videoId)}/comments/${commentId}/pin`, {
+        method: 'POST',
+        token
+      })
+      setComments(comments.map(c => c.id === commentId ? { ...c, pinned: res.pinned } : c))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  async function postComment(e: React.FormEvent, parentId?: string) {
     e.preventDefault()
-    if (!videoId || !token || !commentText.trim()) return
+    const text = parentId ? replyText : commentText
+    if (!videoId || !token || !text.trim()) return
 
     try {
       setSubmittingComment(true)
       const res = await apiFetch<{ success: true; item: CommentItem }>(`/api/videos/${encodeURIComponent(videoId)}/comments`, {
         method: 'POST',
         token,
-        body: JSON.stringify({ message: commentText }),
+        body: JSON.stringify({ message: text, parentId }),
       })
-      setComments([res.item, ...comments])
-      setCommentText('')
+      // If it's a reply, find parent and insert after? Or just append and let logic handle it?
+      // Simple append works if we filter by parentId in render.
+      setComments((prev) => [res.item, ...prev])
+      
+      if (parentId) {
+        setReplyText('')
+        setReplyingTo(null)
+      } else {
+        setCommentText('')
+      }
     } catch (err) {
       setError('Nepodařilo se odeslat komentář')
     } finally {
       setSubmittingComment(false)
     }
+  }
+
+  const isOwner = user?.id && video?.channel?.userId && user.id === video.channel.userId
+
+  const renderComment = (c: CommentItem, isReply = false) => {
+    const replies = comments.filter(r => r.parentId === c.id).sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    
+    return (
+      <div key={c.id} className={`flex gap-3 rounded-2xl border border-border/10 bg-surface p-4 ${c.pinned ? 'border-l-4 border-l-primary' : ''}`}>
+        <img src={c.authorAvatarUrl} alt={c.authorName} className="h-9 w-9 rounded-full object-cover" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-sm font-semibold">{c.authorName}</div>
+            {c.pinned && <div className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Připnuto</div>}
+            <div className="text-xs text-muted">{c.authorHandle}</div>
+            <div className="text-xs text-muted">• {formatTimeAgo(c.createdAt)}</div>
+          </div>
+          <div className="mt-2 text-sm text-text">{c.message}</div>
+          <div className="mt-2 flex items-center gap-4">
+            <div className="text-xs text-muted">{formatCompactNumber(c.likes)} likes</div>
+            {user && (
+                <button onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)} className="text-xs font-semibold text-muted hover:text-text transition-colors">
+                    Odpovědět
+                </button>
+            )}
+            {isOwner && !isReply && (
+                <button onClick={() => handlePin(c.id)} className="text-xs font-semibold text-muted hover:text-text transition-colors">
+                    {c.pinned ? 'Odepnout' : 'Připnout'}
+                </button>
+            )}
+          </div>
+
+          {replyingTo === c.id && (
+            <form onSubmit={(e) => postComment(e, c.id)} className="mt-3 flex gap-2">
+              <input 
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Vaše odpověď..."
+                className="flex-1 rounded-lg border border-border/10 bg-surface2 px-3 py-2 text-sm text-text focus:outline-none focus:border-primary"
+                autoFocus
+              />
+              <Button variant="primary" size="sm" type="submit" disabled={!replyText.trim() || submittingComment}>
+                Odeslat
+              </Button>
+            </form>
+          )}
+
+          {replies.length > 0 && (
+            <div className="mt-3 space-y-3 pl-4 border-l-2 border-border/10">
+              {replies.map(r => renderComment(r, true))}
+            </div>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (

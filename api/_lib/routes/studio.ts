@@ -8,8 +8,48 @@ import crypto from 'crypto'
 import path from 'path'
 import fs from 'fs'
 import { cloudinary } from '../lib/cloudinary.js'
+import ffmpeg from 'fluent-ffmpeg'
+import ffmpegPath from 'ffmpeg-static'
+
+if (ffmpegPath) {
+  ffmpeg.setFfmpegPath(ffmpegPath)
+}
 
 const router = Router()
+
+// Helper to process local video
+const processLocalVideo = (filePath: string, outputDir: string): Promise<{ duration: number; thumbnailFilename: string }> => {
+  return new Promise((resolve) => {
+    let duration = 0
+    const thumbnailFilename = `thumb-${Date.now()}-${Math.round(Math.random() * 1e9)}.jpg`
+    
+    ffmpeg(filePath)
+      .on('codecData', (data) => {
+        // data.duration format: "00:00:10.50"
+        if (data.duration) {
+          const parts = data.duration.split(':')
+          if (parts.length === 3) {
+            duration = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(parts[2])
+          }
+        }
+      })
+      .on('end', () => {
+        resolve({ duration, thumbnailFilename })
+      })
+      .on('error', (err) => {
+        console.error('FFmpeg processing error:', err)
+        resolve({ duration: 0, thumbnailFilename: '' })
+      })
+      .screenshots({
+        count: 1,
+        timestamps: ['20%'],
+        filename: thumbnailFilename,
+        folder: outputDir,
+        size: '640x360'
+      })
+  })
+}
+
 
 
 // Configure Storage
@@ -137,7 +177,17 @@ router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'th
     if (files['file']?.[0]) {
         const file = files['file'][0]
         url = `/uploads/${file.filename}`
-        thumbnailUrl = url // Default fallback
+        
+        // Generate metadata & thumbnail
+        try {
+            const { duration: d, thumbnailFilename } = await processLocalVideo(file.path, path.dirname(file.path))
+            duration = d
+            if (thumbnailFilename) {
+                thumbnailUrl = `/uploads/${thumbnailFilename}`
+            }
+        } catch (e) {
+            console.error('Video processing failed', e)
+        }
     }
     
     if (files['thumbnail']?.[0]) {
@@ -241,7 +291,7 @@ router.post('/videos', async (req: Request, res: Response) => {
     return
   }
 
-  const { title, description, sourceUrl, thumbnailUrl, duration, type, embedCode } = (req.body || {}) as {
+  const { title, description, sourceUrl, thumbnailUrl, duration, type, embedCode, tags, category } = (req.body || {}) as {
     title?: string
     description?: string
     sourceUrl?: string
@@ -249,6 +299,8 @@ router.post('/videos', async (req: Request, res: Response) => {
     duration?: number
     type?: 'video' | 'movie' | 'episode'
     embedCode?: string
+    tags?: string[]
+    category?: string
   }
 
   // Allow either file upload (sourceUrl) or embedCode
@@ -277,6 +329,8 @@ router.post('/videos', async (req: Request, res: Response) => {
     sourceUrl: sourceUrl || '', // Can be empty if embedCode is present
     embedCode: embedCode || '',
     durationSeconds: duration || 0,
+    tags: tags || [],
+    category: category || 'People & Blogs',
     views: 0,
     likes: 0,
     dislikes: 0,
@@ -308,16 +362,20 @@ router.patch('/videos/:videoId', async (req: Request, res: Response) => {
     return
   }
 
-  const { title, description, visibility, thumbnailUrl } = (req.body || {}) as {
+  const { title, description, visibility, thumbnailUrl, tags, category } = (req.body || {}) as {
     title?: string
     description?: string
     visibility?: 'draft' | 'unlisted' | 'published'
     thumbnailUrl?: string
+    tags?: string[]
+    category?: string
   }
 
   if (typeof title === 'string') v.title = title
   if (typeof description === 'string') v.description = description
   if (typeof thumbnailUrl === 'string') v.thumbnailUrl = thumbnailUrl
+  if (Array.isArray(tags)) v.tags = tags
+  if (typeof category === 'string') v.category = category
   if (visibility === 'draft' || visibility === 'unlisted' || visibility === 'published') {
     v.visibility = visibility
     if (visibility === 'published' && !v.publishedAt) v.publishedAt = new Date()

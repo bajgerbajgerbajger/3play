@@ -63,6 +63,28 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
   res.status(200).json({ success: true, channel: profile })
 })
 
+router.patch('/', requireAuth, async (req: Request, res: Response) => {
+  const db = await dbConnect()
+  const userId = (req as Request & { auth: { sub: string } }).auth.sub
+  const { displayName, description, bannerUrl, avatarUrl, socialLinks } = req.body || {}
+
+  const profile = await Profile.findOne({ userId })
+  if (!profile) {
+    res.status(404).json({ success: false, error: 'Channel not found' })
+    return
+  }
+
+  if (typeof displayName === 'string' && displayName.trim()) profile.displayName = displayName.trim()
+  if (typeof description === 'string') profile.bio = description
+  if (typeof bannerUrl === 'string') profile.bannerUrl = bannerUrl
+  if (typeof avatarUrl === 'string') profile.avatarUrl = avatarUrl
+  if (Array.isArray(socialLinks)) profile.socialLinks = socialLinks
+
+  await profile.save()
+
+  res.status(200).json({ success: true, channel: profile })
+})
+
 router.get('/:handle', async (req: Request, res: Response) => {
   const { handle } = req.params
   // Handle in DB is stored with @ or not?

@@ -3,6 +3,8 @@ import { requireAuth } from '../lib/auth.js'
 import dbConnect from '../lib/db.js'
 import Subscription from '../models/Subscription.js'
 import Profile from '../models/Profile.js'
+import Notification from '../models/Notification.js'
+import User from '../models/User.js'
 
 const router = Router()
 
@@ -53,6 +55,30 @@ router.post('/toggle', requireAuth, async (req: Request, res: Response) => {
         { $inc: { subscribers: 1 } }
       )
       subscribed = true
+
+      // Notify Channel Owner
+      try {
+        if (channelProfile.userId) {
+          const subscriberUser = await User.findOne({ id: subscriberId })
+          if (subscriberUser) {
+             await Notification.create({
+              id: `n-${Math.random().toString(16).slice(2, 10)}`,
+              userId: channelProfile.userId,
+              actorId: subscriberId,
+              actorName: subscriberUser.displayName,
+              actorAvatarUrl: subscriberUser.avatarUrl,
+              type: 'subscribe',
+              title: `New subscriber`,
+              message: `${subscriberUser.displayName} subscribed to your channel`,
+              resourceId: channelId,
+              link: `/channel/${subscriberId}`, // Link to subscriber's channel
+              createdAt: new Date()
+            })
+          }
+        }
+      } catch (e) {
+        console.error('Failed to create subscription notification', e)
+      }
     }
 
     // Get updated count

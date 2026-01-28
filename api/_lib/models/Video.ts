@@ -47,6 +47,8 @@ const VideoSchema = new mongoose.Schema({
   sourceUrl: { type: String },
   embedCode: { type: String },
   durationSeconds: { type: Number, default: 0 },
+  tags: [{ type: String }],
+  category: { type: String, default: 'People & Blogs' },
   views: { type: Number, default: 0 },
   likes: { type: Number, default: 0 },
   dislikes: { type: Number, default: 0 },

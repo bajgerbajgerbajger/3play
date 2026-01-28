@@ -72,6 +72,11 @@ export default defineConfig(({ mode }) => {
           target: `http://localhost:${PORT}`,
           changeOrigin: true,
           secure: false,
+        },
+        '/uploads': {
+          target: `http://localhost:${PORT}`,
+          changeOrigin: true,
+          secure: false,
         }
       }
     },

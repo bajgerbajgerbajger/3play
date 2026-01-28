@@ -7,6 +7,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/Logo";
+import { Notifications } from "@/components/Notifications";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -130,6 +131,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
         </div>
         
         <div className="flex items-center gap-2">
+          {hydrated && user && <Notifications />}
           <IconButton aria-label="Chat">
             <MessageSquare size={18} />
           </IconButton>

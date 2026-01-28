@@ -8,6 +8,8 @@ export type StudioVideo = {
   thumbnailUrl: string
   sourceUrl: string
   durationSeconds: number
+  tags: string[]
+  category: string
   views: number
   likes: number
   dislikes: number

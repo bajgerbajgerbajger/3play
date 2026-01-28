@@ -4,11 +4,13 @@ import { LocalModel } from '../lib/local-db-adapter.js'
 export type CommentDoc = {
   id: string
   videoId: string
+  parentId?: string | null
   authorHandle: string
   authorName: string
   authorAvatarUrl?: string
   message: string
   likes: number
+  pinned: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -16,11 +18,13 @@ export type CommentDoc = {
 const CommentSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   videoId: { type: String, required: true, ref: 'Video' },
+  parentId: { type: String, default: null },
   authorHandle: { type: String, required: true },
   authorName: { type: String, required: true },
   authorAvatarUrl: { type: String },
   message: { type: String, required: true },
   likes: { type: Number, default: 0 },
+  pinned: { type: Boolean, default: false },
 }, { timestamps: true })
 
 const Model = process.env.MONGODB_URI

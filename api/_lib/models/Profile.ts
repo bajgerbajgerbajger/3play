@@ -9,6 +9,7 @@ export type ProfileDoc = {
   avatarUrl?: string
   bannerUrl?: string
   bio?: string
+  socialLinks?: { platform: string; url: string }[]
   subscribers: number
   phone?: string
   consentContact?: boolean
@@ -27,6 +28,10 @@ const ProfileSchema = new mongoose.Schema({
   avatarUrl: { type: String },
   bannerUrl: { type: String },
   bio: { type: String },
+  socialLinks: [{
+    platform: { type: String, required: true },
+    url: { type: String, required: true }
+  }],
   subscribers: { type: Number, default: 0 },
   phone: { type: String },
   consentContact: { type: Boolean, default: false },

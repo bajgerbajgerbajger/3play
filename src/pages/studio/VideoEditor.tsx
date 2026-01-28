@@ -96,6 +96,32 @@ export function VideoEditor({
             className="min-h-[110px] w-full rounded-[12px] border border-border/10 bg-surface px-3 py-2 text-sm text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           />
         </div>
+        
+        <div>
+          <div className="mb-1 text-xs font-semibold text-muted">Category</div>
+          <select
+            value={video.category || 'People & Blogs'}
+            onChange={(e) => onChange({ ...video, category: e.target.value })}
+            className="h-11 w-full rounded-[10px] border border-border/10 bg-surface px-3 text-sm text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+          >
+            {[
+              "Film & Animation", "Autos & Vehicles", "Music", "Pets & Animals", "Sports", 
+              "Travel & Events", "Gaming", "People & Blogs", "Comedy", "Entertainment", 
+              "News & Politics", "Howto & Style", "Education", "Science & Technology", 
+              "Nonprofits & Activism"
+            ].map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <div className="mb-1 text-xs font-semibold text-muted">Tags (comma separated)</div>
+          <Input 
+            value={video.tags?.join(', ') || ''} 
+            onChange={(e) => onChange({ ...video, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} 
+            placeholder="gaming, tutorial, review..."
+          />
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <div className="mb-1 text-xs font-semibold text-muted">Visibility</div>

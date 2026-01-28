@@ -18,6 +18,7 @@ type ChannelInfo = {
   avatarUrl: string
   bannerUrl: string
   bio: string
+  socialLinks?: { platform: string; url: string }[]
   subscribers: number
   totalViews: number
   videoCount: number
@@ -100,6 +101,21 @@ export default function Channel() {
                       {channel.handle} • {formatCompactNumber(channel.subscribers)} odběratelů • {formatCompactNumber(channel.totalViews)} zhlédnutí
                     </div>
                     {channel.bio ? <div className="mt-2 max-w-2xl text-sm text-text">{channel.bio}</div> : null}
+                    {channel.socialLinks && channel.socialLinks.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {channel.socialLinks.map((link, i) => (
+                          <a 
+                            key={i} 
+                            href={link.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs font-medium text-brand hover:underline bg-brand/10 px-2 py-1 rounded-md"
+                          >
+                            {link.platform}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 {isOwner ? (

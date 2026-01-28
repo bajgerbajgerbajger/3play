@@ -250,7 +250,13 @@ export default function Studio() {
       const d = await apiFetch<{ success: true; video: StudioVideo }>(`/api/studio/videos/${encodeURIComponent(selected.id)}`, {
         method: 'PATCH',
         token,
-        body: JSON.stringify({ title: selected.title, description: selected.description, visibility: selected.visibility }),
+        body: JSON.stringify({ 
+        title: selected.title, 
+        description: selected.description, 
+        visibility: selected.visibility,
+        tags: selected.tags,
+        category: selected.category
+      }),
       })
       setSelected(d.video)
       setItems((prev) => prev.map((v) => (v.id === d.video.id ? d.video : v)))

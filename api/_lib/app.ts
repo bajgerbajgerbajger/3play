@@ -14,6 +14,8 @@ import authRoutes from './routes/auth.js'
 import videoRoutes from './routes/videos.js'
 import channelRoutes from './routes/channels.js'
 import studioRoutes from './routes/studio.js'
+import subscriptionRoutes from './routes/subscriptions.js'
+import notificationRoutes from './routes/notifications.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -72,6 +74,8 @@ app.use('/api/auth', authRoutes)
 app.use('/api/videos', videoRoutes)
 app.use('/api/channels', channelRoutes)
 app.use('/api/studio', studioRoutes)
+app.use('/api/subscriptions', subscriptionRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 /**
  * health
