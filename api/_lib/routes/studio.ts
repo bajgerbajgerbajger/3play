@@ -98,49 +98,43 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024 * 1024, // 50GB max file size
   },
   fileFilter: (req, file, cb) => {
-    if (file.fieldname === 'file') {
-      if (file.mimetype.startsWith('video/')) {
-        cb(null, true)
-      } else {
-        cb(null, false)
-      }
-    } else if (file.fieldname === 'thumbnail') {
-      if (file.mimetype.startsWith('image/')) {
-        cb(null, true)
-      } else {
-        cb(null, false)
-      }
-    } else {
+    if (file.mimetype.startsWith('video/') || file.mimetype.startsWith('image/')) {
       cb(null, true)
+    } else {
+      cb(new Error('Only video and image files are allowed'))
     }
-  }
+  },
 })
 
 router.use(requireAuth)
 
-router.post('/upload-signature', (req: Request, res: Response) => {
+// --- Signed Upload Endpoint ---
+router.get('/signature', (req: Request, res: Response) => {
   if (!hasCloudinaryConfig) {
-    res.json({ mode: 'local' })
+    res.status(500).json({ success: false, error: 'Cloudinary not configured' })
     return
   }
-  const timestamp = Math.round(new Date().getTime() / 1000)
-  const folder = '3play-uploads'
-  const signature = cloudinary.utils.api_sign_request({
-    timestamp,
-    folder
-  }, process.env.CLOUDINARY_API_SECRET)
   
-  res.json({ 
-    mode: 'cloud',
+  const timestamp = Math.round((new Date()).getTime() / 1000)
+  const signature = cloudinary.utils.api_sign_request({
+    timestamp: timestamp,
+    folder: '3play-videos',
+  }, process.env.CLOUDINARY_API_SECRET!)
+
+  res.status(200).json({
+    success: true,
     signature,
     timestamp,
-    folder,
-    apiKey: process.env.CLOUDINARY_API_KEY,
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY
   })
 })
+// -----------------------------
 
-router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]), async (req: Request, res: Response) => {
+router.post('/upload', upload.fields([
+  { name: 'file', maxCount: 1 },
+  { name: 'thumbnail', maxCount: 1 },
+]), async (req: Request, res: Response) => {
   const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined
   
   if (!files || (!files['file'] && !files['thumbnail'])) {

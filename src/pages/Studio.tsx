@@ -122,81 +122,168 @@ export default function Studio() {
           finalThumbnailUrl = data.thumbnailUrl
       }
 
-      // 2. Upload Video File if in file mode
+      // 2. Upload Video File
       if (uploadMode === 'file' && uploadFile) {
           uploadModal.setStatus('uploading')
-          const formData = new FormData()
-          formData.append('file', uploadFile)
-          
           const startTime = Date.now()
 
-          const res = await new Promise<UploadResponse>((resolve, reject) => {
-            const xhr = new XMLHttpRequest()
-            xhr.open('POST', '/api/studio/upload')
-            xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-            
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable) {
-                const percentComplete = (e.loaded / e.total) * 100
-                setUploadProgress(percentComplete)
-                uploadModal.setProgress(percentComplete)
-                
-                // Calculate speed and remaining time
-                const elapsedTime = (Date.now() - startTime) / 1000 
-                if (elapsedTime > 0.5) { 
-                   const speedBytesPerSec = e.loaded / elapsedTime
-                   const remainingBytes = e.total - e.loaded
-                   const remainingSeconds = remainingBytes / speedBytesPerSec
-                   
-                   let speedText = ''
-                   if (speedBytesPerSec > 1024 * 1024) {
-                     speedText = `${(speedBytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
-                   } else {
-                     speedText = `${(speedBytesPerSec / 1024).toFixed(0)} KB/s`
-                   }
-                   
-                   let timeText = ''
-                   if (remainingSeconds < 60) {
-                     timeText = `${Math.ceil(remainingSeconds)}s`
-                   } else {
-                     const mins = Math.floor(remainingSeconds / 60)
-                     const secs = Math.ceil(remainingSeconds % 60)
-                     timeText = `${mins}m ${secs}s`
-                   }
-                   
-                   setUploadSpeed(speedText)
-                   setUploadTimeRemaining(timeText)
-                   uploadModal.setStats(speedText, timeText)
-                }
-              }
-            }
-            
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                  const data = JSON.parse(xhr.responseText) as UploadResponse
-                  resolve(data)
-                } catch {
-                  reject(new Error('Invalid response from server'))
-                }
-              } else {
-                try {
-                  const errorData = JSON.parse(xhr.responseText)
-                  reject(new Error(errorData.error || errorData.message || `Upload failed: ${xhr.statusText}`))
-                } catch {
-                  reject(new Error(`Upload failed: ${xhr.statusText} (${xhr.status})`))
-                }
-              }
-            }
-            xhr.onerror = () => reject(new Error('Network error during upload'))
-            xhr.send(formData)
-          })
+          // Check if we can use Cloudinary Direct Upload
+          let useDirectUpload = false
+          let signatureData = null
 
-          if (!res.success) throw new Error(res.error || 'Upload failed')
-          if (res.url) finalSourceUrl = res.url
-          // If we didn't upload a custom thumbnail, use the generated one
-          if (!finalThumbnailUrl && res.thumbnailUrl) finalThumbnailUrl = res.thumbnailUrl
-          finalDuration = res.duration || 0
+          try {
+            const sigRes = await apiFetch<{ success: boolean; signature: string; timestamp: number; cloudName: string; apiKey: string }>('/api/studio/signature', { token })
+            if (sigRes.success) {
+              useDirectUpload = true
+              signatureData = sigRes
+            }
+          } catch (e) {
+            console.log('Direct upload not available, falling back to server proxy', e)
+          }
+
+          if (useDirectUpload && signatureData) {
+             // --- DIRECT UPLOAD TO CLOUDINARY ---
+             const formData = new FormData()
+             formData.append('file', uploadFile)
+             formData.append('api_key', signatureData.apiKey)
+             formData.append('timestamp', signatureData.timestamp.toString())
+             formData.append('signature', signatureData.signature)
+             formData.append('folder', '3play-videos')
+             
+             const res = await new Promise<any>((resolve, reject) => {
+                const xhr = new XMLHttpRequest()
+                xhr.open('POST', `https://api.cloudinary.com/v1_1/${signatureData!.cloudName}/video/upload`)
+                
+                xhr.upload.onprogress = (e) => {
+                  if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100
+                    setUploadProgress(percentComplete)
+                    uploadModal.setProgress(percentComplete)
+                    
+                    const elapsedTime = (Date.now() - startTime) / 1000 
+                    if (elapsedTime > 0.5) { 
+                       const speedBytesPerSec = e.loaded / elapsedTime
+                       const remainingBytes = e.total - e.loaded
+                       const remainingSeconds = remainingBytes / speedBytesPerSec
+                       
+                       let speedText = ''
+                       if (speedBytesPerSec > 1024 * 1024) {
+                         speedText = `${(speedBytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
+                       } else {
+                         speedText = `${(speedBytesPerSec / 1024).toFixed(0)} KB/s`
+                       }
+                       
+                       let timeText = ''
+                       if (remainingSeconds < 60) {
+                         timeText = `${Math.ceil(remainingSeconds)}s`
+                       } else {
+                         const mins = Math.floor(remainingSeconds / 60)
+                         const secs = Math.ceil(remainingSeconds % 60)
+                         timeText = `${mins}m ${secs}s`
+                       }
+                       
+                       setUploadSpeed(speedText)
+                       setUploadTimeRemaining(timeText)
+                       uploadModal.setStats(speedText, timeText)
+                    }
+                  }
+                }
+                
+                xhr.onload = () => {
+                  if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                      resolve(JSON.parse(xhr.responseText))
+                    } catch {
+                      reject(new Error('Invalid response from Cloudinary'))
+                    }
+                  } else {
+                    reject(new Error(`Cloudinary upload failed: ${xhr.statusText}`))
+                  }
+                }
+                xhr.onerror = () => reject(new Error('Network error during upload'))
+                xhr.send(formData)
+             })
+
+             finalSourceUrl = res.secure_url
+             finalDuration = res.duration || 0
+             // Create video record in our DB
+             // We need to call a new endpoint to register the uploaded video
+             // OR we reuse the existing endpoint but pass the URL instead of file
+             // For now, let's reuse the existing upload endpoint logic but modify it to accept external URL if provided
+             // Actually, we can just use the 'embed' flow or add a new parameter to 'create' endpoint
+             // Let's modify the flow to call create directly with the URL.
+          } else {
+             // --- FALLBACK TO SERVER PROXY ---
+              const formData = new FormData()
+              formData.append('file', uploadFile)
+              
+              const res = await new Promise<UploadResponse>((resolve, reject) => {
+                const xhr = new XMLHttpRequest()
+                xhr.open('POST', '/api/studio/upload')
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+                
+                xhr.upload.onprogress = (e) => {
+                  if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100
+                    setUploadProgress(percentComplete)
+                    uploadModal.setProgress(percentComplete)
+                    
+                    // Calculate speed and remaining time
+                    const elapsedTime = (Date.now() - startTime) / 1000 
+                    if (elapsedTime > 0.5) { 
+                      const speedBytesPerSec = e.loaded / elapsedTime
+                      const remainingBytes = e.total - e.loaded
+                      const remainingSeconds = remainingBytes / speedBytesPerSec
+                      
+                      let speedText = ''
+                      if (speedBytesPerSec > 1024 * 1024) {
+                        speedText = `${(speedBytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
+                      } else {
+                        speedText = `${(speedBytesPerSec / 1024).toFixed(0)} KB/s`
+                      }
+                      
+                      let timeText = ''
+                      if (remainingSeconds < 60) {
+                        timeText = `${Math.ceil(remainingSeconds)}s`
+                      } else {
+                        const mins = Math.floor(remainingSeconds / 60)
+                        const secs = Math.ceil(remainingSeconds % 60)
+                        timeText = `${mins}m ${secs}s`
+                      }
+                      
+                      setUploadSpeed(speedText)
+                      setUploadTimeRemaining(timeText)
+                      uploadModal.setStats(speedText, timeText)
+                    }
+                  }
+                }
+                
+                xhr.onload = () => {
+                  if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                      const data = JSON.parse(xhr.responseText) as UploadResponse
+                      resolve(data)
+                    } catch {
+                      reject(new Error('Invalid response from server'))
+                    }
+                  } else {
+                    try {
+                      const errorData = JSON.parse(xhr.responseText)
+                      reject(new Error(errorData.error || errorData.message || `Upload failed: ${xhr.statusText}`))
+                    } catch {
+                      reject(new Error(`Upload failed: ${xhr.statusText} (${xhr.status})`))
+                    }
+                  }
+                }
+                xhr.onerror = () => reject(new Error('Network error during upload'))
+                xhr.send(formData)
+              })
+
+              if (!res.success) throw new Error(res.error || 'Upload failed')
+              if (res.url) finalSourceUrl = res.url
+              if (!finalThumbnailUrl && res.thumbnailUrl) finalThumbnailUrl = res.thumbnailUrl
+              finalDuration = res.duration || 0
+          }
       } else {
          if (uploadMode === 'file') {
              // sourceUrl is already set to finalSourceUrl
