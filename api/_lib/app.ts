@@ -35,17 +35,17 @@ app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: false,
     directives: {
-      defaultSrc: ["'self'", "*"], // Allow everything by default
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:", "data:", "https:", "http:", "*"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https:", "http:", "*"],
-      imgSrc: ["'self'", "data:", "blob:", "https:", "http:", "*"],
-      mediaSrc: ["'self'", "data:", "blob:", "https:", "http:", "*"],
-      fontSrc: ["'self'", "data:", "https:", "http:", "*"],
-      workerSrc: ["'self'", "blob:", "*"], // Allow blob workers for video processing
-      childSrc: ["'self'", "blob:", "*"], // Allow child frames/workers
-      frameSrc: ["*"], // Allow frames from any source for embedding
-      frameAncestors: ["'self'", "*"], // Allow 3Play to be embedded anywhere
-      connectSrc: ["'self'", "https:", "http:", "*"],
+      defaultSrc: ["'self'"], 
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:", "data:", "https:", "http:"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:", "http:"],
+      imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+      mediaSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+      fontSrc: ["'self'", "data:", "https:", "http:"],
+      workerSrc: ["'self'", "blob:"],
+      childSrc: ["'self'", "blob:"],
+      frameSrc: ["*"], // Allow frames from any source (for embeds)
+      frameAncestors: ["*"], // Allow 3Play to be embedded anywhere
+      connectSrc: ["'self'", "https:", "http:"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: null, // Allow mixed content for HTTP embeds
     },

@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
 import type { Request, Response, NextFunction } from 'express'
 
 export type AuthUser = {
@@ -13,61 +13,34 @@ type TokenPayload = {
   sub: string
   email: string
   handle: string
-  exp: number
+  exp?: number
+  iat?: number
 }
 
 const secret = process.env.AUTH_SECRET || 'dev-secret'
 
 if (process.env.NODE_ENV === 'production' && !process.env.AUTH_SECRET) {
-  console.warn('WARNING: Using default AUTH_SECRET in production! Please set AUTH_SECRET environment variable.')
-}
-
-function base64urlEncode(input: Buffer | string) {
-  const b = Buffer.isBuffer(input) ? input : Buffer.from(input)
-  return b
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-}
-
-function base64urlDecode(input: string) {
-  const padded = input.replace(/-/g, '+').replace(/_/g, '/')
-  const padLen = (4 - (padded.length % 4)) % 4
-  const withPad = padded + '='.repeat(padLen)
-  return Buffer.from(withPad, 'base64')
-}
-
-function sign(data: string) {
-  return base64urlEncode(crypto.createHmac('sha256', secret).update(data).digest())
+  throw new Error('CRITICAL SECURITY ERROR: AUTH_SECRET is not set in production environment! The application cannot start securely.')
 }
 
 export function signToken(user: { id: string; email: string; handle: string }, ttlSeconds = 60 * 60 * 24 * 14) {
-  const header = base64urlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-  const payload: TokenPayload = {
-    sub: user.id,
-    email: user.email,
-    handle: user.handle,
-    exp: Math.floor(Date.now() / 1000) + ttlSeconds,
-  }
-  const payloadPart = base64urlEncode(JSON.stringify(payload))
-  const unsigned = `${header}.${payloadPart}`
-  const sig = sign(unsigned)
-  return `${unsigned}.${sig}`
+  return jwt.sign(
+    { 
+      sub: user.id,
+      email: user.email,
+      handle: user.handle 
+    },
+    secret,
+    { expiresIn: ttlSeconds }
+  )
 }
 
 export function verifyToken(token: string): TokenPayload | null {
-  const parts = token.split('.')
-  if (parts.length !== 3) return null
-  const [h, p, s] = parts
-  const unsigned = `${h}.${p}`
-  if (sign(unsigned) !== s) return null
   try {
-    const payload = JSON.parse(base64urlDecode(p).toString('utf8')) as TokenPayload
-    if (!payload?.sub || !payload.exp) return null
-    if (payload.exp < Math.floor(Date.now() / 1000)) return null
+    // jwt.verify throws if invalid or expired
+    const payload = jwt.verify(token, secret) as TokenPayload
     return payload
-  } catch {
+  } catch (error) {
     return null
   }
 }
@@ -92,4 +65,3 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   ;(req as Request & { auth: TokenPayload }).auth = payload
   next()
 }
-

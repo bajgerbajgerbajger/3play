@@ -55,6 +55,11 @@ const VideoSchema = new mongoose.Schema({
   publishedAt: { type: Date },
 }, { timestamps: true })
 
+// Add text index for search
+VideoSchema.index({ title: 'text', description: 'text' })
+// Add compound index for common filtering
+VideoSchema.index({ visibility: 1, status: 1, publishedAt: -1 })
+
 const Model = process.env.MONGODB_URI
   ? (mongoose.models.Video || mongoose.model('Video', VideoSchema))
   : new LocalModel('videos')

@@ -48,6 +48,26 @@ if (!storage) {
 
 const upload = multer({
   storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024 * 1024, // 2GB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === 'file') {
+      if (file.mimetype.startsWith('video/')) {
+        cb(null, true)
+      } else {
+        cb(null, false)
+      }
+    } else if (file.fieldname === 'thumbnail') {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true)
+      } else {
+        cb(null, false)
+      }
+    } else {
+      cb(null, true)
+    }
+  }
 })
 
 router.use(requireAuth)
