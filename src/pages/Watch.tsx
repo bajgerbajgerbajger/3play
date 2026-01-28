@@ -91,6 +91,8 @@ export default function Watch() {
   const [engaging, setEngaging] = useState<'like' | 'dislike' | null>(null)
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [subscribed, setSubscribed] = useState(false)
+  const [subscribing, setSubscribing] = useState(false)
 
   useEffect(() => {
     if (!videoId) return
@@ -107,6 +109,15 @@ export default function Watch() {
         setVideo(v.video)
         setComments(c.items)
         setUpNext(u.items.filter((x) => x.id !== videoId).slice(0, 10))
+        
+        // Check subscription status if user is logged in
+        if (token && v.video.channel) {
+            apiFetch<{ subscribed: boolean }>(`/api/subscriptions/status/${v.video.channel.id}`, { token })
+                .then(res => {
+                    if (alive) setSubscribed(res.subscribed)
+                })
+                .catch(() => {})
+        }
       })
       .catch((e: unknown) => {
         if (!alive) return
@@ -158,6 +169,42 @@ export default function Watch() {
       setError(e instanceof Error ? e.message : 'Failed')
     } finally {
       setEngaging(null)
+    }
+  }
+
+  async function handleSubscribe() {
+    if (!video?.channel) return
+    if (!token || !user) {
+        setError('Pro odběr se musíte přihlásit')
+        return
+    }
+    // Prevent subscribing to own channel
+    if (user.channelId === video.channel.id) {
+        setError('Nemůžete odebírat svůj vlastní kanál')
+        return
+    }
+
+    try {
+        setSubscribing(true)
+        const res = await apiFetch<{ subscribed: boolean; count: number }>('/api/subscriptions/toggle', {
+            method: 'POST',
+            token,
+            body: JSON.stringify({ channelId: video.channel.id }),
+        })
+        setSubscribed(res.subscribed)
+        if (video.channel) {
+            setVideo({
+                ...video,
+                channel: {
+                    ...video.channel,
+                    subscribers: res.count
+                }
+            })
+        }
+    } catch (err) {
+        setError('Nepodařilo se změnit stav odběru')
+    } finally {
+        setSubscribing(false)
     }
   }
 
@@ -240,9 +287,14 @@ export default function Watch() {
                     </div>
                   </Link>
                 ) : null}
-                <Button variant="secondary" className="hidden md:inline-flex">
-                  <Bell size={16} />
-                  Odebírat
+                <Button 
+                    variant={subscribed ? 'secondary' : 'primary'} 
+                    className="hidden md:inline-flex"
+                    onClick={handleSubscribe}
+                    loading={subscribing}
+                >
+                  <Bell size={16} className={subscribed ? "fill-current" : ""} />
+                  {subscribed ? 'Odebíráno' : 'Odebírat'}
                 </Button>
               </div>
               <div className="flex flex-wrap items-center gap-2">
