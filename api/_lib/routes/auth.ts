@@ -206,8 +206,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     passwordHash: hashPassword(password),
     emailVerified: true,
     plan: 'free',
-    subscriptionStatus: 'trial',
-    trialEndsAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
+    subscriptionStatus: 'active', // Permanently active
   })
   
   await user.save()
