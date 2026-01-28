@@ -100,7 +100,7 @@ export function SmartAgent() {
       if (Math.random() > 0.7 && tracker.current) {
         const profile = tracker.current.getProfile();
         const topGenre = Object.entries(profile.preferences.favoriteGenres)
-          .sort((a, b) => b[1] - a[1])[0];
+          .sort((a, b) => Number(b[1]) - Number(a[1]))[0];
         
         const prompts = [
           "Nevíš, na co koukat? Mám pro tebe tip!",
