@@ -26,6 +26,7 @@ if (CloudinaryStorage && process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDI
         folder: '3play-uploads',
         resource_type: isVideo ? 'video' : 'image',
         public_id: `upload-${Date.now()}-${Math.round(Math.random() * 1E9)}`,
+        format: isVideo ? 'mp4' : undefined,
       }
     },
   })
