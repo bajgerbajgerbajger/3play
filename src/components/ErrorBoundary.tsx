@@ -12,6 +12,9 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props)
+  }
   public state: State = {
     hasError: false,
     error: null,
@@ -25,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('Uncaught error:', error, errorInfo);
   }
 
-  public render() {
+  public override render(): ReactNode {
     if (this.state.hasError) {
       return (
         <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-bg text-text p-4">
