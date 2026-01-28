@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import crypto from 'crypto'
 import { getAuthToken, requireAuth, verifyToken } from '../lib/auth.js'
+import { seedDatabase } from '../lib/seed.js'
 import dbConnect from '../lib/db.js'
 import Video from '../models/Video.js'
 import Profile from '../models/Profile.js'
