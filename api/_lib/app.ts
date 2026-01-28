@@ -94,14 +94,16 @@ app.use(
  * error handler middleware
  */
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  void next
-  if (process.env.NODE_ENV !== 'production') {
-    console.error(error)
+  console.error('[Global Error Handler]:', error)
+  
+  if (res.headersSent) {
+    return next(error)
   }
+
   res.status(500).json({
     success: false,
-    error: 'Server internal error',
-    details: process.env.NODE_ENV !== 'production' ? error.message : undefined,
+    error: error.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
   })
 })
 

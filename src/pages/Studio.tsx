@@ -180,7 +180,12 @@ export default function Studio() {
                   reject(new Error('Invalid response from server'))
                 }
               } else {
-                reject(new Error(`Upload failed: ${xhr.statusText}`))
+                try {
+                  const errorData = JSON.parse(xhr.responseText)
+                  reject(new Error(errorData.error || errorData.message || `Upload failed: ${xhr.statusText}`))
+                } catch {
+                  reject(new Error(`Upload failed: ${xhr.statusText} (${xhr.status})`))
+                }
               }
             }
             xhr.onerror = () => reject(new Error('Network error during upload'))
