@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { formatCompactNumber, formatDuration, formatTimeAgo } from '@/lib/format'
 import type { VideoListItem } from './VideoCard'
 
-export function VideoRow({ video }: { video: VideoListItem }) {
+export const VideoRow: React.FC<{ video: VideoListItem }> = ({ video }) => {
   return (
     <Link
       to={`/watch/${video.id}`}

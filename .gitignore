@@ -23,7 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .vite
-.vercel
 .env*.local
 .env
 .env.*

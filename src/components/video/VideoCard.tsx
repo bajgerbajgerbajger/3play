@@ -20,7 +20,7 @@ export type VideoListItem = {
   } | null
 }
 
-export function VideoCard({ video, className }: { video: VideoListItem; className?: string }) {
+export const VideoCard: React.FC<{ video: VideoListItem; className?: string }> = ({ video, className }) => {
   return (
     <div
       className={cn(
