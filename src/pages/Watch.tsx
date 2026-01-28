@@ -264,7 +264,40 @@ export default function Watch() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="font-heading text-sm font-semibold">Komentáře</h3>
+              <h3 className="font-heading text-sm font-semibold">Komentáře ({comments.length})</h3>
+              
+              {user ? (
+                <form onSubmit={postComment} className="flex gap-3 mb-6">
+                   <img 
+                     src={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.handle}`} 
+                     alt="Já" 
+                     className="h-9 w-9 rounded-full object-cover" 
+                   />
+                   <div className="flex-1 space-y-2">
+                     <textarea
+                       value={commentText}
+                       onChange={(e) => setCommentText(e.target.value)}
+                       placeholder="Přidejte komentář..."
+                       className="w-full rounded-xl border border-border/10 bg-surface px-3 py-2 text-sm text-text placeholder:text-muted focus:border-primary focus:outline-none min-h-[80px] resize-y"
+                     />
+                     <div className="flex justify-end">
+                       <Button 
+                         variant="primary" 
+                         type="submit" 
+                         disabled={!commentText.trim() || submittingComment}
+                         loading={submittingComment}
+                       >
+                         Komentovat
+                       </Button>
+                     </div>
+                   </div>
+                </form>
+              ) : (
+                <div className="rounded-xl border border-border/10 bg-surface p-4 text-center text-sm text-muted mb-6">
+                  Pro přidání komentáře se <Link to="/login" className="text-primary hover:underline">přihlaste</Link>.
+                </div>
+              )}
+
               <div className="space-y-3">
                 {comments.map((c) => (
                   <div key={c.id} className="flex gap-3 rounded-2xl border border-border/10 bg-surface p-4">
