@@ -13,7 +13,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check": "tsc --noEmit",
+    "check": "node node_modules/typescript/lib/tsc.js --noEmit",
     "server:dev": "nodemon",
     "migrate": "tsx api/_lib/scripts/migrate.ts",
     "create-admin": "tsx api/_lib/scripts/create-admin.ts",
