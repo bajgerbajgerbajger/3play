@@ -75,20 +75,22 @@ export default function Subscriptions() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {loading
           ? Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-border/10 bg-surface overflow-hidden">
-                <Skeleton className="aspect-video w-full rounded-none" />
-                <div className="p-3">
-                  <div className="flex gap-3">
-                    <Skeleton className="h-9 w-9 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-4/5" />
-                      <Skeleton className="h-3 w-2/5" />
+              <React.Fragment key={i}>
+                <div className="rounded-xl border border-border/10 bg-surface overflow-hidden">
+                  <Skeleton className="aspect-video w-full rounded-none" />
+                  <div className="p-3">
+                    <div className="flex gap-3">
+                      <Skeleton className="h-9 w-9 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-4/5" />
+                        <Skeleton className="h-3 w-2/5" />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </React.Fragment>
             ))
-          : items.map((v, i) => <VideoCard key={`${v.id}-${i}`} video={v} />)}
+          : items.map((v, i) => <VideoCard key={`${v.id}-${i}`} video={v as VideoListItem} />)}
       </div>
 
       {user && !loading && items.length > 0 ? (
@@ -101,4 +103,3 @@ export default function Subscriptions() {
     </div>
   )
 }
-

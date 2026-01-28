@@ -485,8 +485,12 @@ export default function Watch() {
         </div>
         <div className="space-y-3">
           {loading
-            ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[100px] w-full rounded-2xl" />)
-            : upNext.map((v) => <VideoRow key={v.id} video={v} />)}
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <React.Fragment key={i}>
+                  <Skeleton className="h-[100px] w-full rounded-2xl" />
+                </React.Fragment>
+              ))
+            : upNext.map((v) => <VideoRow key={v.id} video={v as VideoListItem} />)}
         </div>
       </aside>
     </div>

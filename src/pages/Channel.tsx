@@ -157,8 +157,12 @@ export default function Channel() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {loading
-          ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[260px] w-full rounded-2xl" />)
-          : videos.map((v) => <VideoCard key={v.id} video={v} />)}
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <React.Fragment key={i}>
+                <Skeleton className="h-[260px] w-full rounded-2xl" />
+              </React.Fragment>
+            ))
+          : videos.map((v) => <VideoCard key={v.id} video={v as VideoListItem} />)}
       </div>
     </div>
   )
