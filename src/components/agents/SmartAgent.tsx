@@ -165,7 +165,7 @@ export function SmartAgent() {
     const lower = text.toLowerCase();
     const profile = tracker.current.getProfile();
     const topGenre = Object.entries(profile.preferences.favoriteGenres)
-      .sort((a, b) => (b[1] as number) - (a[1] as number))[0];
+      .sort((a, b) => Number(b[1]) - Number(a[1]))[0];
 
     if (lower.includes('doporuč') || lower.includes('co') || lower.includes('film')) {
       const recs = tracker.current.getRecommendations();
