@@ -134,7 +134,7 @@ router.post('/upload-signature', (req: Request, res: Response) => {
   })
 })
 
-router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]), (req: Request, res: Response) => {
+router.post('/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]), async (req: Request, res: Response) => {
   const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined
   
   if (!files || (!files['file'] && !files['thumbnail'])) {

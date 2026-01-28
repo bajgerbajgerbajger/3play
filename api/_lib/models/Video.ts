@@ -13,6 +13,8 @@ export type VideoDoc = {
   sourceUrl?: string
   embedCode?: string
   durationSeconds: number
+  tags?: string[]
+  category?: string
   views: number
   likes: number
   dislikes: number
