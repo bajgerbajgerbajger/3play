@@ -78,7 +78,7 @@ export default function Developer() {
               Authorized personnel only.
             </p>
             <div className="flex gap-4">
-              <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500 hover:text-black">
+              <Button variant="ghost" className="border border-green-500 text-green-500 hover:bg-green-500 hover:text-black">
                 VIEW API DOCS
               </Button>
               <Button variant="ghost" className="text-green-500 hover:bg-green-500/10">

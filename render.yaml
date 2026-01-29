@@ -18,8 +18,11 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: CORS_ORIGINS
+        value: https://3play.cz,https://www.3play.cz
         sync: false
       - key: APP_ORIGIN
+        value: https://3play.cz
         sync: false
       - key: API_ORIGIN
+        value: https://3play.cz
         sync: false

@@ -314,6 +314,68 @@ router.post('/:videoId/comments/:commentId/pin', requireAuth, async (req: Reques
   res.status(200).json({ success: true, pinned: comment.pinned })
 })
 
+router.post('/:videoId/comments/:commentId/engagement', requireAuth, async (req: Request, res: Response) => {
+  await dbConnect()
+  const { videoId, commentId } = req.params
+  const { action } = (req.body || {}) as { action?: 'like' | 'dislike' }
+  const auth = (req as Request & { auth: { sub: string } }).auth
+
+  if (!action || !['like', 'dislike'].includes(action)) {
+    res.status(400).json({ success: false, error: 'Invalid action' })
+    return
+  }
+
+  const comment = await Comment.findOne({ id: commentId, videoId })
+  if (!comment) {
+    res.status(404).json({ success: false, error: 'Comment not found' })
+    return
+  }
+
+  const userId = auth.sub
+
+  if (action === 'like') {
+    if (comment.likedBy.includes(userId)) {
+        // Toggle off
+        comment.likedBy = comment.likedBy.filter((id: string) => id !== userId)
+        comment.likes = Math.max(0, comment.likes - 1)
+    } else {
+        // Add like
+        comment.likedBy.push(userId)
+        comment.likes += 1
+        // Remove dislike
+        if (comment.dislikedBy.includes(userId)) {
+            comment.dislikedBy = comment.dislikedBy.filter((id: string) => id !== userId)
+            comment.dislikes = Math.max(0, comment.dislikes - 1)
+        }
+    }
+  }
+
+  if (action === 'dislike') {
+    if (comment.dislikedBy.includes(userId)) {
+        // Toggle off
+        comment.dislikedBy = comment.dislikedBy.filter((id: string) => id !== userId)
+        comment.dislikes = Math.max(0, comment.dislikes - 1)
+    } else {
+        // Add dislike
+        comment.dislikedBy.push(userId)
+        comment.dislikes += 1
+        // Remove like
+        if (comment.likedBy.includes(userId)) {
+            comment.likedBy = comment.likedBy.filter((id: string) => id !== userId)
+            comment.likes = Math.max(0, comment.likes - 1)
+        }
+    }
+  }
+
+  await comment.save()
+
+  let viewerRating = 'none'
+  if (comment.likedBy.includes(userId)) viewerRating = 'like'
+  if (comment.dislikedBy.includes(userId)) viewerRating = 'dislike'
+
+  res.status(200).json({ success: true, likes: comment.likes, dislikes: comment.dislikes, viewerRating })
+})
+
 router.post('/:videoId/engagement', requireAuth, async (req: Request, res: Response) => {
   await dbConnect()
   const { videoId } = req.params

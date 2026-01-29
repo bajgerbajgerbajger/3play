@@ -23,7 +23,7 @@ export function SubscribeButton({
   showCount = true 
 }: SubscribeButtonProps) {
   const { user, token } = useAuthStore()
-  const { openChannelCreation } = useModalStore()
+  const { openWelcome } = useModalStore()
   const [subscribed, setSubscribed] = useState(false)
   const [count, setCount] = useState(initialCount)
   const [loading, setLoading] = useState(false)
@@ -53,7 +53,7 @@ export function SubscribeButton({
 
     // Require channel to subscribe
     if (!user.channelId) {
-      openChannelCreation('subscribe')
+      openWelcome()
       return
     }
 

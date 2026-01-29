@@ -36,6 +36,7 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
   const [fullscreen, setFullscreen] = useState(false)
   const [hovering, setHovering] = useState(false)
   const [buffering, setBuffering] = useState(false)
+  const [showClickAnim, setShowClickAnim] = useState<'play' | 'pause' | null>(null)
   
   // Settings State
   const [showSettings, setShowSettings] = useState(false)
@@ -216,8 +217,14 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
   // Handlers
   const togglePlay = () => {
     if (!videoRef.current) return
-    if (playing) videoRef.current.pause()
-    else videoRef.current.play()
+    if (playing) {
+      videoRef.current.pause()
+      setShowClickAnim('pause')
+    } else {
+      videoRef.current.play()
+      setShowClickAnim('play')
+    }
+    setTimeout(() => setShowClickAnim(null), 600)
   }
 
   const handleTimeUpdate = () => {

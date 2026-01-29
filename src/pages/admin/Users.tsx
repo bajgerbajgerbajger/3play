@@ -140,7 +140,7 @@ export default function UsersPage() {
                       {user.role !== 'admin' && (
                         <Button 
                           size="sm" 
-                          variant={user.isBlocked ? "default" : "secondary"}
+                          variant={user.isBlocked ? "primary" : "secondary"}
                           className={user.isBlocked ? "bg-green-600 hover:bg-green-700" : "bg-red-500/10 text-red-500 hover:bg-red-500/20"}
                           onClick={() => toggleBlock(user)}
                         >

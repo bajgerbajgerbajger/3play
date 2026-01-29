@@ -102,6 +102,33 @@ export default function Watch() {
   const [replyText, setReplyText] = useState('')
   const [engagingComment, setEngagingComment] = useState<string | null>(null)
 
+  async function engageComment(commentId: string, action: 'like' | 'dislike') {
+    if (!videoId || !token || !user) return
+    
+    try {
+      setEngagingComment(commentId)
+      const res = await apiFetch<{ success: true; likes: number; dislikes: number; viewerRating: 'like' | 'dislike' | 'none' }>(
+        `/api/videos/${encodeURIComponent(videoId)}/comments/${commentId}/engagement`,
+        {
+          method: 'POST',
+          token,
+          body: JSON.stringify({ action }),
+        }
+      )
+      
+      setComments(prev => prev.map(c => {
+        if (c.id === commentId) {
+          return { ...c, likes: res.likes, dislikes: res.dislikes, viewerRating: res.viewerRating }
+        }
+        return c
+      }))
+    } catch (e) {
+      console.error('Failed to engage with comment', e)
+    } finally {
+      setEngagingComment(null)
+    }
+  }
+
   useEffect(() => {
     if (!videoId) return
     let alive = true
@@ -293,7 +320,7 @@ export default function Watch() {
           <div className="mt-2 flex items-center gap-4">
             <div className="flex items-center gap-1">
                 <button 
-                    onClick={() => engageComment(c.id, 'like')}
+                    onClick={() => handleCommentEngagement(c.id, 'like')}
                     disabled={!user || engagingComment === c.id}
                     className={`p-1 rounded hover:bg-white/10 ${c.viewerRating === 'like' ? 'text-primary' : 'text-muted'}`}
                 >
@@ -304,7 +331,7 @@ export default function Watch() {
             
             <div className="flex items-center gap-1">
                 <button 
-                    onClick={() => engageComment(c.id, 'dislike')}
+                    onClick={() => handleCommentEngagement(c.id, 'dislike')}
                     disabled={!user || engagingComment === c.id}
                     className={`p-1 rounded hover:bg-white/10 ${c.viewerRating === 'dislike' ? 'text-primary' : 'text-muted'}`}
                 >

@@ -15,7 +15,6 @@ export default function Auth() {
   const returnTo = params.get('returnTo') || '/'
 
   const { user } = useAuthStore()
-  const { openChannelCreation } = useModalStore()
   const [mode, setMode] = useState<Mode>('login')
 
   const subtitle = useMemo(() => {

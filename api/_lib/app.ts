@@ -17,6 +17,7 @@ import studioRoutes from './routes/studio.js'
 import subscriptionRoutes from './routes/subscriptions.js'
 import notificationRoutes from './routes/notifications.js'
 import adminRoutes from './routes/admin.js'
+import seoRoutes from './routes/seo.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -29,6 +30,10 @@ dotenv.config({ path: path.join(__dirname, '../../.env.local') })
 dotenv.config()
 
 const app: express.Application = express()
+
+// Trust proxy is required when running behind a reverse proxy (Render + Cloudflare)
+// to correctly identify client IP addresses for rate limiting and protocol detection.
+app.set('trust proxy', 1)
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -78,6 +83,7 @@ app.use('/api/studio', studioRoutes)
 app.use('/api/subscriptions', subscriptionRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/', seoRoutes) // Serve robots.txt and sitemap.xml at root
 
 /**
  * health

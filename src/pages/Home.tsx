@@ -19,7 +19,7 @@ export default function Home() {
   const isWelcome = params.get('welcome') === 'true'
 
   const { user, token } = useAuthStore()
-  const { openChannelCreation } = useModalStore()
+  const { openWelcome } = useModalStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<VideoListItem[]>([])
@@ -37,9 +37,9 @@ export default function Home() {
         })
       })
       .catch(() => {
-        openChannelCreation('welcome')
+        openWelcome()
       })
-  }, [isWelcome, user, token, setParams, openChannelCreation])
+  }, [isWelcome, user, token, setParams, openWelcome])
 
   const title = useMemo(() => {
     if (q.trim()) return `Results for “${q.trim()}”`
