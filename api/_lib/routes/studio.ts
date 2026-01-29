@@ -131,13 +131,31 @@ router.get('/signature', (req: Request, res: Response) => {
 })
 // -----------------------------
 
-router.post('/upload', upload.fields([
-  { name: 'file', maxCount: 1 },
-  { name: 'thumbnail', maxCount: 1 },
-]), async (req: Request, res: Response) => {
+router.post('/upload', (req: Request, res: Response, next: any) => {
+  upload.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'thumbnail', maxCount: 1 },
+  ])(req, res, (err: any) => {
+    if (err) {
+      console.error('Multer upload error:', err)
+      console.error('Stack:', err.stack)
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ success: false, error: `Upload error: ${err.message}` })
+      }
+      return res.status(400).json({ success: false, error: err.message })
+    }
+    next()
+  })
+}, async (req: Request, res: Response) => {
+  console.log('Upload request received', { 
+    files: req.files ? Object.keys(req.files as object) : 'none',
+    body: req.body 
+  })
+
   const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined
   
   if (!files || (!files['file'] && !files['thumbnail'])) {
+    console.error('Upload failed: No file or thumbnail provided')
     res.status(400).json({ success: false, error: 'No file or thumbnail uploaded' })
     return
   }

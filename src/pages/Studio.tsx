@@ -269,9 +269,9 @@ export default function Studio() {
                   } else {
                     try {
                       const errorData = JSON.parse(xhr.responseText)
-                      reject(new Error(errorData.error || errorData.message || `Upload failed: ${xhr.statusText}`))
+                      reject(new Error(errorData.error || errorData.message || `Upload failed: ${xhr.statusText} (${xhr.status})`))
                     } catch {
-                      reject(new Error(`Upload failed: ${xhr.statusText} (${xhr.status})`))
+                      reject(new Error(`Upload failed: ${xhr.statusText} (${xhr.status}) - ${xhr.responseText.substring(0, 100)}`))
                     }
                   }
                 }

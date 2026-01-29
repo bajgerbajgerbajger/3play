@@ -20,20 +20,24 @@ export type VideoListItem = {
   } | null
 }
 
-function getCloudinaryPreviewUrl(sourceUrl?: string, thumbnailUrl?: string): string | null {
-  // Try to use sourceUrl first if it's a Cloudinary video
+function getPreviewUrl(sourceUrl?: string, thumbnailUrl?: string): string | null {
+  // 1. Cloudinary Preview (Best optimized)
   if (sourceUrl && sourceUrl.includes('cloudinary.com') && !sourceUrl.includes('youtube')) {
-    // Inject e_preview:duration_4 after /upload/
-    // Example: https://res.cloudinary.com/xyz/video/upload/v123/id.mp4
-    // Becomes: https://res.cloudinary.com/xyz/video/upload/e_preview:duration_4/v123/id.mp4
     return sourceUrl.replace(/\/upload\//, '/upload/e_preview:duration_4/')
   }
   
-  // Fallback to thumbnail URL if it's Cloudinary (might be a derived image from video)
-  // We can try to switch extension to mp4 and add preview transformation
   if (thumbnailUrl && thumbnailUrl.includes('cloudinary.com')) {
     const videoUrl = thumbnailUrl.replace(/\.[^/.]+$/, '.mp4').replace(/\/image\/upload\//, '/video/upload/')
     return videoUrl.replace(/\/upload\//, '/upload/e_preview:duration_4/')
+  }
+
+  // 2. Local Video / Direct File Fallback (Load full video muted)
+  if (sourceUrl && (
+      sourceUrl.startsWith('/uploads/') || 
+      sourceUrl.match(/\.(mp4|webm|ogg|mov)$/i) ||
+      sourceUrl.startsWith('blob:')
+  )) {
+      return sourceUrl
   }
 
   return null
@@ -46,7 +50,7 @@ export const VideoCard: React.FC<{ video: VideoListItem; className?: string }> =
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    setPreviewUrl(getCloudinaryPreviewUrl(video.sourceUrl, video.thumbnailUrl))
+    setPreviewUrl(getPreviewUrl(video.sourceUrl, video.thumbnailUrl))
   }, [video.sourceUrl, video.thumbnailUrl])
 
   const handleMouseEnter = () => {

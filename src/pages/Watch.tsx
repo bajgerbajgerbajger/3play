@@ -332,13 +332,11 @@ export default function Watch() {
                 <SafeEmbed code={video.embedCode || video.sourceUrl} className="w-full h-full" />
               </div>
             ) : (
-              <video
-                className="aspect-video w-full"
-                controls
-                playsInline
-                preload="metadata"
+              <CustomPlayer
                 src={video.sourceUrl}
                 poster={video.thumbnailUrl}
+                title={video.title}
+                autoPlay
               />
             )
           ) : (

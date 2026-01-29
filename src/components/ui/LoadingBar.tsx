@@ -72,7 +72,7 @@ export function LoadingBar() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] h-[3px] bg-transparent pointer-events-none">
       <div 
-        className="h-full bg-brand shadow-[0_0_20px_2px_rgba(229,9,20,0.8)]"
+        className="h-full bg-brand shadow-[0_0_30px_5px_rgba(229,9,20,0.9)]"
         style={{ 
           width: `${progress}%`, 
           opacity: progress === 100 ? 0 : 1,
