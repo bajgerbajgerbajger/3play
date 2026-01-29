@@ -21,10 +21,11 @@ interface CustomPlayerProps {
 }
 
 type Quality = 'original' | '1080p' | '720p' | '480p' | '360p' | '240p' | '32px'
-type SubtitleState = 'off' | 'ai-en' | 'ai-cs' | 'ai-auto'
+type SubtitleState = 'off' | 'ai-en' | 'ai-cs' | 'ai-auto' | 'ai-de' | 'ai-fr' | 'ai-es'
 
 export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const bgVideoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   
   // State
@@ -75,7 +76,7 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
 
   // Play Button Interaction & Parallax Logic
   const playBtnRef = useRef<HTMLButtonElement>(null)
-  const tiltRef = useRef({ cx: 0, cy: 0, tx: 0, ty: 0 })
+  const tiltRef = useRef({ cx: 0, cy: 0, tx: 0, ty: 0, isHover: false })
   const rafRef = useRef<number>()
 
   useEffect(() => {
@@ -124,7 +125,6 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
     const dy = (e.clientY - cy) / (r.height / 2)
     
     // Flag hover state for scroll logic
-    // @ts-ignore
     tiltRef.current.isHover = true
 
     // Combine scroll tilt with mouse tilt
@@ -134,7 +134,6 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
   }
 
   const handleBtnMouseLeave = () => {
-    // @ts-ignore
     tiltRef.current.isHover = false
     const t = Math.min(window.scrollY / 18, 14)
     tiltRef.current.tx = t
