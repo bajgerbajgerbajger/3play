@@ -10,6 +10,9 @@ export type CommentDoc = {
   authorAvatarUrl?: string
   message: string
   likes: number
+  dislikes: number
+  likedBy: string[]
+  dislikedBy: string[]
   pinned: boolean
   createdAt: Date
   updatedAt: Date
@@ -24,6 +27,9 @@ const CommentSchema = new mongoose.Schema({
   authorAvatarUrl: { type: String },
   message: { type: String, required: true },
   likes: { type: Number, default: 0 },
+  dislikes: { type: Number, default: 0 },
+  likedBy: { type: [String], default: [] },
+  dislikedBy: { type: [String], default: [] },
   pinned: { type: Boolean, default: false },
 }, { timestamps: true })
 

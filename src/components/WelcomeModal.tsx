@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/Button'
 import { useNavigate } from 'react-router-dom'
 
 export function WelcomeModal() {
-  const { activeModal, closeModal, trigger } = useModalStore()
+  const { activeModal, closeModal } = useModalStore()
   const navigate = useNavigate()
 
-  const isOpen = activeModal === 'channelCreation'
+  const isOpen = activeModal === 'welcome'
 
   if (!isOpen) return null
 
@@ -45,9 +45,7 @@ export function WelcomeModal() {
 
               <h2 className="mb-2 text-2xl font-bold">Vítej v 3Play!</h2>
               <p className="mb-8 text-muted">
-                {trigger === 'welcome' 
-                  ? 'Tvůj účet je připraven. Chceš rovnou vytvořit svůj kanál a začít nahrávat videa?' 
-                  : 'Pro tuto akci je potřeba mít vytvořený kanál.'}
+                Tvůj kanál byl úspěšně připraven. Můžeš začít nahrávat videa, sledovat obsah a budovat svou komunitu.
               </p>
 
               <div className="grid gap-3">
@@ -56,30 +54,28 @@ export function WelcomeModal() {
                   className="w-full gap-2 h-12 text-lg"
                   onClick={() => {
                     closeModal()
-                    navigate('/studio/onboarding')
+                    navigate('/studio/dashboard')
                   }}
                 >
                   <Video size={20} />
-                  Vytvořit kanál
+                  Přejít do Studia
                 </Button>
 
-                {trigger === 'welcome' && (
-                  <Button
-                    variant="ghost"
-                    className="w-full gap-2 h-12 text-lg"
-                    onClick={closeModal}
-                  >
-                    <MonitorPlay size={20} />
-                    Jen se dívat (Možná později)
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  className="w-full gap-2 h-12 text-lg"
+                  onClick={closeModal}
+                >
+                  <MonitorPlay size={20} />
+                  Jen se dívat (Možná později)
+                </Button>
               </div>
             </div>
 
             <div className="bg-surface2 p-4 text-center text-xs text-muted">
-              Vytvořením kanálu souhlasíš s podmínkami pro tvůrce.
+              Tvůj kanál je veřejně viditelný a připravený k použití.
               <br />
-              Kanál můžeš vytvořit kdykoliv později v nastavení účtu.
+              Upravit ho můžeš kdykoliv v nastavení.
             </div>
           </motion.div>
         </div>

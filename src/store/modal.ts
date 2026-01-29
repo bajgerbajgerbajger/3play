@@ -1,18 +1,18 @@
 import { create } from 'zustand'
 
-type ModalType = 'channelCreation' | null
+type ModalType = 'welcome' | null
 type TriggerType = 'welcome' | 'subscribe' | 'like' | 'upload' | null
 
 interface ModalState {
   activeModal: ModalType
   trigger: TriggerType
-  openChannelCreation: (trigger?: TriggerType) => void
   closeModal: () => void
+  openWelcome: () => void
 }
 
 export const useModalStore = create<ModalState>((set) => ({
   activeModal: null,
   trigger: null,
-  openChannelCreation: (trigger = 'welcome') => set({ activeModal: 'channelCreation', trigger }),
   closeModal: () => set({ activeModal: null, trigger: null }),
+  openWelcome: () => set({ activeModal: 'welcome', trigger: 'welcome' }),
 }))

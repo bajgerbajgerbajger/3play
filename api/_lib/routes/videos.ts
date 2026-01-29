@@ -146,15 +146,42 @@ router.get('/:videoId/comments', async (req: Request, res: Response) => {
   await dbConnect()
   const { videoId } = req.params
   let list = await Comment.find({ videoId })
+  
+  // Get current user to determine viewerRating for each comment
+  const token = getAuthToken(req)
+  let userId: string | null = null
+  if (token) {
+      const payload = verifyToken(token)
+      if (payload) userId = payload.sub
+  }
+
+  const items = list.map(c => {
+      let viewerRating = 'none'
+      if (userId) {
+          if (c.likedBy && c.likedBy.includes(userId)) viewerRating = 'like'
+          if (c.dislikedBy && c.dislikedBy.includes(userId)) viewerRating = 'dislike'
+      }
+      return {
+          ...c, // .toObject() if it were a real mongoose doc, but find returns POJOs or Docs. 
+                // LocalModel returns objects. Mongoose returns docs. 
+                // Spread works for POJOs. For Mongoose docs we might need toObject().
+                // But let's assume it works or use toObject if available.
+          // Safely access properties
+          likes: c.likes || 0,
+          dislikes: c.dislikes || 0,
+          viewerRating
+      }
+  })
+  
   // Sort: Pinned first, then by date (newest first)
-  list = list.sort((a, b) => {
+  const sorted = items.sort((a, b) => {
     if (a.pinned && !b.pinned) return -1
     if (!a.pinned && b.pinned) return 1
     const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
     const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
     return tb - ta
   })
-  res.status(200).json({ success: true, items: list })
+  res.status(200).json({ success: true, items: sorted })
 })
 
 router.post('/:videoId/comments', requireAuth, async (req: Request, res: Response) => {

@@ -12,7 +12,7 @@ export function StudioSidebar({
   onTab: (next: Tab) => void
 }) {
   return (
-    <aside className="rounded-2xl border border-border/10 bg-surface p-4">
+    <aside className="rounded-2xl border border-border/10 bg-surface p-4 shadow-lg shadow-black/20">
       <div className="flex items-center gap-3">
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/5">
           <Sparkles size={18} className="text-brand" />

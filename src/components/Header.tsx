@@ -147,7 +147,12 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
               {menuOpen ? (
                 <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border/10 bg-surface shadow-soft">
                   <div className="px-3 py-2 border-b border-border/10">
-                    <div className="text-sm font-semibold">{user.displayName}</div>
+                    <div className="text-sm font-semibold flex items-center gap-2">
+                      {user.displayName}
+                      {user.newAccount && (
+                        <span className="bg-brand/20 text-brand text-[10px] px-1.5 py-0.5 rounded font-bold border border-brand/20">NEW</span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted">{user.handle}</div>
                   </div>
                   <Link to={`/channel/${encodeURIComponent(user.handle)}`} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5">

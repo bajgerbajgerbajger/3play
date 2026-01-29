@@ -6,7 +6,6 @@ import {
 } from 'lucide-react'
 import { BRAND } from '@/brand/brand'
 import { Button } from '@/components/ui/Button'
-import { ThreePlayButton } from './ThreePlayButton'
 
 // --- GENIUS BUTTON COMPONENT ---
 // Removed legacy GeniusPlayButton as it is replaced by ThreePlayButton
@@ -296,28 +295,25 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
       />
 
-      {/* Brand Logo Overlay */}
-      <div className="absolute top-4 left-4 z-30 pointer-events-none opacity-80">
-        <img src={BRAND.assets.logoIcon} alt="Logo" className="h-8 w-auto" />
-      </div>
+      {/* Brand Logo Overlay - MOVED TO CONTROLS */}
+
+      {/* Center Click Animation */}
+      {showClickAnim && (
+        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none animate-in fade-in zoom-in duration-300">
+          <div className="bg-black/50 rounded-full p-4 backdrop-blur-sm">
+            {showClickAnim === 'play' ? (
+              <Play size={48} className="fill-white text-white" />
+            ) : (
+              <Pause size={48} className="fill-white text-white" />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Buffering Indicator */}
       {buffering && (
         <div className="absolute inset-0 flex items-center justify-center z-40 bg-black/20">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      )}
-
-      {/* Custom "Genius" Play Button (Three.js Scene) */}
-      {!playing && !buffering && !showSettings && (
-        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-          <ThreePlayButton 
-            onClick={handleBtnClick} 
-            videoRef={videoRef}
-            playing={playing}
-            size={160}
-            color="#FF0033"
-          />
         </div>
       )}
 
@@ -360,8 +356,13 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button onClick={togglePlay} className="text-white hover:text-primary transition">
-                {playing ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+              <img src={BRAND.assets.logoIcon} alt="Logo" className="h-6 w-auto object-contain drop-shadow-md select-none pointer-events-none" />
+              <button onClick={togglePlay} className="text-white hover:text-primary transition flex items-center drop-shadow-md">
+                {playing ? (
+                  <Pause size={24} fill="currentColor" />
+                ) : (
+                  <Play size={24} fill="currentColor" />
+                )}
               </button>
               
               <div className="group/vol flex items-center gap-2">

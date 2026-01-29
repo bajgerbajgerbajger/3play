@@ -125,13 +125,14 @@ router.post('/verify-code', async (req: Request, res: Response): Promise<void> =
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   await dbConnect()
 
-  const { email, password, displayName, handle, verificationCode, acceptTerms, _gotcha } = (req.body || {}) as {
+  const { email, password, displayName, handle, verificationCode, acceptTerms, gender, _gotcha } = (req.body || {}) as {
     email?: string
     password?: string
     displayName?: string
     handle?: string
     verificationCode?: string
     acceptTerms?: boolean
+    gender?: 'male' | 'female' | 'other'
     _gotcha?: string // Honeypot field
   }
 
@@ -193,9 +194,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   const userId = `u-${Math.random().toString(16).slice(2, 10)}`
   const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
   
-  const avatarUrl = `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-    'flat geometric avatar icon, readable number 3 with play triangle motif, minimal, sharp edges, red accent, dark background, vector style',
-  )}&image_size=square`
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${handle}-${gender || 'male'}`
 
   const user = new User({
     id: userId,
@@ -205,8 +204,10 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     avatarUrl,
     passwordHash: hashPassword(password),
     emailVerified: true,
+    channelId: profileId, // Link to the auto-created channel
     plan: 'free',
     subscriptionStatus: 'active', // Permanently active
+    newAccount: true, // Mark as new account for visibility
   })
   
   await user.save()
@@ -239,7 +240,11 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       avatarUrl: user.avatarUrl,
       plan: user.plan,
       subscriptionStatus: user.subscriptionStatus,
+      newAccount: user.newAccount,
+      role: user.role,
+      isBlocked: user.isBlocked,
       trialEndsAt: user.trialEndsAt,
+      channelId: user.channelId,
     },
   })
 })
@@ -264,6 +269,11 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
+  if (user.isBlocked) {
+    res.status(403).json({ success: false, error: 'Your account has been blocked.' })
+    return
+  }
+
   // Update last login
   user.lastLogin = new Date()
   await user.save()
@@ -280,8 +290,12 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       avatarUrl: user.avatarUrl,
       plan: user.plan || 'free',
       subscriptionStatus: user.subscriptionStatus || 'inactive',
+      newAccount: user.newAccount,
+      role: user.role,
+      isBlocked: user.isBlocked,
       trialEndsAt: user.trialEndsAt,
       subscriptionEndsAt: user.subscriptionEndsAt,
+      channelId: user.channelId,
     },
   })
 })
@@ -314,6 +328,9 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
       avatarUrl: user.avatarUrl,
       plan: user.plan || 'free',
       subscriptionStatus: user.subscriptionStatus || 'inactive',
+      newAccount: user.newAccount,
+      role: user.role,
+      isBlocked: user.isBlocked,
       trialEndsAt: user.trialEndsAt,
       subscriptionEndsAt: user.subscriptionEndsAt,
     },

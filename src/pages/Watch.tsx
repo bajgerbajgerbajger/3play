@@ -78,13 +78,14 @@ type CommentItem = {
   message: string
   createdAt: string
   likes: number
+  dislikes: number
+  viewerRating: 'like' | 'dislike' | 'none'
   pinned: boolean
 }
 
 export default function Watch() {
   const { videoId } = useParams()
   const { token, user } = useAuthStore()
-  const { openChannelCreation } = useModalStore()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -99,6 +100,7 @@ export default function Watch() {
   const [subscribing, setSubscribing] = useState(false)
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
+  const [engagingComment, setEngagingComment] = useState<string | null>(null)
 
   useEffect(() => {
     if (!videoId) return
@@ -140,6 +142,16 @@ export default function Watch() {
   }, [videoId])
 
   const channel = video?.channel
+  
+  // GENIUS ARCHITEKT DEBUG: Kontrola detekce přehrávače
+  useEffect(() => {
+    if (video) {
+        console.log('[3Play Debug] Video Source:', video.sourceUrl);
+        console.log('[3Play Debug] Is Embed URL?', isEmbedUrl(video.sourceUrl));
+        console.log('[3Play Debug] Has Embed Code?', !!video.embedCode);
+    }
+  }, [video]);
+
   const meta = useMemo(() => {
     if (!video) return ''
     const parts = [`${formatCompactNumber(video.views)} views`]
@@ -155,10 +167,10 @@ export default function Watch() {
     }
     
     // Require channel to engage
-    if (!user.channelId) {
-        openChannelCreation('like')
-        return
-    }
+    // if (!user.channelId) {
+    //     openChannelCreation('like')
+    //     return
+    // }
 
     try {
       setEngaging(action)
@@ -263,17 +275,44 @@ export default function Watch() {
     
     return (
       <div key={c.id} className={`flex gap-3 rounded-2xl border border-border/10 bg-surface p-4 ${c.pinned ? 'border-l-4 border-l-primary' : ''}`}>
-        <img src={c.authorAvatarUrl} alt={c.authorName} className="h-9 w-9 rounded-full object-cover" />
+        <Link to={`/channel/${encodeURIComponent(c.authorHandle)}`} className="shrink-0">
+            <img src={c.authorAvatarUrl} alt={c.authorName} className="h-9 w-9 rounded-full object-cover hover:opacity-80 transition-opacity" />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="text-sm font-semibold">{c.authorName}</div>
+            <Link to={`/channel/${encodeURIComponent(c.authorHandle)}`} className="text-sm font-semibold hover:underline">
+                {c.authorName}
+            </Link>
             {c.pinned && <div className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Připnuto</div>}
-            <div className="text-xs text-muted">{c.authorHandle}</div>
+            <Link to={`/channel/${encodeURIComponent(c.authorHandle)}`} className="text-xs text-muted hover:text-text">
+                {c.authorHandle}
+            </Link>
             <div className="text-xs text-muted">• {formatTimeAgo(c.createdAt)}</div>
           </div>
-          <div className="mt-2 text-sm text-text">{c.message}</div>
+          <div className="mt-2 text-sm text-text whitespace-pre-wrap">{c.message}</div>
           <div className="mt-2 flex items-center gap-4">
-            <div className="text-xs text-muted">{formatCompactNumber(c.likes)} likes</div>
+            <div className="flex items-center gap-1">
+                <button 
+                    onClick={() => engageComment(c.id, 'like')}
+                    disabled={!user || engagingComment === c.id}
+                    className={`p-1 rounded hover:bg-white/10 ${c.viewerRating === 'like' ? 'text-primary' : 'text-muted'}`}
+                >
+                    <ThumbsUp size={14} fill={c.viewerRating === 'like' ? 'currentColor' : 'none'} />
+                </button>
+                <span className="text-xs text-muted">{formatCompactNumber(c.likes)}</span>
+            </div>
+            
+            <div className="flex items-center gap-1">
+                <button 
+                    onClick={() => engageComment(c.id, 'dislike')}
+                    disabled={!user || engagingComment === c.id}
+                    className={`p-1 rounded hover:bg-white/10 ${c.viewerRating === 'dislike' ? 'text-primary' : 'text-muted'}`}
+                >
+                    <ThumbsDown size={14} fill={c.viewerRating === 'dislike' ? 'currentColor' : 'none'} />
+                </button>
+                {c.dislikes > 0 && <span className="text-xs text-muted">{formatCompactNumber(c.dislikes)}</span>}
+            </div>
+
             {user && (
                 <button onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)} className="text-xs font-semibold text-muted hover:text-text transition-colors">
                     Odpovědět
@@ -383,21 +422,21 @@ export default function Watch() {
                   variant={video.viewerRating === 'like' ? 'primary' : 'secondary'}
                   loading={engaging === 'like'}
                   onClick={() => engage('like')}
-                  className="min-w-[120px]"
+                  className={`h-8 px-3 gap-2 ${video.viewerRating === 'like' ? 'bg-green-600 hover:bg-green-500 shadow-green-500/20' : 'hover:text-green-500'}`}
                 >
-                  <ThumbsUp size={16} fill={video.viewerRating === 'like' ? 'currentColor' : 'none'} />
+                  <ThumbsUp size={24} fill={video.viewerRating === 'like' ? 'currentColor' : 'none'} />
                   {formatCompactNumber(video.likes)}
                 </Button>
                 <Button
                   variant={video.viewerRating === 'dislike' ? 'primary' : 'secondary'}
                   loading={engaging === 'dislike'}
                   onClick={() => engage('dislike')}
-                  className="min-w-[120px]"
+                  className={`h-8 px-3 gap-2 ${video.viewerRating === 'dislike' ? 'bg-red-600 hover:bg-red-500 shadow-red-500/20' : 'hover:text-red-500'}`}
                 >
-                  <ThumbsDown size={16} fill={video.viewerRating === 'dislike' ? 'currentColor' : 'none'} />
+                  <ThumbsDown size={24} fill={video.viewerRating === 'dislike' ? 'currentColor' : 'none'} />
                   {formatCompactNumber(video.dislikes)}
                 </Button>
-                <Button variant="secondary" onClick={() => navigator.clipboard.writeText(window.location.href)}>
+                <Button variant="secondary" onClick={() => navigator.clipboard.writeText(window.location.href)} className="h-8 px-3">
                   <Share2 size={16} />
                   Sdílet
                 </Button>
@@ -454,20 +493,7 @@ export default function Watch() {
               )}
 
               <div className="space-y-3">
-                {comments.map((c) => (
-                  <div key={c.id} className="flex gap-3 rounded-2xl border border-border/10 bg-surface p-4">
-                    <img src={c.authorAvatarUrl} alt={c.authorName} className="h-9 w-9 rounded-full object-cover" />
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="text-sm font-semibold">{c.authorName}</div>
-                        <div className="text-xs text-muted">{c.authorHandle}</div>
-                        <div className="text-xs text-muted">• {formatTimeAgo(c.createdAt)}</div>
-                      </div>
-                      <div className="mt-2 text-sm text-text">{c.message}</div>
-                      <div className="mt-2 text-xs text-muted">{formatCompactNumber(c.likes)} likes</div>
-                    </div>
-                  </div>
-                ))}
+                {comments.filter(c => !c.parentId).map((c) => renderComment(c))}
                 {comments.length === 0 ? <div className="text-sm text-muted">Zatím žádné komentáře.</div> : null}
               </div>
             </div>

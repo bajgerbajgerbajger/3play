@@ -8,6 +8,9 @@ export type AuthUser = {
   displayName: string
   avatarUrl: string
   channelId?: string
+  newAccount?: boolean
+  role?: 'user' | 'admin'
+  isBlocked?: boolean
   plan?: 'free' | 'creator' | 'pro'
   subscriptionStatus?: 'active' | 'inactive' | 'trial'
   trialEndsAt?: string

@@ -16,6 +16,7 @@ import channelRoutes from './routes/channels.js'
 import studioRoutes from './routes/studio.js'
 import subscriptionRoutes from './routes/subscriptions.js'
 import notificationRoutes from './routes/notifications.js'
+import adminRoutes from './routes/admin.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -76,6 +77,7 @@ app.use('/api/channels', channelRoutes)
 app.use('/api/studio', studioRoutes)
 app.use('/api/subscriptions', subscriptionRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/admin', adminRoutes)
 
 /**
  * health

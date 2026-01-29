@@ -73,8 +73,8 @@ export const VideoCard: React.FC<{ video: VideoListItem; className?: string }> =
   return (
     <div
       className={cn(
-        'group rounded-xl border border-border/10 bg-surface overflow-hidden transition',
-        'hover:bg-surface2 hover:-translate-y-[2px] hover:shadow-soft',
+        'group rounded-xl border border-border/10 bg-surface overflow-hidden transition shadow-sm',
+        'hover:bg-surface2 hover:-translate-y-[2px] hover:shadow-xl hover:shadow-brand/10',
         className,
       )}
       onMouseEnter={handleMouseEnter}
