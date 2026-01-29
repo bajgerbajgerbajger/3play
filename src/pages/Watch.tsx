@@ -102,7 +102,7 @@ export default function Watch() {
   const [replyText, setReplyText] = useState('')
   const [engagingComment, setEngagingComment] = useState<string | null>(null)
 
-  async function engageComment(commentId: string, action: 'like' | 'dislike') {
+  async function handleCommentEngagement(commentId: string, action: 'like' | 'dislike') {
     if (!videoId || !token || !user) return
     
     try {
