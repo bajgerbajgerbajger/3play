@@ -98,10 +98,18 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024 * 1024, // 50GB max file size
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('video/') || file.mimetype.startsWith('image/')) {
+    // Allow video, audio, and image files
+    // Also allow specific container formats that might have application/ mime types
+    if (
+      file.mimetype.startsWith('video/') || 
+      file.mimetype.startsWith('audio/') || 
+      file.mimetype.startsWith('image/') ||
+      file.mimetype === 'application/x-matroska' || // MKV
+      file.mimetype === 'application/octet-stream' // Generic fallback for some containers
+    ) {
       cb(null, true)
     } else {
-      cb(new Error('Only video and image files are allowed'))
+      cb(new Error('Only video, audio, and image files are allowed'))
     }
   },
 })

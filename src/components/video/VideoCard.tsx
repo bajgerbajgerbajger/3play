@@ -34,9 +34,13 @@ function getPreviewUrl(sourceUrl?: string, thumbnailUrl?: string): string | null
   // 2. Local Video / Direct File Fallback (Load full video muted)
   if (sourceUrl && (
       sourceUrl.startsWith('/uploads/') || 
-      sourceUrl.match(/\.(mp4|webm|ogg|mov)$/i) ||
-      sourceUrl.startsWith('blob:')
+      sourceUrl.match(/\.(mp4|webm|ogg|mov)$/i)
   )) {
+      // Use media fragments to play only the first 5 seconds as a preview
+      return `${sourceUrl}#t=0,5`
+  }
+  
+  if (sourceUrl && sourceUrl.startsWith('blob:')) {
       return sourceUrl
   }
 
@@ -56,7 +60,7 @@ export const VideoCard: React.FC<{ video: VideoListItem; className?: string }> =
   const handleMouseEnter = () => {
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(true)
-    }, 600) // Delay to prevent flickering on quick mouse moves
+    }, 100) // Faster response for preview (was 600ms)
   }
 
   const handleMouseLeave = () => {
@@ -81,37 +85,40 @@ export const VideoCard: React.FC<{ video: VideoListItem; className?: string }> =
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
         <div className="relative aspect-video w-full overflow-hidden bg-surface2">
-          {/* Main Thumbnail */}
-          <img
-            src={video.thumbnailUrl || '/placeholder.jpg'}
-            alt={video.title}
-            loading="lazy"
-            className={cn(
-              "absolute inset-0 h-full w-full object-cover transition duration-300",
-              isHovered && previewUrl ? "opacity-0" : "opacity-100 group-hover:scale-[1.02]"
-            )}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement
-              if (video.embedCode) {
-                 target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'
-              } else {
-                 target.src = '/placeholder.jpg'
-              }
-            }}
-          />
-          
-          {/* Video Preview */}
-          {isHovered && previewUrl && (
-            <video
-              ref={videoRef}
-              src={previewUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute inset-0 h-full w-full object-cover fade-in"
+          {/* Zooming Wrapper */}
+          <div className="absolute inset-0 h-full w-full transition-transform duration-700 ease-out group-hover:scale-110">
+            {/* Main Thumbnail */}
+            <img
+              src={video.thumbnailUrl || '/placeholder.jpg'}
+              alt={video.title}
+              loading="lazy"
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover transition duration-300",
+                isHovered && previewUrl ? "opacity-0" : "opacity-100"
+              )}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                if (video.embedCode) {
+                   target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'
+                } else {
+                   target.src = '/placeholder.jpg'
+                }
+              }}
             />
-          )}
+            
+            {/* Video Preview */}
+            {isHovered && previewUrl && (
+              <video
+                ref={videoRef}
+                src={previewUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover fade-in"
+              />
+            )}
+          </div>
 
           {/* Duration Badge - Hide on hover if playing */}
           <div className={cn(

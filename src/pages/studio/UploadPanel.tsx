@@ -148,7 +148,7 @@ export function UploadPanel({
                         <div className="relative group">
                             <input
                                 type="file"
-                                accept="video/*"
+                                accept="video/*,audio/*,.mkv,.flv,.avi,.mov,.wmv,.amv,.mp4,.m4v,.3gp,.ts,.webm,.ogv"
                                 multiple
                                 onChange={(e) => onFilesSelect(e.target.files)}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
