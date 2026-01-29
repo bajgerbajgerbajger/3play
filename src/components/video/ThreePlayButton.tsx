@@ -21,10 +21,42 @@ export function ThreePlayButton({ playing, onClick, size = 160, color = "#FF0033
   const tiltRef = useRef({ x: 0, y: 0 })
   const iconUniformsRef = useRef<{ uMorph: { value: number }, uGlow: { value: number }, uPress: { value: number } } | null>(null)
 
+  // Audio Context Refs
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+
   // Sync props to ref
   useEffect(() => {
     stateRef.current.playing = playing
   }, [playing])
+
+  // Initialize Audio Context
+  const initAudio = () => {
+    if (audioCtxRef.current || !videoRef?.current) return
+    
+    try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+        const ctx = new AudioContext()
+        audioCtxRef.current = ctx
+        
+        const analyser = ctx.createAnalyser()
+        analyser.fftSize = 256
+        analyser.smoothingTimeConstant = 0.8
+        analyserRef.current = analyser
+        
+        // Connect video to analyser to destination
+        // Check if source already exists (React strict mode double invoke safety)
+        if (!sourceRef.current) {
+            const source = ctx.createMediaElementSource(videoRef.current)
+            source.connect(analyser)
+            analyser.connect(ctx.destination)
+            sourceRef.current = source
+        }
+    } catch (e) {
+        console.warn("Audio Context init failed (likely CORS or user gesture required)", e)
+    }
+  }
 
   // Sync Play/Pause with Video (Direct Listener)
   useEffect(() => {
@@ -274,9 +306,35 @@ export function ThreePlayButton({ playing, onClick, size = 160, color = "#FF0033
       glow.rotation.x = body.rotation.x
       glow.rotation.y = body.rotation.y
 
-      // Morph logic using Ref to avoid stale closure
+      // Morph logic
       const targetMorph = stateRef.current.playing ? 1.0 : 0.0
       iconUniforms.uMorph.value += (targetMorph - iconUniforms.uMorph.value) * 0.1
+
+      // Audio Reactive Pulse or Breathing
+      let audioScale = 1.0
+      
+      // If analyser exists and is receiving data (requires video to be playing)
+      if (analyserRef.current && stateRef.current.playing) {
+          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
+          analyserRef.current.getByteFrequencyData(dataArray)
+          
+          // Calculate Bass Energy (Low 20%)
+          const bassBinCount = Math.floor(dataArray.length * 0.2)
+          let sum = 0
+          for(let i=0; i<bassBinCount; i++) {
+              sum += dataArray[i]
+          }
+          const average = bassBinCount > 0 ? sum / bassBinCount : 0
+          
+          // Map 0-255 to 1.0-1.2
+          audioScale = 1.0 + (average / 255) * 0.2
+      } else {
+          // Idle "Breathing" Animation
+          audioScale = 1.0 + Math.sin(Date.now() * 0.003) * 0.03
+      }
+
+      // Apply Audio Scale with smoothing
+      body.scale.lerp(new THREE.Vector3(audioScale, audioScale, audioScale), 0.1)
 
       composer.render()
     }
@@ -313,19 +371,24 @@ export function ThreePlayButton({ playing, onClick, size = 160, color = "#FF0033
   }
   
   const handlePointerDown = async (e: React.PointerEvent) => {
+    // Initialize Audio Context on user interaction
+    initAudio()
+    if (audioCtxRef.current?.state === 'suspended') {
+        await audioCtxRef.current.resume()
+    }
+
     if (iconUniformsRef.current) iconUniformsRef.current.uPress.value = 1.0
     if (navigator.vibrate) navigator.vibrate(16)
 
     const video = videoRef?.current
     if (video) {
-        // autoplay policies: play needs user gesture, which we have here
         if (video.paused || video.ended) {
             try { await video.play() } catch (err) { console.error(err) }
         } else {
             video.pause()
         }
     } else {
-        // Fallback demo toggle
+        // Fallback
         stateRef.current.playing = !stateRef.current.playing
         onClick(e) 
     }
@@ -333,7 +396,6 @@ export function ThreePlayButton({ playing, onClick, size = 160, color = "#FF0033
   
   const handlePointerUp = (e: React.PointerEvent) => {
     if (iconUniformsRef.current) iconUniformsRef.current.uPress.value = 0.0
-    // We handled the action in pointerdown
   }
 
   // Scroll Parallax
