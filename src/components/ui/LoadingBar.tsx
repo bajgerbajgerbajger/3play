@@ -44,21 +44,22 @@ export function LoadingBar() {
       const animate = () => {
         setProgress(prev => {
           if (prev >= 90) return prev;
-          // Smooth geometric progression tailored for high refresh rates
-          // Using smaller step for smoother feel
-          return prev + (90 - prev) * 0.02;
+          // Faster and more dynamic progress for "real" feel
+          const remaining = 90 - prev;
+          const step = remaining * 0.1 + Math.random() * 2;
+          return Math.min(90, prev + step);
         });
         animationFrameId = requestAnimationFrame(animate);
       };
       
       animationFrameId = requestAnimationFrame(animate);
     } else {
-      // Complete
-      setProgress(p => (p > 0 ? 100 : 0));
+      // Complete - fast finish
+      setProgress(100);
       timeoutId = setTimeout(() => {
         setProgress(0);
         setUploadProgress(null);
-      }, 400);
+      }, 200);
     }
     
     return () => {
@@ -72,14 +73,23 @@ export function LoadingBar() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] h-[3px] bg-transparent pointer-events-none">
       <div 
-        className="h-full bg-brand shadow-[0_0_30px_5px_rgba(229,9,20,0.9)]"
+        className="h-full relative bg-brand shadow-[0_0_30px_5px_rgba(229,9,20,0.9)] overflow-hidden"
         style={{ 
           width: `${progress}%`, 
           opacity: progress === 100 ? 0 : 1,
-          backgroundColor: uploadProgress !== null ? '#ff0000' : undefined, // YouTube Red for uploads
-          transition: progress === 100 ? 'opacity 0.4s ease-out' : 'none' // Disable width transition for instant reaction
+          backgroundColor: uploadProgress !== null ? '#ff0000' : undefined,
+          transition: progress === 100 ? 'opacity 0.2s ease-out' : 'width 0.1s linear'
         }}
-      />
+      >
+        {/* Fast moving shine effect - High speed pulse */}
+        <div 
+          className="absolute inset-0 w-full h-full animate-[shimmer_0.6s_linear_infinite]"
+          style={{
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%)',
+            backgroundSize: '200% 100%',
+          }}
+        />
+      </div>
     </div>
   );
 }
