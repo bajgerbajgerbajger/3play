@@ -173,6 +173,8 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
     togglePlay()
   }
 
+
+
   // Sync Background Video
   useEffect(() => {
     const bg = bgVideoRef.current
@@ -364,11 +366,17 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src={BRAND.assets.logoIcon} alt="Logo" className="h-6 w-auto object-contain drop-shadow-md select-none pointer-events-none" />
-              <button onClick={togglePlay} className="text-white hover:text-primary transition flex items-center drop-shadow-md">
+              <button 
+                  ref={playBtnRef}
+                  onClick={handleBtnClick}
+                  className="relative text-white hover:text-primary transition flex items-center drop-shadow-md overflow-hidden rounded-full p-1"
+                  onMouseMove={handleBtnMouseMove}
+                  onMouseLeave={handleBtnMouseLeave}
+              >
                 {playing ? (
-                  <Pause size={24} fill="currentColor" />
+                  <Pause size={24} fill="currentColor" className="relative z-10" />
                 ) : (
-                  <Play size={24} fill="currentColor" />
+                  <Play size={24} fill="currentColor" className="relative z-10" />
                 )}
               </button>
               

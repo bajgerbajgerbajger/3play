@@ -193,12 +193,8 @@ export default function Watch() {
       return
     }
     
-    // Require channel to engage
-    // if (!user.channelId) {
-    //     openChannelCreation('like')
-    //     return
-    // }
-
+    // Require channel to engage - auto created now, so just proceed
+    
     try {
       setEngaging(action)
       const d = await apiFetch<{ success: true; likes: number; dislikes: number; viewerRating: 'like' | 'dislike' | 'none' }>(
@@ -297,63 +293,72 @@ export default function Watch() {
 
   const isOwner = user?.id && video?.channel?.userId && user.id === video.channel.userId
 
-  const renderComment = (c: CommentItem, isReply = false) => {
-    const replies = comments.filter(r => r.parentId === c.id).sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  // Helper component to render comments recursively with depth limit
+  const CommentNode = ({ comment, depth = 0, visited = new Set<string>() }: { comment: CommentItem; depth?: number; visited?: Set<string> }) => {
+    // Break cycle if we've seen this comment ID in the current path
+    if (visited.has(comment.id) || depth > 10) return null
+    
+    // Create new visited set for children path
+    const newVisited = new Set(visited).add(comment.id)
+
+    const replies = comments
+      .filter(r => r.parentId === comment.id)
+      .sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     
     return (
-      <div key={c.id} className={`flex gap-3 rounded-2xl border border-border/10 bg-surface p-4 ${c.pinned ? 'border-l-4 border-l-primary' : ''}`}>
-        <Link to={`/channel/${encodeURIComponent(c.authorHandle)}`} className="shrink-0">
-            <img src={c.authorAvatarUrl} alt={c.authorName} className="h-9 w-9 rounded-full object-cover hover:opacity-80 transition-opacity" />
+      <div className={`flex gap-3 rounded-2xl border border-border/10 bg-surface p-4 ${comment.pinned ? 'border-l-4 border-l-primary' : ''}`}>
+        <Link to={`/channel/${encodeURIComponent(comment.authorHandle)}`} className="shrink-0">
+            <img src={comment.authorAvatarUrl} alt={comment.authorName} className="h-9 w-9 rounded-full object-cover hover:opacity-80 transition-opacity" />
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Link to={`/channel/${encodeURIComponent(c.authorHandle)}`} className="text-sm font-semibold hover:underline">
-                {c.authorName}
+            <Link to={`/channel/${encodeURIComponent(comment.authorHandle)}`} className="text-sm font-semibold hover:underline">
+                {comment.authorName}
             </Link>
-            {c.pinned && <div className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Připnuto</div>}
-            <Link to={`/channel/${encodeURIComponent(c.authorHandle)}`} className="text-xs text-muted hover:text-text">
-                {c.authorHandle}
+            {comment.pinned && <div className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Připnuto</div>}
+            <Link to={`/channel/${encodeURIComponent(comment.authorHandle)}`} className="text-xs text-muted hover:text-text">
+                {comment.authorHandle}
             </Link>
-            <div className="text-xs text-muted">• {formatTimeAgo(c.createdAt)}</div>
+            <div className="text-xs text-muted">• {formatTimeAgo(comment.createdAt)}</div>
           </div>
-          <div className="mt-2 text-sm text-text whitespace-pre-wrap">{c.message}</div>
+          <div className="mt-2 text-sm text-text whitespace-pre-wrap">{comment.message}</div>
           <div className="mt-2 flex items-center gap-4">
             <div className="flex items-center gap-1">
                 <button 
-                    onClick={() => handleCommentEngagement(c.id, 'like')}
-                    disabled={!user || engagingComment === c.id}
-                    className={`p-1 rounded hover:bg-white/10 ${c.viewerRating === 'like' ? 'text-primary' : 'text-muted'}`}
+                    onClick={() => handleCommentEngagement(comment.id, 'like')}
+                    disabled={!user || engagingComment === comment.id}
+                    className={`p-1 rounded hover:bg-white/10 ${comment.viewerRating === 'like' ? 'text-primary' : 'text-muted'}`}
                 >
-                    <ThumbsUp size={14} fill={c.viewerRating === 'like' ? 'currentColor' : 'none'} />
+                    <ThumbsUp size={14} fill={comment.viewerRating === 'like' ? 'currentColor' : 'none'} />
                 </button>
-                <span className="text-xs text-muted">{formatCompactNumber(c.likes)}</span>
+                <span className="text-xs text-muted">{formatCompactNumber(comment.likes)}</span>
             </div>
             
             <div className="flex items-center gap-1">
                 <button 
-                    onClick={() => handleCommentEngagement(c.id, 'dislike')}
-                    disabled={!user || engagingComment === c.id}
-                    className={`p-1 rounded hover:bg-white/10 ${c.viewerRating === 'dislike' ? 'text-primary' : 'text-muted'}`}
+                    onClick={() => handleCommentEngagement(comment.id, 'dislike')}
+                    disabled={!user || engagingComment === comment.id}
+                    className={`p-1 rounded hover:bg-white/10 ${comment.viewerRating === 'dislike' ? 'text-primary' : 'text-muted'}`}
                 >
-                    <ThumbsDown size={14} fill={c.viewerRating === 'dislike' ? 'currentColor' : 'none'} />
+                    <ThumbsDown size={14} fill={comment.viewerRating === 'dislike' ? 'currentColor' : 'none'} />
                 </button>
-                {c.dislikes > 0 && <span className="text-xs text-muted">{formatCompactNumber(c.dislikes)}</span>}
+                {comment.dislikes > 0 && <span className="text-xs text-muted">{formatCompactNumber(comment.dislikes)}</span>}
             </div>
 
             {user && (
-                <button onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)} className="text-xs font-semibold text-muted hover:text-text transition-colors">
+                <button onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)} className="text-xs font-semibold text-muted hover:text-text transition-colors">
                     Odpovědět
                 </button>
             )}
-            {isOwner && !isReply && (
-                <button onClick={() => handlePin(c.id)} className="text-xs font-semibold text-muted hover:text-text transition-colors">
-                    {c.pinned ? 'Odepnout' : 'Připnout'}
+            {isOwner && (
+                <button onClick={() => handlePin(comment.id)} className="text-xs font-semibold text-muted hover:text-text transition-colors">
+                    {comment.pinned ? 'Odepnout' : 'Připnout'}
                 </button>
             )}
           </div>
 
-          {replyingTo === c.id && (
-            <form onSubmit={(e) => postComment(e, c.id)} className="mt-3 flex gap-2">
+          {replyingTo === comment.id && (
+            <form onSubmit={(e) => postComment(e, comment.id)} className="mt-3 flex gap-2">
               <input 
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
@@ -369,7 +374,9 @@ export default function Watch() {
 
           {replies.length > 0 && (
             <div className="mt-3 space-y-3 pl-4 border-l-2 border-border/10">
-              {replies.map(r => renderComment(r, true))}
+              {replies.map(r => (
+                  <CommentNode key={r.id} comment={r} depth={depth + 1} visited={newVisited} />
+              ))}
             </div>
           )}
         </div>
@@ -520,7 +527,9 @@ export default function Watch() {
               )}
 
               <div className="space-y-3">
-                {comments.filter(c => !c.parentId).map((c) => renderComment(c))}
+                {comments.filter(c => !c.parentId).map(c => (
+            <CommentNode key={c.id} comment={c} />
+          ))}
                 {comments.length === 0 ? <div className="text-sm text-muted">Zatím žádné komentáře.</div> : null}
               </div>
             </div>
