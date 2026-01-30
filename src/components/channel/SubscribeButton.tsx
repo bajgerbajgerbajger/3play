@@ -64,7 +64,8 @@ export function SubscribeButton({
       const res = await apiFetch<{ subscribed: boolean, count: number }>('/api/subscriptions/toggle', {
         method: 'POST',
         token,
-        body: JSON.stringify({ channelId })
+        body: JSON.stringify({ channelId }),
+        skipLoadingBar: true
       })
       setSubscribed(res.subscribed)
       setCount(res.count)

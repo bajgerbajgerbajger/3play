@@ -29,14 +29,14 @@ export function Button({
         'inline-flex items-center justify-center gap-2 rounded-[10px] font-semibold transition will-change-transform',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/80 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
         'disabled:opacity-60 disabled:pointer-events-none',
-        'active:animate-vibrate',
+        'active:scale-95 transition-transform duration-100',
         size === 'sm' ? 'h-9 px-3 text-sm' : 'h-11 px-4 text-sm',
         variant === 'primary' &&
-          'bg-brand text-white hover:bg-brand-hover active:scale-[0.97] active:brightness-95 shadow-lg shadow-brand/20 hover:shadow-xl hover:shadow-brand/40',
+          'bg-brand text-white hover:bg-brand-hover active:brightness-90 shadow-lg shadow-brand/20 hover:shadow-xl hover:shadow-brand/40',
         variant === 'secondary' &&
-          'bg-surface text-text border border-border/10 hover:bg-surface2 active:scale-[0.97] shadow-md hover:shadow-lg hover:shadow-black/20',
-        variant === 'ghost' && 'bg-transparent text-text hover:bg-white/5 active:scale-[0.97]',
-        variant === 'danger' && 'bg-red-500 text-white hover:bg-red-400 active:scale-[0.97] shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/40',
+          'bg-surface text-text border border-border/10 hover:bg-surface2 active:bg-surface3 shadow-md hover:shadow-lg hover:shadow-black/20',
+        variant === 'ghost' && 'bg-transparent text-text hover:bg-white/5 active:bg-white/10',
+        variant === 'danger' && 'bg-red-500 text-white hover:bg-red-400 active:brightness-90 shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/40',
         className,
       )}
     >

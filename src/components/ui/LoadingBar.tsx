@@ -73,7 +73,7 @@ export function LoadingBar() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] h-[3px] bg-transparent pointer-events-none">
       <div 
-        className="h-full relative bg-brand shadow-[0_0_30px_5px_rgba(229,9,20,0.9)] overflow-hidden"
+        className="h-full relative bg-brand overflow-hidden"
         style={{ 
           width: `${progress}%`, 
           opacity: progress === 100 ? 0 : 1,
@@ -81,11 +81,11 @@ export function LoadingBar() {
           transition: progress === 100 ? 'opacity 0.2s ease-out' : 'width 0.1s linear'
         }}
       >
-        {/* Fast moving shine effect - High speed pulse */}
+        {/* Subtle shine effect */}
         <div 
-          className="absolute inset-0 w-full h-full animate-[shimmer_0.6s_linear_infinite]"
+          className="absolute inset-0 w-full h-full animate-[shimmer_0.8s_linear_infinite]"
           style={{
-            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%)',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
             backgroundSize: '200% 100%',
           }}
         />

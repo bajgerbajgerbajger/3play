@@ -88,48 +88,74 @@ export default function Channel() {
       ) : channel ? (
         <>
           <div className="overflow-hidden rounded-2xl border border-border/10 bg-surface">
-            <div className="h-[180px] w-full bg-surface2">
-              <img src={channel.bannerUrl} alt="Channel banner" className="h-full w-full object-cover" />
+            <div className="h-[200px] w-full bg-surface2 relative group">
+              <img src={channel.bannerUrl} alt="Channel banner" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent opacity-60" />
             </div>
-            <div className="p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                  <img src={channel.avatarUrl} alt={channel.displayName} className="h-16 w-16 rounded-full object-cover" />
-                  <div>
-                    <h1 className="font-heading text-xl font-bold tracking-tight">{channel.displayName}</h1>
-                    <div className="mt-1 text-sm text-muted">
-                      {channel.handle} • {formatCompactNumber(channel.subscribers)} odběratelů • {formatCompactNumber(channel.totalViews)} zhlédnutí
+            <div className="px-6 pb-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between relative">
+                <div className="flex items-end gap-5 -mt-10 sm:-mt-12 relative z-10">
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-br from-brand to-purple-600 rounded-full opacity-75 blur group-hover:opacity-100 transition duration-500"></div>
+                    <img src={channel.avatarUrl} alt={channel.displayName} className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-full object-cover border-4 border-surface shadow-2xl" />
+                  </div>
+                  <div className="mb-2 hidden sm:block">
+                    <h1 className="font-heading text-2xl font-bold tracking-tight text-white drop-shadow-md">{channel.displayName}</h1>
+                    <div className="flex items-center gap-2 text-sm text-gray-300 font-medium">
+                      <span>@{channel.handle}</span>
+                      <span>•</span>
+                      <span>{formatCompactNumber(channel.subscribers)} odběratelů</span>
                     </div>
-                    {channel.bio ? <div className="mt-2 max-w-2xl text-sm text-text">{channel.bio}</div> : null}
-                    {channel.socialLinks && channel.socialLinks.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
+                  </div>
+                </div>
+                
+                <div className="flex-1 sm:hidden mt-2">
+                   <h1 className="font-heading text-xl font-bold tracking-tight">{channel.displayName}</h1>
+                   <div className="text-sm text-muted">@{channel.handle} • {formatCompactNumber(channel.subscribers)} odběratelů</div>
+                </div>
+
+                <div className="flex flex-col items-end gap-3 sm:mt-4">
+                  {isOwner ? (
+                    <Button variant="secondary" onClick={() => setIsEditing(true)}>
+                      <Pencil size={16} />
+                      Upravit kanál
+                    </Button>
+                  ) : (
+                    <SubscribeButton 
+                      channelId={channel.id} 
+                      initialCount={channel.subscribers}
+                      onToggle={(newCount) => setChannel(prev => prev ? ({ ...prev, subscribers: newCount }) : null)}
+                    />
+                  )}
+                  {channel.socialLinks && channel.socialLinks.length > 0 && (
+                      <div className="flex flex-wrap gap-2 justify-end">
                         {channel.socialLinks.map((link, i) => (
                           <a 
                             key={i} 
                             href={link.url} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="text-xs font-medium text-brand hover:underline bg-brand/10 px-2 py-1 rounded-md"
+                            className="text-xs font-medium text-text/80 hover:text-brand bg-surface2/50 hover:bg-surface2 px-2.5 py-1.5 rounded-full transition-colors border border-white/5"
                           >
                             {link.platform}
                           </a>
                         ))}
                       </div>
                     )}
-                  </div>
                 </div>
-                {isOwner ? (
-                  <Button variant="secondary" onClick={() => setIsEditing(true)}>
-                    <Pencil size={16} />
-                    Upravit kanál
-                  </Button>
-                ) : (
-                  <SubscribeButton 
-                    channelId={channel.id} 
-                    initialCount={channel.subscribers}
-                    onToggle={(newCount) => setChannel(prev => prev ? ({ ...prev, subscribers: newCount }) : null)}
-                  />
-                )}
+              </div>
+              
+              <div className="mt-4 max-w-3xl text-sm text-muted/90 leading-relaxed">
+                 {channel.bio}
+              </div>
+              
+              <div className="mt-6 flex items-center gap-6 border-t border-white/5 pt-4 text-sm font-medium text-muted">
+                <div className="flex items-center gap-2">
+                    <span className="text-text">{channel.videoCount}</span> videí
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-text">{formatCompactNumber(channel.totalViews)}</span> zhlédnutí celkem
+                </div>
               </div>
             </div>
           </div>

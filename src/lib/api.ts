@@ -8,9 +8,9 @@ function getErrorFromPayload(payload: unknown): string | null {
   return typeof error === 'string' ? error : null
 }
 
-export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit & { token?: string | null; timeout?: number }) {
+export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit & { token?: string | null; timeout?: number; skipLoadingBar?: boolean }) {
   // Signal start
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && !init?.skipLoadingBar) {
     window.dispatchEvent(new Event('api-load-start'));
   }
 
@@ -45,7 +45,7 @@ export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit &
     throw err
   } finally {
     // Signal end
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !init?.skipLoadingBar) {
       window.dispatchEvent(new Event('api-load-end'));
     }
   }

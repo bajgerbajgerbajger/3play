@@ -59,7 +59,7 @@ export default function Studio() {
   useEffect(() => {
     if (!token) return
     const t = window.setInterval(() => {
-      apiFetch<{ success: true; items: StudioVideo[] }>('/api/studio/videos', { token })
+      apiFetch<{ success: true; items: StudioVideo[] }>('/api/studio/videos', { token, skipLoadingBar: true })
         .then((d) => setItems(d.items))
         .catch(() => null)
     }, 3000)

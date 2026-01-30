@@ -32,7 +32,7 @@ export function Notifications() {
   const fetchNotifications = async () => {
     if (!token) return
     try {
-      const res = await apiFetch<NotificationsResponse>('/api/notifications', { token })
+      const res = await apiFetch<NotificationsResponse>('/api/notifications', { token, skipLoadingBar: true })
       if (res) {
         setItems(res.items)
         setUnreadCount(res.unreadCount || 0)
@@ -55,7 +55,8 @@ export function Notifications() {
     try {
       await apiFetch('/api/notifications/mark-all-read', { 
         method: 'POST',
-        token 
+        token,
+        skipLoadingBar: true
       })
       setItems(items.map(i => ({ ...i, isRead: true })))
       setUnreadCount(0)
@@ -108,7 +109,7 @@ export function Notifications() {
                     onClick={() => {
                         setIsOpen(false);
                         if (!item.isRead && token) {
-                            apiFetch(`/api/notifications/${item.id}/read`, { method: 'PATCH', token }).catch(console.error)
+                            apiFetch(`/api/notifications/${item.id}/read`, { method: 'PATCH', token, skipLoadingBar: true }).catch(console.error)
                             setUnreadCount(Math.max(0, unreadCount - 1))
                             setItems(prev => prev.map(i => i.id === item.id ? { ...i, isRead: true } : i))
                         }

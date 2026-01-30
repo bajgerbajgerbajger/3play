@@ -203,6 +203,7 @@ export default function Watch() {
           method: 'POST',
           token,
           body: JSON.stringify({ action }),
+          skipLoadingBar: true
         },
       )
       setVideo({ ...video, likes: d.likes, dislikes: d.dislikes, viewerRating: d.viewerRating })
