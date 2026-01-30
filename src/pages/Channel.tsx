@@ -103,7 +103,13 @@ export default function Channel() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between relative">
                 <div className="flex items-end gap-5 -mt-10 sm:-mt-12 relative z-10">
                   <div className="relative group">
-                    <div className="absolute -inset-0.5 bg-gradient-to-br from-brand to-purple-600 rounded-full opacity-75 blur group-hover:opacity-100 transition duration-500"></div>
+                    <div 
+                      className="absolute -inset-0.5 rounded-full opacity-75 blur group-hover:opacity-100 transition duration-500"
+                      style={{
+                        backgroundColor: avatarShadowColor,
+                        boxShadow: `0 0 20px ${avatarShadowColor}`
+                      }}
+                    />
                     <img src={channel.avatarUrl} alt={channel.displayName} className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-full object-cover border-4 border-surface shadow-2xl" />
                   </div>
                   <div className="mb-2 hidden sm:block">
