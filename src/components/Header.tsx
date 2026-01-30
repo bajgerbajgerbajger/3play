@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/Logo";
 import { Notifications } from "@/components/Notifications";
+import { LiveChat } from "@/components/chat/LiveChat";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -18,6 +19,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
   const { isDark } = useTheme();
   const { user, hydrated, logout } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('q') || '');
   const location = useLocation();
   const navigate = useNavigate();
@@ -69,7 +71,8 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/10 bg-surface/80 backdrop-blur supports-[backdrop-filter]:bg-surface/60">
+    <>
+      <header className="sticky top-0 z-40 border-b border-border/10 bg-surface/80 backdrop-blur supports-[backdrop-filter]:bg-surface/60">
       <div className="container flex h-14 items-center gap-4">
         <div>
           <IconButton aria-label="Menu" onClick={onOpenMobileMenu}>
@@ -132,7 +135,11 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
         
         <div className="flex items-center gap-2">
           {hydrated && user && <Notifications />}
-          <IconButton aria-label="Chat">
+          <IconButton 
+            aria-label="Chat"
+            onClick={() => user ? setChatOpen(true) : navigate('/auth')}
+            className={chatOpen ? 'bg-white/10 text-brand' : ''}
+          >
             <MessageSquare size={18} />
           </IconButton>
           {hydrated && user ? (
@@ -187,5 +194,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
         </div>
       </div>
     </header>
+    <LiveChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+    </>
   );
 }

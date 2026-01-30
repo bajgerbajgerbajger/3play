@@ -10,6 +10,7 @@ import dbConnect from '../lib/db.js'
 import User from '../models/User.js'
 import Profile from '../models/Profile.js'
 import EmailVerificationCode from '../models/EmailVerificationCode.js'
+import { DEFAULT_AVATARS } from '../default-avatars.js'
 
 const router = Router()
 
@@ -194,7 +195,9 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   const userId = `u-${Math.random().toString(16).slice(2, 10)}`
   const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
   
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${handle}-${gender || 'male'}`
+  let avatarUrl = DEFAULT_AVATARS.other
+  if (gender === 'male') avatarUrl = DEFAULT_AVATARS.male
+  else if (gender === 'female') avatarUrl = DEFAULT_AVATARS.female
 
   const user = new User({
     id: userId,
@@ -202,6 +205,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     handle: normalizedHandle,
     displayName,
     avatarUrl,
+    gender: gender || 'other',
     passwordHash: hashPassword(password),
     emailVerified: true,
     channelId: profileId, // Link to the auto-created channel
@@ -288,6 +292,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      gender: user.gender,
       plan: user.plan || 'free',
       subscriptionStatus: user.subscriptionStatus || 'inactive',
       newAccount: user.newAccount,
@@ -326,6 +331,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response): Promise<void
       handle: user.handle,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      gender: user.gender,
       plan: user.plan || 'free',
       subscriptionStatus: user.subscriptionStatus || 'inactive',
       newAccount: user.newAccount,

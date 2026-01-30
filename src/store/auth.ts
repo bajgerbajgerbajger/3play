@@ -15,6 +15,7 @@ export type AuthUser = {
   subscriptionStatus?: 'active' | 'inactive' | 'trial'
   trialEndsAt?: string
   subscriptionEndsAt?: string
+  gender?: 'male' | 'female' | 'other'
 }
 
 type AuthState = {
