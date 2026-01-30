@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, User as UserIcon } from 'lucide-react';
-import { useAuth } from '../../lib/auth';
+import { useAuthStore } from '@/store/auth';
 import { Button } from '../ui/Button';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 interface Message {
   id: string;
@@ -19,7 +19,7 @@ interface LiveChatProps {
 }
 
 export function LiveChat({ isOpen, onClose }: LiveChatProps) {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
