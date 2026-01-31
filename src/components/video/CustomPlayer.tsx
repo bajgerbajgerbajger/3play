@@ -267,7 +267,7 @@ export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPl
   return (
     <div 
       ref={containerRef}
-      className={`group relative w-full overflow-hidden bg-black font-sans select-none ${fullscreen ? 'h-full w-full' : 'aspect-video'}`}
+      className={`group relative w-full overflow-hidden bg-black font-sans select-none ${className ?? (fullscreen ? 'h-full w-full' : 'aspect-video')}`}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => {
         setHovering(false)

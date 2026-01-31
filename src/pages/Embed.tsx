@@ -87,8 +87,7 @@ export default function Embed() {
     <div className="h-screen w-screen bg-black overflow-hidden relative">
       {isEmbed ? (
         <SafeEmbed 
-          src={video.sourceUrl} 
-          title={video.title} 
+          code={video.sourceUrl} 
           className="h-full w-full" 
         />
       ) : video.embedCode ? (
