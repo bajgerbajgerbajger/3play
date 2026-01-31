@@ -10,6 +10,7 @@ const Channel = lazy(() => import("@/pages/Channel"));
 const Studio = lazy(() => import("@/pages/Studio"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const ChannelSetup = lazy(() => import("@/pages/onboarding/ChannelSetup"));
+const Embed = lazy(() => import("@/pages/Embed"));
 const Developer = lazy(() => import("@/pages/Developer"));
 
 // Admin
@@ -78,6 +79,13 @@ export default function App() {
             <Route path="/developer" element={
               <Suspense fallback={<div className="bg-black h-screen text-green-500 p-4">Loading System...</div>}>
                 <Developer />
+              </Suspense>
+            } />
+
+            {/* Embed Route (No Layout) */}
+            <Route path="/embed/:videoId" element={
+              <Suspense fallback={<div className="bg-black h-screen text-white flex items-center justify-center">Loading...</div>}>
+                <Embed />
               </Suspense>
             } />
 

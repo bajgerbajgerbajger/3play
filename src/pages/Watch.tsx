@@ -513,12 +513,19 @@ export default function Watch() {
                   <ThumbsDown size={24} fill={video.viewerRating === 'dislike' ? 'currentColor' : 'none'} />
                   {formatCompactNumber(video.dislikes)}
                 </Button>
-                <Button variant="secondary" onClick={() => navigator.clipboard.writeText(window.location.href)} className="h-8 px-3">
+                <Button variant="secondary" onClick={() => setShareModalOpen(true)} className="h-8 px-3">
                   <Share2 size={16} />
                   Sdílet
                 </Button>
               </div>
             </div>
+
+            <ShareModal 
+              isOpen={shareModalOpen} 
+              onClose={() => setShareModalOpen(false)} 
+              videoId={videoId} 
+              title={video.title} 
+            />
 
             <div className="rounded-2xl border border-border/10 bg-surface p-4">
               <div className="text-xs text-muted">{meta}</div>
