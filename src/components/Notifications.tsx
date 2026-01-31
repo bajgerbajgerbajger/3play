@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/store/auth'
 import { IconButton } from '@/components/ui/IconButton'
+import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
 
 type Notification = {
   id: string
   actorName?: string
   actorAvatarUrl?: string
+  actorGender?: 'male' | 'female' | 'other'
   type: 'comment' | 'reply' | 'like' | 'subscribe' | 'system'
   title: string
   message?: string

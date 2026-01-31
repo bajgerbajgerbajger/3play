@@ -18,7 +18,8 @@ export function SettingsPanel() {
     bio: '',
     phone: '',
     avatarUrl: '',
-    bannerUrl: ''
+    bannerUrl: '',
+    gender: 'other' as 'male' | 'female' | 'other'
   })
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export function SettingsPanel() {
     phone: string
     avatarUrl: string
     bannerUrl: string
+    gender?: 'male' | 'female' | 'other'
   }
 
   async function loadProfile() {

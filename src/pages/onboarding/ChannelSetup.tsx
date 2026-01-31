@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/auth'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Avatar } from '@/components/ui/Avatar'
 import { Upload, Camera, Loader2, ArrowRight, Instagram, Twitter, Youtube, Globe, Facebook, Link as LinkIcon } from 'lucide-react'
 
 export default function ChannelSetup() {

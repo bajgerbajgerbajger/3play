@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { Button } from './ui/Button';
+import { Avatar } from './ui/Avatar';
 import { useAuthStore } from '@/store/auth';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';

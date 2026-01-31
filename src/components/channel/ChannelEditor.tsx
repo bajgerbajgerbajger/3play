@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Avatar } from '@/components/ui/Avatar'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/store/auth'
 import { X, Upload, Loader2, Plus, Trash2 } from 'lucide-react'
@@ -15,6 +16,7 @@ type ChannelProfile = {
   bio: string
   avatarUrl: string
   bannerUrl: string
+  gender?: 'male' | 'female' | 'other'
   socialLinks?: SocialLink[]
   phone?: string
 }

@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import { apiFetch } from '@/lib/api'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
+import { Avatar } from '@/components/ui/Avatar'
 import { VideoCard, type VideoListItem } from '@/components/video/VideoCard'
 import { formatCompactNumber } from '@/lib/format'
 import { getDominantColor } from '@/lib/colors'
@@ -18,6 +19,7 @@ type ChannelInfo = {
   displayName: string
   avatarUrl: string
   bannerUrl: string
+  gender?: 'male' | 'female' | 'other'
   bio: string
   socialLinks?: { platform: string; url: string }[]
   subscribers: number

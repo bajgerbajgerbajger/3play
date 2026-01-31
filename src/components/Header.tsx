@@ -4,6 +4,7 @@ import { Search, User, LogOut, Video, CircleUserRound, Menu, MessageSquare } fro
 import { useAuthStore } from "@/store/auth";
 import { useTheme } from "@/hooks/useTheme";
 import { IconButton } from "@/components/ui/IconButton";
+import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/Logo";
