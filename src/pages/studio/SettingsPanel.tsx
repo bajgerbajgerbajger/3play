@@ -47,7 +47,8 @@ export function SettingsPanel() {
           bio: data.channel.bio || '',
           phone: data.channel.phone || '',
           avatarUrl: data.channel.avatarUrl || '',
-          bannerUrl: data.channel.bannerUrl || ''
+          bannerUrl: data.channel.bannerUrl || '',
+          gender: data.channel.gender || 'other'
         })
       }
     } catch {

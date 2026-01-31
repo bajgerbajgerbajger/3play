@@ -56,7 +56,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
   }
 
   // Fallback if still empty
-  if (!initialAvatarUrl) initialAvatarUrl = DEFAULT_AVATARS.neutral
+  if (!initialAvatarUrl) initialAvatarUrl = DEFAULT_AVATARS.other
 
   const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
   
