@@ -103,7 +103,7 @@ export default function Studio() {
 
     try {
       let finalSourceUrl = uploadSource
-      let finalThumbnailUrl = undefined
+      let finalThumbnailUrl = thumbnailUrl || undefined
       let finalDuration = 0
 
       // 1. Upload Thumbnail if present (regardless of mode)

@@ -211,18 +211,35 @@ export function UploadPanel({
         {/* Thumbnail Upload - Always available */}
         <div>
             <div className="mb-1 text-xs font-semibold text-muted">Vlastní náhledovka (Volitelné)</div>
-            <div className="relative">
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => onThumbnailSelect(e.target.files?.[0] || null)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div className="flex items-center gap-2 h-10 w-full rounded-[10px] border border-border/10 bg-surface px-3 text-sm text-text overflow-hidden">
-                    <ImageIcon size={16} className="text-muted flex-shrink-0" />
-                    <span className="truncate">{thumbnailFile ? thumbnailFile.name : "Vybrat obrázek náhledu..."}</span>
-                </div>
+            
+            <div className="space-y-3">
+              <div className="relative">
+                  <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => onThumbnailSelect(e.target.files?.[0] || null)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="flex items-center gap-2 h-10 w-full rounded-[10px] border border-border/10 bg-surface px-3 text-sm text-text overflow-hidden hover:bg-surface2 transition-colors">
+                      <ImageIcon size={16} className="text-muted flex-shrink-0" />
+                      <span className="truncate">{thumbnailFile ? thumbnailFile.name : "Vybrat obrázek náhledu ze zařízení..."}</span>
+                  </div>
+              </div>
+
+              <div className="relative">
+                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
+                     <Link size={14} />
+                 </div>
+                 <Input 
+                     value={thumbnailUrl} 
+                     onChange={(e) => onThumbnailUrl(e.target.value)} 
+                     placeholder="Nebo vložte URL obrázku" 
+                     className="pl-9 h-10 text-sm"
+                     disabled={!!thumbnailFile}
+                 />
+              </div>
             </div>
+
             <div className="mt-1 text-[10px] text-muted">
                 Pokud není nahrána, bude vygenerována automaticky z videa.
             </div>

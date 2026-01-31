@@ -17,12 +17,13 @@ interface CustomPlayerProps {
   title?: string
   autoPlay?: boolean
   onEnded?: () => void
+  className?: string
 }
 
 type Quality = 'original' | '1080p' | '720p' | '480p' | '360p' | '240p' | '32px'
 type SubtitleState = 'off' | 'ai-en' | 'ai-cs' | 'ai-auto' | 'ai-de' | 'ai-fr' | 'ai-es'
 
-export function CustomPlayer({ src, poster, title, autoPlay, onEnded }: CustomPlayerProps) {
+export function CustomPlayer({ src, poster, title, autoPlay, onEnded, className }: CustomPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const bgVideoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)

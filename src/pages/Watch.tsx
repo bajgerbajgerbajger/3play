@@ -11,6 +11,7 @@ import { type VideoListItem } from '@/components/video/VideoCard'
 import { VideoRow } from '@/components/video/VideoRow'
 import { SafeEmbed } from '@/components/video/SafeEmbed'
 import { CustomPlayer } from '@/components/video/CustomPlayer'
+import { ShareModal } from '@/components/ShareModal'
 import { useAuthStore } from '@/store/auth'
 import { useModalStore } from '@/store/modal'
 import { ThumbsDown, ThumbsUp, Share2, Bell, ChevronDown, RotateCw, ExternalLink } from 'lucide-react'
@@ -263,24 +264,51 @@ export default function Watch() {
         return
     }
 
+    // Optimistic Update
+    const previousSubscribed = subscribed
+    const previousCount = video.channel.subscribers
+    
+    setSubscribed(!previousSubscribed)
+    setVideo({
+        ...video,
+        channel: {
+            ...video.channel,
+            subscribers: previousSubscribed ? previousCount - 1 : previousCount + 1
+        }
+    })
+
     try {
         setSubscribing(true)
         const res = await apiFetch<{ subscribed: boolean; count: number }>('/api/subscriptions/toggle', {
             method: 'POST',
             token,
             body: JSON.stringify({ channelId: video.channel.id }),
+            skipLoadingBar: true // Smooth UX
         })
+        
+        // Sync with server source of truth just in case
         setSubscribed(res.subscribed)
+        if (video.channel) {
+            setVideo(prev => prev ? ({
+                ...prev,
+                channel: {
+                    ...prev.channel!,
+                    subscribers: res.count
+                }
+            }) : null)
+        }
+    } catch (err) {
+        // Revert on error
+        setSubscribed(previousSubscribed)
         if (video.channel) {
             setVideo({
                 ...video,
                 channel: {
                     ...video.channel,
-                    subscribers: res.count
+                    subscribers: previousCount
                 }
             })
         }
-    } catch (err) {
         setError('Nepodařilo se změnit stav odběru')
     } finally {
         setSubscribing(false)
