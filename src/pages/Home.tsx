@@ -23,6 +23,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<VideoListItem[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   // Check for channel on welcome
   useEffect(() => {
@@ -50,10 +52,12 @@ export default function Home() {
     let alive = true
     setLoading(true)
     setError(null)
-    apiFetch<{ success: true; items: VideoListItem[] }>(`/api/videos?q=${encodeURIComponent(q)}&sort=${encodeURIComponent(sort)}&limit=24`)
+    setNextCursor(null)
+    apiFetch<{ success: true; items: VideoListItem[]; nextCursor?: string | null }>(`/api/videos?q=${encodeURIComponent(q)}&sort=${encodeURIComponent(sort)}&limit=24`)
       .then((d) => {
         if (!alive) return
         setItems(d.items)
+        setNextCursor(d.nextCursor || null)
       })
       .catch((e: unknown) => {
         if (!alive) return
@@ -67,6 +71,22 @@ export default function Home() {
       alive = false
     }
   }, [q, sort])
+
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+        const d = await apiFetch<{ success: true; items: VideoListItem[]; nextCursor?: string | null }>(
+            `/api/videos?q=${encodeURIComponent(q)}&sort=${encodeURIComponent(sort)}&limit=24&cursor=${encodeURIComponent(nextCursor)}`
+        )
+        setItems(prev => [...prev, ...d.items])
+        setNextCursor(d.nextCursor || null)
+    } catch (e) {
+        console.error(e)
+    } finally {
+        setLoadingMore(false)
+    }
+  }
 
   return (
     <div className="space-y-6 animate-fadeUp">
@@ -192,6 +212,18 @@ export default function Home() {
             ))
           : items.map((v, i) => <VideoCard key={`${v.id}-${i}`} video={v as VideoListItem} />)}
       </div>
+
+      {items.length > 0 && nextCursor && (
+        <div className="flex justify-center pt-8 pb-12">
+            <button 
+                onClick={loadMore} 
+                disabled={loadingMore}
+                className="px-6 py-2.5 rounded-full bg-surface border border-border/10 font-semibold text-sm hover:bg-surface2 hover:border-border/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                {loadingMore ? 'Načítání...' : 'Načíst další videa'}
+            </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -8,6 +8,7 @@ export type CommentDoc = {
   authorHandle: string
   authorName: string
   authorAvatarUrl?: string
+  authorGender?: 'male' | 'female' | 'other'
   message: string
   likes: number
   dislikes: number
@@ -25,6 +26,7 @@ const CommentSchema = new mongoose.Schema({
   authorHandle: { type: String, required: true },
   authorName: { type: String, required: true },
   authorAvatarUrl: { type: String },
+  authorGender: { type: String, enum: ['male', 'female', 'other'] },
   message: { type: String, required: true },
   likes: { type: Number, default: 0 },
   dislikes: { type: Number, default: 0 },

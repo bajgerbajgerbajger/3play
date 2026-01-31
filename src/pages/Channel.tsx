@@ -110,7 +110,13 @@ export default function Channel() {
                         boxShadow: `0 0 20px ${avatarShadowColor}`
                       }}
                     />
-                    <img src={channel.avatarUrl} alt={channel.displayName} className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-full object-cover border-4 border-surface shadow-2xl" />
+                    <Avatar 
+                      src={channel.avatarUrl} 
+                      alt={channel.displayName} 
+                      gender={channel.gender}
+                      className="relative h-24 w-24 sm:h-32 sm:w-32 border-4 border-surface shadow-2xl"
+                      size="custom"
+                    />
                   </div>
                   <div className="mb-2 hidden sm:block">
                     <h1 className="font-heading text-2xl font-bold tracking-tight text-white drop-shadow-md">{channel.displayName}</h1>

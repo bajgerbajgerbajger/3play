@@ -119,11 +119,13 @@ export function Notifications() {
                         !item.isRead && "bg-primary/5"
                     )}
                   >
-                    {item.actorAvatarUrl ? (
-                        <img src={item.actorAvatarUrl} alt="" className="w-8 h-8 rounded-full object-cover mt-1" />
-                    ) : (
-                        <div className="w-8 h-8 rounded-full bg-white/10 mt-1" />
-                    )}
+                    <Avatar 
+                      src={item.actorAvatarUrl} 
+                      alt={item.actorName || ''} 
+                      gender={item.actorGender}
+                      className="w-8 h-8 mt-1"
+                      size="custom"
+                    />
                     <div className="flex-1">
                         <div className="text-sm font-medium leading-none mb-1">{item.title}</div>
                         <div className="text-xs text-muted line-clamp-2">{item.message}</div>

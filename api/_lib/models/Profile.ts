@@ -12,10 +12,13 @@ export type ProfileDoc = {
   socialLinks?: { platform: string; url: string }[]
   subscribers: number
   phone?: string
+  gender?: 'male' | 'female' | 'other'
   consentContact?: boolean
   consentMarketing?: boolean
   consentVersion?: string
   consentedAt?: Date
+  isPremium?: boolean
+  stripeCustomerId?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -33,12 +36,18 @@ const ProfileSchema = new mongoose.Schema({
     url: { type: String, required: true }
   }],
   subscribers: { type: Number, default: 0 },
+  gender: { type: String, enum: ['male', 'female', 'other'], default: 'other' },
   phone: { type: String },
   consentContact: { type: Boolean, default: false },
   consentMarketing: { type: Boolean, default: false },
   consentVersion: { type: String },
   consentedAt: { type: Date },
+  isPremium: { type: Boolean, default: false },
+  stripeCustomerId: { type: String },
 }, { timestamps: true })
+
+// Add text index for search
+ProfileSchema.index({ displayName: 'text', handle: 'text' })
 
 const Model = process.env.MONGODB_URI
   ? (mongoose.models.Profile || mongoose.model('Profile', ProfileSchema))

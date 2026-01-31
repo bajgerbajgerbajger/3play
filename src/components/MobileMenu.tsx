@@ -134,10 +134,12 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 {user ? (
                   <div className="space-y-4">
                     <div className="px-3 flex items-center gap-3">
-                      <img 
+                      <Avatar 
                         src={user.avatarUrl} 
                         alt={user.displayName} 
-                        className="w-10 h-10 rounded-full object-cover border border-border/20"
+                        gender={user.gender}
+                        className="w-10 h-10 border border-border/20"
+                        size="custom"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold truncate">{user.displayName}</div>

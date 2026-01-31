@@ -3,8 +3,9 @@ import { cn } from '@/lib/utils'
 
 export function IconButton({
   className,
+  size,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { 'aria-label': string }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { 'aria-label': string; size?: string }) {
   return (
     <button
       {...props}

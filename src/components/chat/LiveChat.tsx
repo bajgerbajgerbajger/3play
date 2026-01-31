@@ -5,12 +5,14 @@ import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
 import { cn } from '@/lib/utils';
 import { DEFAULT_AVATARS } from '@/lib/default-avatars';
+import { Avatar } from '@/components/ui/Avatar';
 
 interface Message {
   id: string;
   userId: string;
   userName: string;
   userAvatar?: string;
+  userGender?: string;
   content: string;
   type: 'text' | 'image' | 'file';
   fileUrl?: string;
@@ -22,6 +24,7 @@ interface OnlineUser {
   id: string;
   name: string;
   avatar?: string;
+  gender?: string;
   status: 'online' | 'idle' | 'dnd';
 }
 
@@ -41,10 +44,10 @@ export function LiveChat({ isOpen, onClose }: LiveChatProps) {
 
   // Mock online users
   const onlineUsers: OnlineUser[] = [
-    { id: '1', name: 'Admin', avatar: DEFAULT_AVATARS.male, status: 'online' },
-    { id: '2', name: 'Support', avatar: DEFAULT_AVATARS.female, status: 'idle' },
-    { id: '3', name: 'Moderator', avatar: DEFAULT_AVATARS.other, status: 'dnd' },
-    ...(user ? [{ id: user.id, name: user.displayName, avatar: user.avatarUrl, status: 'online' } as OnlineUser] : [])
+    { id: '1', name: 'Admin', avatar: '', gender: 'male', status: 'online' },
+    { id: '2', name: 'Support', avatar: '', gender: 'female', status: 'idle' },
+    { id: '3', name: 'Moderator', avatar: '', gender: 'other', status: 'dnd' },
+    ...(user ? [{ id: user.id, name: user.displayName, avatar: user.avatarUrl, gender: user.gender, status: 'online' } as OnlineUser] : [])
   ];
 
   // Mock initial messages
@@ -63,7 +66,8 @@ export function LiveChat({ isOpen, onClose }: LiveChatProps) {
           id: '2',
           userId: 'user2',
           userName: 'Tester',
-          userAvatar: DEFAULT_AVATARS.male,
+          userAvatar: '',
+          userGender: 'male',
           content: 'Ahoj všem! Koukněte na tuhle fotku.',
           type: 'text',
           timestamp: new Date(Date.now() - 1000 * 60 * 5),
@@ -88,6 +92,7 @@ export function LiveChat({ isOpen, onClose }: LiveChatProps) {
       userId: user.id,
       userName: user.displayName || 'User',
       userAvatar: user.avatarUrl,
+      userGender: user.gender,
       content: inputValue.trim(),
       type: 'text',
       timestamp: new Date(),
@@ -157,12 +162,15 @@ export function LiveChat({ isOpen, onClose }: LiveChatProps) {
             onClick={() => setShowUsers(!showUsers)}
             className={cn("hover:bg-brand/10", showUsers && "text-brand bg-brand/10")}
             title="Online uživatelé"
+            aria-label="Online users"
           >
             <Users size={20} />
           </IconButton>
           <IconButton 
             onClick={onClose}
             className="hover:bg-red-500/10 hover:text-red-500"
+            title="Zavřít"
+            aria-label="Close chat"
           >
             <X size={20} />
           </IconButton>
@@ -261,16 +269,31 @@ export function LiveChat({ isOpen, onClose }: LiveChatProps) {
             {user ? (
               <div className="flex flex-col gap-2">
                  <div className="flex items-center gap-1 px-1">
-                    <IconButton size="sm" onClick={() => setShowEmojis(!showEmojis)} className={showEmojis ? 'text-yellow-400' : 'text-muted hover:text-yellow-400'}>
+                    <IconButton 
+                      onClick={() => setShowEmojis(!showEmojis)} 
+                      className={cn("h-8 w-8", showEmojis ? 'text-yellow-400' : 'text-muted hover:text-yellow-400')}
+                      aria-label="Add emoji"
+                    >
                       <Smile size={18} />
                     </IconButton>
-                    <IconButton size="sm" onClick={() => fileInputRef.current?.click()} className="text-muted hover:text-blue-400">
+                    <IconButton 
+                      onClick={() => fileInputRef.current?.click()} 
+                      className="h-8 w-8 text-muted hover:text-blue-400"
+                      aria-label="Upload image"
+                    >
                       <ImageIcon size={18} />
                     </IconButton>
-                    <IconButton size="sm" className="text-muted hover:text-purple-400">
+                    <IconButton 
+                      className="h-8 w-8 text-muted hover:text-purple-400"
+                      aria-label="Send gift"
+                    >
                       <Gift size={18} />
                     </IconButton>
-                    <IconButton size="sm" onClick={() => fileInputRef.current?.click()} className="text-muted hover:text-green-400">
+                    <IconButton 
+                      onClick={() => fileInputRef.current?.click()} 
+                      className="h-8 w-8 text-muted hover:text-green-400"
+                      aria-label="Attach file"
+                    >
                       <Paperclip size={18} />
                     </IconButton>
                     <input 
@@ -323,7 +346,13 @@ export function LiveChat({ isOpen, onClose }: LiveChatProps) {
             {onlineUsers.map(u => (
               <div key={u.id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer group">
                 <div className="relative">
-                  <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded-full object-cover" />
+                  <Avatar 
+                    src={u.avatar} 
+                    alt={u.name} 
+                    gender={u.gender}
+                    className="w-8 h-8"
+                    size="custom"
+                  />
                   <div className={cn(
                     "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-surface",
                     u.status === 'online' ? "bg-green-500" :

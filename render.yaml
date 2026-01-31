@@ -3,26 +3,18 @@ services:
     name: 3play
     env: node
     plan: free
-    buildCommand: npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
-    healthCheckPath: /api/health
     envVars:
-      - key: NODE_ENV
-        value: production
+      - key: NODE_VERSION
+        value: 20.11.0
       - key: MONGODB_URI
-        sync: false
-      - key: CLOUDINARY_CLOUD_NAME
-        sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
-      - key: CORS_ORIGINS
-        value: https://3play.cz,https://www.3play.cz
-        sync: false
+        fromGroup: shared-secrets
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLOUDINARY_URL
+        fromGroup: shared-secrets
+      - key: RESEND_API_KEY
+        fromGroup: shared-secrets
       - key: APP_ORIGIN
-        value: https://3play.cz
-        sync: false
-      - key: API_ORIGIN
-        value: https://3play.cz
-        sync: false
+        value: https://your-domain.com # Change this to your custom domain

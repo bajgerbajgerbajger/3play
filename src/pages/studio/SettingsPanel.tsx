@@ -121,6 +121,43 @@ export function SettingsPanel() {
 
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-muted">
+              <User size={14} />
+              Gender
+            </label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={formData.gender === 'male' ? 'primary' : 'secondary'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setFormData({...formData, gender: 'male'})}
+              >
+                Male
+              </Button>
+              <Button
+                type="button"
+                variant={formData.gender === 'female' ? 'primary' : 'secondary'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setFormData({...formData, gender: 'female'})}
+              >
+                Female
+              </Button>
+              <Button
+                type="button"
+                variant={formData.gender === 'other' ? 'primary' : 'secondary'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setFormData({...formData, gender: 'other'})}
+              >
+                Other
+              </Button>
+            </div>
+            <p className="text-xs text-muted/60">Changing gender will reset your avatar to default.</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-muted">
               <Phone size={14} />
               Phone Number
             </label>

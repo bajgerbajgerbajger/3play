@@ -33,6 +33,8 @@ const app: express.Application = express()
 
 // Trust proxy is required when running behind a reverse proxy (Render + Cloudflare)
 // to correctly identify client IP addresses for rate limiting and protocol detection.
+// "trust proxy" should be enabled (1 or true) for Render. 
+// If using Cloudflare, we might need to trust the Cloudflare IP ranges or rely on headers passed by Render.
 app.set('trust proxy', 1)
 
 app.use(helmet({

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { formatCompactNumber, formatDuration, formatTimeAgo } from '@/lib/format'
 
+import { Avatar } from '@/components/ui/Avatar'
+
 export type VideoListItem = {
   id: string
   title: string
@@ -17,6 +19,7 @@ export type VideoListItem = {
     handle: string
     displayName: string
     avatarUrl: string
+    gender?: 'male' | 'female' | 'other'
   } | null
 }
 
@@ -142,7 +145,13 @@ export const VideoCard: React.FC<{ video: VideoListItem; className?: string }> =
       <div className="p-3">
         <div className="flex gap-3">
           {video.channel ? (
-            <img src={video.channel.avatarUrl} alt={video.channel.displayName} className="h-9 w-9 rounded-full object-cover" />
+            <Avatar 
+              src={video.channel.avatarUrl} 
+              alt={video.channel.displayName} 
+              gender={video.channel.gender}
+              className="h-9 w-9" 
+              size="custom"
+            />
           ) : (
             <div className="h-9 w-9 rounded-full bg-white/5" />
           )}

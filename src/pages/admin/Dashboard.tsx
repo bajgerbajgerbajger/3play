@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
 import { Users, Video, MessageSquare, TrendingUp, UserPlus } from 'lucide-react'
+import { Avatar } from '@/components/ui/Avatar'
 
 type Stats = {
   totalUsers: number
@@ -14,6 +15,7 @@ type RecentUser = {
   email: string
   createdAt: string
   avatarUrl?: string
+  gender?: 'male' | 'female' | 'other'
 }
 
 export default function Dashboard() {
@@ -92,13 +94,13 @@ export default function Dashboard() {
               <div key={user.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
-                    {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">
-                        {user.displayName[0]}
-                      </div>
-                    )}
+                    <Avatar 
+                      src={user.avatarUrl} 
+                      alt={user.displayName} 
+                      gender={user.gender}
+                      className="w-full h-full"
+                      size="custom"
+                    />
                   </div>
                   <div>
                     <div className="font-medium text-sm">{user.displayName}</div>

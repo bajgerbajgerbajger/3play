@@ -13,6 +13,9 @@ function localNormalizeHandle(input: string) {
   return `@${noAt.toLowerCase()}`
 }
 
+import User from '../models/User.js'
+import { DEFAULT_AVATARS } from '../default-avatars.js'
+
 router.post('/', requireAuth, async (req: Request, res: Response) => {
   const db = await dbConnect()
   if (!db) {
@@ -43,6 +46,18 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     return
   }
 
+  const user = await User.findOne({ id: userId })
+  let initialAvatarUrl = user?.avatarUrl
+  
+  if (!initialAvatarUrl && user?.gender) {
+     if (user.gender === 'male') initialAvatarUrl = DEFAULT_AVATARS.male
+     else if (user.gender === 'female') initialAvatarUrl = DEFAULT_AVATARS.female
+     else initialAvatarUrl = DEFAULT_AVATARS.other
+  }
+
+  // Fallback if still empty
+  if (!initialAvatarUrl) initialAvatarUrl = DEFAULT_AVATARS.neutral
+
   const profileId = `p-${Math.random().toString(16).slice(2, 10)}`
   
   const profile = await Profile.create({
@@ -52,12 +67,9 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     displayName,
     bio: description,
     subscribers: 0,
-    avatarUrl: `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-      'flat geometric avatar icon, number 3, minimal, vector',
-    )}&image_size=square`,
-    bannerUrl: `https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-      'abstract tech banner, dark theme',
-    )}&image_size=landscape_16_9`,
+    avatarUrl: initialAvatarUrl,
+    bannerUrl: `https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2670&auto=format&fit=crop`,
+    gender: user?.gender // Sync gender to profile
   })
 
   res.status(200).json({ success: true, channel: profile })

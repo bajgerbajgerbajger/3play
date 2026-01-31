@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
+import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCompactNumber, formatTimeAgo } from '@/lib/format'
 import { type VideoListItem } from '@/components/video/VideoCard'
@@ -64,6 +65,7 @@ type VideoDetail = {
     bio: string
     subscribers: number
     userId: string
+    gender?: string
   } | null
   viewerRating?: 'like' | 'dislike' | 'none'
 }
@@ -75,6 +77,7 @@ type CommentItem = {
   authorHandle: string
   authorName: string
   authorAvatarUrl: string
+  authorGender?: string
   message: string
   createdAt: string
   likes: number
@@ -435,7 +438,13 @@ export default function Watch() {
               <div className="flex items-center gap-3">
                 {channel ? (
                   <Link to={`/channel/${encodeURIComponent(channel.handle)}`} className="flex items-center gap-3">
-                    <img src={channel.avatarUrl} alt={channel.displayName} className="h-10 w-10 rounded-full object-cover" />
+                    <Avatar 
+                      src={channel.avatarUrl} 
+                      alt={channel.displayName} 
+                      gender={channel.gender}
+                      className="h-10 w-10"
+                      size="custom"
+                    />
                     <div>
                       <div className="text-sm font-semibold">{channel.displayName}</div>
                       <div className="text-xs text-muted">{formatCompactNumber(channel.subscribers)} odběratelů</div>

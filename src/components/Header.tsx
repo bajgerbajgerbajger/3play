@@ -149,7 +149,12 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                 onClick={() => setMenuOpen((v) => !v)}
                 className="overflow-hidden"
               >
-                <img src={user.avatarUrl} alt={user.displayName} className="h-10 w-10 object-cover" />
+                <Avatar 
+                  src={user.avatarUrl} 
+                  alt={user.displayName} 
+                  gender={user.gender}
+                  className="h-10 w-10"
+                />
               </IconButton>
               {menuOpen ? (
                 <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border/10 bg-surface shadow-soft">

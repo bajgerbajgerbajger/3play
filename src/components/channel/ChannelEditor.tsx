@@ -139,7 +139,13 @@ export function ChannelEditor({ initialData, onClose, onUpdate }: ChannelEditorP
           {/* Avatar */}
           <div className="flex items-center gap-4">
             <div className="relative h-20 w-20 rounded-full overflow-hidden bg-surface2 shrink-0 group border border-border/10">
-              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              <Avatar 
+                src={avatarUrl} 
+                alt="Avatar" 
+                gender={initialData.gender}
+                className="w-full h-full"
+                size="custom"
+              />
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <label className="cursor-pointer text-white hover:text-brand transition">
                   {uploadingAvatar ? <Loader2 className="animate-spin" /> : <Upload size={20} />}

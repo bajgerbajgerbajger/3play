@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
 import { Search, Ban, CheckCircle, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Avatar } from '@/components/ui/Avatar'
 
 type User = {
   id: string
@@ -12,6 +13,7 @@ type User = {
   isBlocked: boolean
   createdAt: string
   avatarUrl?: string
+  gender?: 'male' | 'female' | 'other'
 }
 
 export default function UsersPage() {
@@ -99,13 +101,13 @@ export default function UsersPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
-                          {user.avatarUrl ? (
-                            <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xs">
-                              {user.displayName[0]}
-                            </div>
-                          )}
+                          <Avatar 
+                            src={user.avatarUrl} 
+                            alt={user.displayName} 
+                            gender={user.gender}
+                            className="w-full h-full"
+                            size="custom"
+                          />
                         </div>
                         <div>
                           <div className="font-medium text-white">{user.displayName}</div>

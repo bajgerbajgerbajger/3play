@@ -10,6 +10,7 @@ import dbConnect from '../lib/db.js'
 import User from '../models/User.js'
 import Profile from '../models/Profile.js'
 import EmailVerificationCode from '../models/EmailVerificationCode.js'
+import { sendVerificationEmail } from '../lib/mail.js'
 import { DEFAULT_AVATARS } from '../default-avatars.js'
 
 const router = Router()
@@ -86,7 +87,20 @@ router.post('/request-code', async (req: Request, res: Response): Promise<void> 
 
   if (process.env.NODE_ENV !== 'production' || !process.env.RESEND_API_KEY) {
     console.log('Dev email verification code for', normalizedEmail, 'is', code)
+    // In dev mode, we return the code to the frontend for convenience
+    // But we also try to send it if API key is present
+    if (process.env.RESEND_API_KEY) {
+       await sendVerificationEmail(normalizedEmail, code)
+    }
     res.status(200).json({ success: true, devCode: code })
+    return
+  }
+
+  // Production: Send email
+  const emailResult = await sendVerificationEmail(normalizedEmail, code)
+  
+  if (!emailResult.success) {
+    res.status(500).json({ success: false, error: 'Failed to send verification email' })
     return
   }
 

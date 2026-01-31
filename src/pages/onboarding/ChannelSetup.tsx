@@ -161,13 +161,13 @@ export default function ChannelSetup() {
 
                 <div className="absolute -bottom-16 left-8 md:left-12">
                     <div className="relative h-32 w-32 md:h-40 md:w-40 rounded-full border-[6px] border-surface bg-surface2 overflow-hidden group/avatar shadow-lg">
-                        {avatarUrl ? (
-                            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-brand/10 text-brand font-bold text-4xl">
-                                {displayName.charAt(0)}
-                            </div>
-                        )}
+                        <Avatar 
+                            src={avatarUrl} 
+                            alt="Avatar" 
+                            gender={user?.gender}
+                            className="w-full h-full"
+                            size="custom"
+                        />
                         <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all cursor-pointer backdrop-blur-[2px]">
                             <Camera className="w-8 h-8 text-white" />
                             <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'avatar')} />

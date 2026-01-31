@@ -7,6 +7,7 @@ export type NotificationDoc = {
   actorId?: string
   actorName?: string
   actorAvatarUrl?: string
+  actorGender?: 'male' | 'female' | 'other'
   type: 'comment' | 'reply' | 'like' | 'subscribe' | 'system'
   title: string
   message?: string
@@ -22,6 +23,7 @@ const NotificationSchema = new mongoose.Schema({
   actorId: { type: String },
   actorName: { type: String },
   actorAvatarUrl: { type: String },
+  actorGender: { type: String, enum: ['male', 'female', 'other'] },
   type: { 
     type: String, 
     enum: ['comment', 'reply', 'like', 'subscribe', 'system'], 

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
+import { DEFAULT_AVATARS } from '@/lib/default-avatars'
 import type { FieldErrors } from './utils'
 
 export function StepAccount({
@@ -77,16 +78,35 @@ export function StepAccount({
 
       <div>
         <div className="mb-1 text-xs font-semibold text-muted">Pohlaví (volitelné)</div>
-        <select
-          value={gender || ''}
-          onChange={(e) => onGender?.(e.target.value as 'male' | 'female' | 'other')}
-          className="h-10 w-full rounded-lg border border-border/10 bg-surface px-3 text-sm outline-none transition focus:border-brand/50 focus:ring-2 focus:ring-brand/20"
-        >
-          <option value="">Neuvádět</option>
-          <option value="male">Muž</option>
-          <option value="female">Žena</option>
-          <option value="other">Jiné</option>
-        </select>
+        <div className="grid grid-cols-3 gap-3">
+          {(['male', 'female', 'other'] as const).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => onGender?.(g)}
+              className={cn(
+                "group relative flex flex-col items-center gap-2 rounded-xl border p-3 transition-all outline-none",
+                gender === g 
+                  ? "border-brand bg-brand/5 ring-1 ring-brand" 
+                  : "border-border/10 bg-surface hover:border-brand/50 hover:bg-surface/80"
+              )}
+            >
+              <div className="relative h-16 w-16 overflow-hidden rounded-full ring-2 ring-border/10 group-hover:ring-brand/30 transition-all">
+                <img 
+                  src={DEFAULT_AVATARS[g]} 
+                  alt={g} 
+                  className="h-full w-full object-cover bg-[#F0F2F5]" 
+                />
+              </div>
+              <span className={cn(
+                "text-xs font-medium transition-colors",
+                gender === g ? "text-brand" : "text-muted group-hover:text-text"
+              )}>
+                {g === 'male' ? 'Muž' : g === 'female' ? 'Žena' : 'Jiné'}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div>

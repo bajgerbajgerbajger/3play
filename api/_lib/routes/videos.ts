@@ -38,6 +38,7 @@ router.get('/', async (req: Request, res: Response) => {
   const query = typeof req.query.q === 'string' ? req.query.q.trim() : ''
   const sort = typeof req.query.sort === 'string' ? req.query.sort : null
   const limit = typeof req.query.limit === 'string' ? Number(req.query.limit) : 24
+  const cursor = typeof req.query.cursor === 'string' ? req.query.cursor : null
   
   let filter: Record<string, unknown> = { visibility: 'published', status: 'ready' }
 
@@ -64,12 +65,12 @@ router.get('/', async (req: Request, res: Response) => {
   
   if (query) {
     const qRegex = new RegExp(query, 'i')
-    // We need to look up profiles to filter by channel name, which is hard in one query without aggregation.
-    // For simplicity, we'll fetch matches by title/desc first.
-    // Or we can use aggregation.
-    // Let's stick to simple find for now, maybe finding profiles first.
-    
-    const profiles = await Profile.find({ displayName: qRegex })
+    const profiles = await Profile.find({ 
+      $or: [
+        { displayName: qRegex },
+        { handle: qRegex }
+      ]
+    })
     const profileIds = profiles.map(p => p.id)
     
     filter = {
@@ -83,12 +84,51 @@ router.get('/', async (req: Request, res: Response) => {
     }
   }
 
+  // Cursor pagination logic (simple skip/limit is bad for performance, but good for simplicity. 
+  // For true scalability we need value-based cursors e.g. publishedAt < cursor).
+  // Let's implement value-based cursor for 'latest'.
+  if (cursor && sort !== 'popular' && !query) {
+      // If we are sorting by date, cursor is the timestamp
+      const cursorDate = new Date(Number(cursor));
+      if (!isNaN(cursorDate.getTime())) {
+          filter.publishedAt = { $lt: cursorDate };
+      }
+  }
+
+  // Note: For search and popular sort, reliable cursor pagination is harder without a search engine (Elasticsearch/MeiliSearch).
+  // We will stick to basic limit for search/popular for now, or use skip if needed (but skip is slow).
+  // Given we fetch all matching and sort in memory (lines 86-87), we should optimize this.
+  // The current implementation loads ALL videos into memory to sort them (line 86). This is BAD for scalability.
+  
   let list = await Video.find(filter)
-  list = sortVideos(list, sort)
+      .sort(sort === 'popular' ? { views: -1 } : { publishedAt: -1 })
+      .limit(limit + 1); // Fetch one extra to check for next page
+
+  // If we couldn't use DB sort (because of mixed processing), we might need the old logic.
+  // But standard Mongo sort is fine.
+  
+  // However, the original code had a custom sort function. Let's see if we can use Mongo sort.
+  // Mongo sort is efficient. 
+  
+  const hasMore = list.length > limit;
+  const itemsList = hasMore ? list.slice(0, limit) : list;
+  
+  // Calculate next cursor
+  let nextCursor = null;
+  if (hasMore && itemsList.length > 0) {
+      const last = itemsList[itemsList.length - 1];
+      if (last.publishedAt) {
+          nextCursor = new Date(last.publishedAt).getTime().toString();
+      }
+  }
 
   // Hydrate with profile info
-  const items = await Promise.all(list.slice(0, Math.max(1, Math.min(60, Number.isFinite(limit) ? limit : 24))).map(async (v) => {
-    const owner = await Profile.findOne({ id: v.ownerId })
+  const ownerIds = [...new Set(itemsList.map(v => v.ownerId))]
+  const owners = await Profile.find({ id: { $in: ownerIds } })
+  const ownerMap = new Map(owners.map(o => [o.id, o]))
+
+  const items = itemsList.map((v) => {
+    const owner = ownerMap.get(v.ownerId)
     return {
       id: v.id,
       title: v.title,
@@ -100,9 +140,9 @@ router.get('/', async (req: Request, res: Response) => {
       sourceUrl: v.sourceUrl,
       channel: owner,
     }
-  }))
+  })
 
-  res.status(200).json({ success: true, items })
+  res.status(200).json({ success: true, items, nextCursor })
 })
 
 router.get('/:videoId', async (req: Request, res: Response) => {
@@ -262,6 +302,7 @@ router.post('/:videoId/comments', requireAuth, async (req: Request, res: Respons
                 actorId: auth.sub,
                 actorName: u.displayName,
                 actorAvatarUrl: u.avatarUrl,
+                actorGender: u.gender,
                 type: 'reply',
                 title: `Reply to your comment on "${video.title}"`,
                 message: message.trim(),

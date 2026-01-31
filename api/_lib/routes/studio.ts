@@ -4,6 +4,8 @@ import multer from 'multer'
 import dbConnect from '../lib/db.js'
 import Video from '../models/Video.js'
 import Profile from '../models/Profile.js'
+import User from '../models/User.js'
+import { DEFAULT_AVATARS } from '../default-avatars.js'
 import crypto from 'crypto'
 import path from 'path'
 import fs from 'fs'
@@ -245,17 +247,32 @@ router.patch('/channel', async (req: Request, res: Response) => {
   }
   const auth = (req as Request & { auth: { handle: string } }).auth
   
-  const { displayName, bio, avatarUrl, bannerUrl, phone } = (req.body || {}) as {
+  const { displayName, bio, avatarUrl, bannerUrl, phone, gender } = (req.body || {}) as {
     displayName?: string
     bio?: string
     avatarUrl?: string
     bannerUrl?: string
     phone?: string
+    gender?: 'male' | 'female' | 'other'
   }
 
   if (displayName && displayName.trim().length < 2) {
     res.status(400).json({ success: false, error: 'Display name is too short' })
     return
+  }
+
+  // Calculate new avatar if gender changed and no explicit avatarUrl provided (or if user wants to reset)
+  // Ideally, if gender changes, we update the avatar to the new default.
+  let newAvatarUrl = avatarUrl;
+  if (gender && ['male', 'female', 'other'].includes(gender)) {
+     // If gender is provided, we might want to update avatar
+     // We only auto-update avatar if it wasn't explicitly provided in this request (meaning user didn't upload a custom one at the same time)
+     // OR if the user is switching gender, they likely want the new default avatar.
+     if (!avatarUrl) {
+        if (gender === 'male') newAvatarUrl = DEFAULT_AVATARS.male;
+        else if (gender === 'female') newAvatarUrl = DEFAULT_AVATARS.female;
+        else newAvatarUrl = DEFAULT_AVATARS.other;
+     }
   }
 
   const channel = await Profile.findOneAndUpdate(
@@ -264,9 +281,10 @@ router.patch('/channel', async (req: Request, res: Response) => {
       $set: {
         ...(displayName && { displayName }),
         ...(bio !== undefined && { bio }),
-        ...(avatarUrl !== undefined && { avatarUrl }),
+        ...(newAvatarUrl !== undefined && { avatarUrl: newAvatarUrl }),
         ...(bannerUrl !== undefined && { bannerUrl }),
         ...(phone !== undefined && { phone }),
+        ...(gender && { gender }),
       }
     },
     { new: true }
@@ -275,6 +293,32 @@ router.patch('/channel', async (req: Request, res: Response) => {
   if (!channel) {
     res.status(404).json({ success: false, error: 'Channel not found' })
     return
+  }
+
+  // Sync with User model
+  if (channel.userId) {
+    await User.findOneAndUpdate(
+        { id: channel.userId },
+        {
+            $set: {
+                ...(displayName && { displayName }),
+                ...(newAvatarUrl !== undefined && { avatarUrl: newAvatarUrl }),
+                ...(gender && { gender }),
+            }
+        }
+    );
+  } else {
+    // Fallback if userId not in profile, try to find by handle
+    await User.findOneAndUpdate(
+        { handle: auth.handle },
+        {
+            $set: {
+                ...(displayName && { displayName }),
+                ...(newAvatarUrl !== undefined && { avatarUrl: newAvatarUrl }),
+                ...(gender && { gender }),
+            }
+        }
+    );
   }
 
   res.status(200).json({ success: true, channel })
