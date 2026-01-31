@@ -17,4 +17,4 @@ services:
       - key: RESEND_API_KEY
         fromGroup: shared-secrets
       - key: APP_ORIGIN
-        value: https://your-domain.com # Change this to your custom domain
+        value: https://3play.cz # Custom domain
