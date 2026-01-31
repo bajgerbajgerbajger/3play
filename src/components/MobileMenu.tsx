@@ -151,6 +151,9 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                     <div className="space-y-1">
                       <NavItem to={`/channel/${user.handle}`} icon={<User size={20} />} label="Můj kanál" onClick={onClose} />
                       <NavItem to="/studio" icon={<Video size={20} />} label="Studio" onClick={onClose} />
+                      {user.role === 'admin' && (
+                        <NavItem to="/admin" icon={<Flame size={20} />} label="Admin Center" onClick={onClose} />
+                      )}
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"

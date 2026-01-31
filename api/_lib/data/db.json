@@ -1,13 +1,13 @@
 {
   "users": [
     {
-      "id": "u-f04097d8",
-      "email": "bajgerizzz@gmail.com",
-      "handle": "@newcreator",
-      "displayName": "New Creator",
-      "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20readable%20number%203%20with%20play%20triangle%20motif%2C%20minimal%2C%20sharp%20edges%2C%20red%20accent%2C%20dark%20background%2C%20vector%20style&image_size=square",
-      "passwordHash": "730017415d3e32d48c29de3bf672f925:bcfc5ab1b1314f63a49603c418941a80612618a0ba25eb88d6734a29070a68fb14e4ce3315fd7c8ebec194507ea5cede05335df26ceceb71d68dd9b371c0ef29",
-      "lastLogin": "2026-01-26T03:00:19.936Z"
+      "id": "u-aurora",
+      "email": "creator@3play.dev",
+      "handle": "@aurora",
+      "displayName": "Aurora Labs",
+      "avatarUrl": "https://coreva-normal.trae.ai/api/ide/v1/text_to_image?prompt=flat%20geometric%20avatar%20icon%2C%20tech%20creator%2C%20neon%20red%20accent%2C%20minimal%2C%20sharp%20edges%2C%20dark%20background%2C%20vector%20style&image_size=square",
+      "passwordHash": "cc7db2e8ce7e3967a96762e95f4050c8:4b76873c17cf9ab9bd9a75482770540f6a207fad912fa7016a5cd1770ec208386e690fc2ce96ba000e1af0dc7d7186343aadba118e505abd7034d7f4467d1cf5",
+      "role": "admin"
     },
     {
       "id": "u-aurora",

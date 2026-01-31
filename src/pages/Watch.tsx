@@ -198,6 +198,36 @@ export default function Watch() {
     
     // Require channel to engage - auto created now, so just proceed
     
+    // Optimistic Update
+    const previousVideo = { ...video }
+    const previousRating = video.viewerRating
+    const wasLiked = previousRating === 'like'
+    const wasDisliked = previousRating === 'dislike'
+    
+    // Calculate new counts
+    let newLikes = video.likes
+    let newDislikes = video.dislikes
+    
+    if (action === 'like') {
+        if (wasLiked) {
+            newLikes--
+            setVideo({ ...video, likes: newLikes, viewerRating: 'none' })
+        } else {
+            newLikes++
+            if (wasDisliked) newDislikes--
+            setVideo({ ...video, likes: newLikes, dislikes: newDislikes, viewerRating: 'like' })
+        }
+    } else {
+        if (wasDisliked) {
+            newDislikes--
+            setVideo({ ...video, dislikes: newDislikes, viewerRating: 'none' })
+        } else {
+            newDislikes++
+            if (wasLiked) newLikes--
+            setVideo({ ...video, likes: newLikes, dislikes: newDislikes, viewerRating: 'dislike' })
+        }
+    }
+
     try {
       setEngaging(action)
       const d = await apiFetch<{ success: true; likes: number; dislikes: number; viewerRating: 'like' | 'dislike' | 'none' }>(
@@ -209,9 +239,12 @@ export default function Watch() {
           skipLoadingBar: true
         },
       )
-      setVideo({ ...video, likes: d.likes, dislikes: d.dislikes, viewerRating: d.viewerRating })
+      // Sync with server source of truth
+      setVideo(prev => prev ? ({ ...prev, likes: d.likes, dislikes: d.dislikes, viewerRating: d.viewerRating }) : null)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed')
+      // Revert
+      setVideo(previousVideo)
     } finally {
       setEngaging(null)
     }
@@ -466,7 +499,7 @@ export default function Watch() {
                   variant={video.viewerRating === 'like' ? 'primary' : 'secondary'}
                   loading={engaging === 'like'}
                   onClick={() => engage('like')}
-                  className={`h-8 px-3 gap-2 ${video.viewerRating === 'like' ? 'bg-green-600 hover:bg-green-500 shadow-green-500/20' : 'hover:text-green-500'}`}
+                  className={`h-8 px-3 gap-2 ${video.viewerRating === 'like' ? 'bg-green-600 hover:bg-green-500' : 'hover:text-green-500'}`}
                 >
                   <ThumbsUp size={24} fill={video.viewerRating === 'like' ? 'currentColor' : 'none'} />
                   {formatCompactNumber(video.likes)}
@@ -475,7 +508,7 @@ export default function Watch() {
                   variant={video.viewerRating === 'dislike' ? 'primary' : 'secondary'}
                   loading={engaging === 'dislike'}
                   onClick={() => engage('dislike')}
-                  className={`h-8 px-3 gap-2 ${video.viewerRating === 'dislike' ? 'bg-red-600 hover:bg-red-500 shadow-red-500/20' : 'hover:text-red-500'}`}
+                  className={`h-8 px-3 gap-2 ${video.viewerRating === 'dislike' ? 'bg-red-600 hover:bg-red-500' : 'hover:text-red-500'}`}
                 >
                   <ThumbsDown size={24} fill={video.viewerRating === 'dislike' ? 'currentColor' : 'none'} />
                   {formatCompactNumber(video.dislikes)}
@@ -506,10 +539,11 @@ export default function Watch() {
               
               {user ? (
                 <form onSubmit={postComment} className="flex gap-3 mb-6">
-                   <img 
-                     src={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.handle}`} 
+                   <Avatar 
+                     src={user.avatarUrl} 
                      alt="Já" 
-                     className="h-9 w-9 rounded-full object-cover" 
+                     gender={user.gender}
+                     className="h-10 w-10 shrink-0"
                    />
                    <div className="flex-1 space-y-2">
                      <textarea

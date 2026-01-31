@@ -59,6 +59,17 @@ export function SubscribeButton({
 
     if (user.id === channelId) return // Cannot subscribe to self (backend also checks)
 
+    // Optimistic Update
+    const previousSubscribed = subscribed
+    const previousCount = count
+    
+    const newSubscribed = !subscribed
+    const newCount = newSubscribed ? count + 1 : Math.max(0, count - 1)
+    
+    setSubscribed(newSubscribed)
+    setCount(newCount)
+    onToggle?.(newCount, newSubscribed)
+
     setLoading(true)
     try {
       const res = await apiFetch<{ subscribed: boolean, count: number }>('/api/subscriptions/toggle', {
@@ -67,11 +78,16 @@ export function SubscribeButton({
         body: JSON.stringify({ channelId }),
         skipLoadingBar: true
       })
+      // Sync with server
       setSubscribed(res.subscribed)
       setCount(res.count)
       onToggle?.(res.count, res.subscribed)
     } catch (err) {
       console.error(err)
+      // Revert
+      setSubscribed(previousSubscribed)
+      setCount(previousCount)
+      onToggle?.(previousCount, previousSubscribed)
     } finally {
       setLoading(false)
     }

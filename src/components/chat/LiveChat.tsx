@@ -197,13 +197,13 @@ export function LiveChat({ isOpen, onClose }: LiveChatProps) {
                          <span className="text-xs font-bold">SYS</span>
                        </div>
                     ) : (
-                      msg.userAvatar ? (
-                        <img src={msg.userAvatar} alt={msg.userName} className="w-8 h-8 rounded-full object-cover border border-border/10" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-surface2 flex items-center justify-center text-muted">
-                          <UserIcon size={14} />
-                        </div>
-                      )
+                      <Avatar 
+                        src={msg.userAvatar} 
+                        alt={msg.userName} 
+                        gender={msg.userGender}
+                        className="w-8 h-8 border border-border/10"
+                        size="custom"
+                      />
                     )}
                   </div>
                   

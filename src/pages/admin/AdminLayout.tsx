@@ -96,10 +96,10 @@ export default function AdminLayout() {
               className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
               onClick={() => {
                 logout()
-                navigate('/login')
+                navigate('/auth')
               }}
             >
-              <LogOut size={18} className="mr-2" />
+              <LogOut size={18} className="mr-3" />
               Sign Out
             </Button>
             <div className="mt-2 pt-2 border-t border-white/5 text-center">

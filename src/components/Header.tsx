@@ -172,6 +172,12 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                     <CircleUserRound size={16} />
                     Channel
                   </Link>
+                  {user.role === 'admin' && (
+                    <Link to="/admin" className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 text-red-400">
+                      <User size={16} />
+                      Admin Center
+                    </Link>
+                  )}
                   <Link to="/studio" className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5">
                     <Video size={16} />
                     Studio
