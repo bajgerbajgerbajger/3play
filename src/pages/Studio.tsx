@@ -84,8 +84,14 @@ export function Studio() {
             <div className="flex justify-between text-xs text-gray-500">
               <span>Použito: 1.2 GB</span>
               <span className="flex items-center gap-1">
-                <InfinityIcon className="h-3 w-3" />
-                Neomezeno
+                {STORAGE_LIMITS.MAX_STORAGE_PER_USER === Infinity ? (
+                  <>
+                    <InfinityIcon className="h-3 w-3" />
+                    Neomezeno
+                  </>
+                ) : (
+                  <span>{STORAGE_LIMITS.MAX_STORAGE_PER_USER} GB</span>
+                )}
               </span>
             </div>
           </div>
