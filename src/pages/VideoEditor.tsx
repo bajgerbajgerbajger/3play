@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, Save, Eye } from 'lucide-react';
+import { Upload, X, Save, Eye, Infinity as InfinityIcon } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { RichTextEditor } from '../components/RichTextEditor';
+import { STORAGE_LIMITS } from '../config/storage';
 
 export function VideoEditor() {
   const [title, setTitle] = useState('');
@@ -20,8 +21,9 @@ export function VideoEditor() {
 
   const { getRootProps: getVideoRootProps, getInputProps: getVideoInputProps } = useDropzone({
     onDrop: onDropVideo,
-    accept: { 'video/*': [] },
-    maxFiles: 1
+    accept: STORAGE_LIMITS.ACCEPTED_VIDEO_TYPES,
+    maxFiles: 1,
+    maxSize: STORAGE_LIMITS.MAX_FILE_SIZE
   });
 
   const { getRootProps: getThumbnailRootProps, getInputProps: getThumbnailInputProps } = useDropzone({
@@ -126,11 +128,15 @@ export function VideoEditor() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-2 text-gray-500 py-4">
-                  <Upload className="h-6 w-6" />
-                  <p className="text-sm">Vybrat video soubor</p>
-                </div>
-              )}
+                        <div className="flex flex-col items-center gap-2 text-gray-500 py-4">
+                          <Upload className="h-6 w-6" />
+                          <p className="text-sm">Vybrat video soubor</p>
+                          <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full mt-2">
+                            <InfinityIcon className="h-3 w-3" />
+                            <span>Neomezená velikost</span>
+                          </div>
+                        </div>
+                      )}
             </div>
           </div>
 

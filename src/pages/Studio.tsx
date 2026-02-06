@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { 
   LayoutDashboard, Video, BarChart2, MessageSquare, Settings, 
-  Upload, DollarSign, Edit2, Trash2, Eye 
+  Upload, DollarSign, Edit2, Trash2, Eye, Infinity as InfinityIcon, Cloud
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { STORAGE_LIMITS } from '../config/storage';
 
 export function Studio() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -70,6 +71,24 @@ export function Studio() {
               Nastavení
             </button>
           </nav>
+
+          {/* Storage Indicator */}
+          <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-100">
+            <div className="flex items-center gap-2 mb-2 text-sm font-semibold text-gray-700">
+              <Cloud className="h-4 w-4" />
+              <span>Úložiště</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+              <div className="bg-blue-600 h-2 rounded-full" style={{ width: '1%' }}></div>
+            </div>
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>Použito: 1.2 GB</span>
+              <span className="flex items-center gap-1">
+                <InfinityIcon className="h-3 w-3" />
+                Neomezeno
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
