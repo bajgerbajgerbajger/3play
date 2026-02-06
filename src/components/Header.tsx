@@ -11,7 +11,7 @@ export function Header() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
 
   const languages = [
     { code: 'cs', name: 'Čeština', flag: '🇨🇿' },

@@ -2,10 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { Button } from '../components/ui/Button';
-import { Input } from 'lucide-react'; // Using icon as placeholder for Input component if needed, but I'll use standard input
 import { 
-  Mail, Smartphone, Lock, Facebook, Chrome, Instagram, 
-  MessageCircle, Send as SendIcon 
+  Mail, Smartphone, Lock, Facebook, Chrome, Instagram 
 } from 'lucide-react';
 
 export function Login() {

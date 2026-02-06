@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { 
   LayoutDashboard, Video, BarChart2, MessageSquare, Settings, 
-  Upload, DollarSign, Copyright, Edit2, Trash2, Eye, ThumbsUp 
+  Upload, DollarSign, Edit2, Trash2, Eye 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ThumbsUp, ThumbsDown, Share2, Save, MoreHorizontal, User } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Share2, Save, MoreHorizontal } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { VideoAnalytics } from '../components/VideoAnalytics';
 import { LiveChat } from '../components/LiveChat';

@@ -7,7 +7,7 @@ interface VideoAnalyticsProps {
   shares: number;
 }
 
-export function VideoAnalytics({ videoId, views, likes, shares }: VideoAnalyticsProps) {
+export function VideoAnalytics({ views, likes, shares }: VideoAnalyticsProps) {
   const engagementRate = ((likes + shares) / views * 100).toFixed(1);
   
   return (

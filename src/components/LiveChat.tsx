@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, MoreVertical, Smile, Trash2, Check, CheckCheck } from 'lucide-react';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 import { Button } from './ui/Button';
 import { useAuthStore } from '../store/auth';
-import { cn } from '../lib/utils';
 
 interface Message {
   id: string;
@@ -26,10 +25,10 @@ export function LiveChat({ videoId }: LiveChatProps) {
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [typingUsers] = useState<string[]>([]);
   const socketRef = useRef<Socket | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Colors for usernames
   const nameColors = [

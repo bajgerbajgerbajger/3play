@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react';
 import { 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
-  Type, Palette, Smile, Image as ImageIcon, Link as LinkIcon 
+  Type, Palette, Smile 
 } from 'lucide-react';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { Button } from './ui/Button';
-import { cn } from '../lib/utils';
 
 interface RichTextEditorProps {
   content: string;

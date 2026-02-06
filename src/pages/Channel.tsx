@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { User, Settings, Video, Grid, List } from 'lucide-react';
+import { Settings, List } from 'lucide-react';
 
 export function Channel() {
   const { id } = useParams();
