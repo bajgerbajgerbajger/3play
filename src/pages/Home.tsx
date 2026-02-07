@@ -5,6 +5,21 @@ import { useVideoStore } from '../store/videos';
 export function Home() {
   const { videos } = useVideoStore();
 
+  if (videos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Zatím zde nejsou žádná videa</h2>
+        <p className="text-gray-500 mb-6">Buďte první, kdo nahraje video na tuto platformu!</p>
+        <a 
+          href="/upload" 
+          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition-colors"
+        >
+          Nahrát první video
+        </a>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {videos.map((video) => (

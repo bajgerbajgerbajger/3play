@@ -17,34 +17,30 @@ export function Watch() {
   const [showLiveChat, setShowLiveChat] = useState(true);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
 
-  // Find video in store or fallback
+  // Find video in store
   const foundVideo = videos.find(v => v.id === id);
   
-  // Default mock video if not found (preserves old behavior for unknown IDs)
-  const defaultVideo = {
-    id: id || '1',
-    title: 'Jak vytvořit moderní React aplikaci v roce 2026',
-    videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',
-    description: '<p>V tomto videu se podíváme na <strong>nejnovější technologie</strong> v ekosystému Reactu.</p><p>Probereme:</p><ul><li>React 19+ features</li><li>Vite a jeho výhody</li><li>Tailwind CSS pro styling</li></ul>',
-    views: 125000,
-    uploadedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    channelName: 'TechGuru CZ',
-    channelAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TechGuru',
-    duration: '10:30',
-    thumbnail: `https://picsum.photos/seed/${id || '1'}/1280/720`
-  };
+  if (!foundVideo) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Video nebylo nalezeno</h2>
+        <p className="text-gray-500 mb-6">Požadované video neexistuje nebo bylo odstraněno.</p>
+        <Button onClick={() => window.location.href = '/'} variant="outline">
+          Zpět na hlavní stránku
+        </Button>
+      </div>
+    );
+  }
 
-  const video = foundVideo || defaultVideo;
+  const video = foundVideo;
   
   // Mock extended stats that are not in store
-  const likes = 5400;
-  const shares = 1200;
+  const likes = 0;
+  const shares = 0;
 
   useEffect(() => {
     const loadVideo = async () => {
       if (!video.videoUrl) {
-        // Fallback for completely missing URL
-        setCurrentVideoUrl(defaultVideo.videoUrl);
         return;
       }
 
@@ -57,12 +53,14 @@ export function Watch() {
             setCurrentVideoUrl(url);
             return () => URL.revokeObjectURL(url);
           } else {
-            console.warn('Video blob not found in DB, falling back');
-            setCurrentVideoUrl(defaultVideo.videoUrl);
+            console.warn('Video blob not found in DB');
+            // If video blob is missing in DB for some reason, we could show an error state
+            // For now, we keep the state empty which results in a player error or blank
+            setCurrentVideoUrl(''); 
           }
         } catch (e) {
           console.error('Failed to load video from DB', e);
-          setCurrentVideoUrl(defaultVideo.videoUrl);
+          setCurrentVideoUrl('');
         }
       } else {
         setCurrentVideoUrl(video.videoUrl);

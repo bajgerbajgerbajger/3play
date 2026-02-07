@@ -9,19 +9,8 @@ interface VideoState {
   setVideos: (videos: Video[]) => void;
 }
 
-// Initial mock videos to populate the platform
-const MOCK_VIDEOS: Video[] = Array.from({ length: 8 }).map((_, i) => ({
-  id: `mock-${i}`,
-  title: `Video Title ${i + 1} - Ukázka obsahu`,
-  description: 'Toto je ukázkové video pro testování platformy.',
-  thumbnail: `https://picsum.photos/seed/${i}/320/180`,
-  channelName: `Kanál ${i + 1}`,
-  channelAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
-  views: Math.floor(Math.random() * 1000000),
-  uploadedAt: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
-  duration: "10:30",
-  videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4'
-}));
+// Initial state is empty for real application usage
+const MOCK_VIDEOS: Video[] = [];
 
 export const useVideoStore = create<VideoState>()(
   persist(
