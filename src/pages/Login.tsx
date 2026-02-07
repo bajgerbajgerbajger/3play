@@ -25,9 +25,26 @@ export function Login() {
       alert('Prosím zadejte uživatelské jméno');
       return;
     }
-    // Simulate API call
+
+    if (isRegister) {
+      // Direct registration without 2FA
+      login({
+        id: Date.now().toString(),
+        username: username,
+        email: email,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+        subscribers: 0,
+        isVerified: false,
+        createdAt: new Date().toISOString(),
+        chatColor: '#000000',
+        twoFactorEnabled: false
+      });
+      navigate('/', { replace: true });
+      return;
+    }
+
+    // Login flow - Move to 2FA step
     console.log('Logging in with', email, password);
-    // Move to 2FA step
     setStep('2fa');
     // Simulate sending code
     console.log(`Sending code via ${method} to ${email}`);
@@ -39,7 +56,7 @@ export function Login() {
     if (isValid) {
       login({
         id: Date.now().toString(),
-        username: isRegister ? username : email.split('@')[0],
+        username: email.split('@')[0], // For login, we might not have username if not persisted, but store updates it
         email: email,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
         subscribers: 0,
@@ -48,7 +65,7 @@ export function Login() {
         chatColor: '#000000',
         twoFactorEnabled: true
       });
-      navigate('/');
+      navigate('/', { replace: true });
     } else {
       alert('Neplatný kód (zkuste 123456)');
     }
