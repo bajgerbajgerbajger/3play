@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { Button } from '../components/ui/Button';
 import { 
-  Mail, Smartphone, Lock, Facebook, Chrome, Instagram, User as UserIcon
+  Mail, Smartphone, Lock, Facebook, Chrome, Instagram, User as UserIcon, RefreshCw
 } from 'lucide-react';
 
 export function Login() {
@@ -18,6 +18,24 @@ export function Login() {
   
   const [code, setCode] = useState('');
   const [method, setMethod] = useState<'email' | 'sms'>('email');
+  const [resendTimer, setResendTimer] = useState(0);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
+
+  const handleResend = () => {
+    if (resendTimer > 0) return;
+    
+    // Simulate sending code
+    console.log(`Resending code via ${method} to ${email}`);
+    alert(`Nový kód byl odeslán na ${method === 'email' ? 'váš email' : 'vaše číslo'}.`);
+    setResendTimer(30); // 30 seconds cooldown
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +66,7 @@ export function Login() {
     setStep('2fa');
     // Simulate sending code
     console.log(`Sending code via ${method} to ${email}`);
+    setResendTimer(30); // Start timer on initial send
   };
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -212,6 +231,24 @@ export function Login() {
                 maxLength={6}
                 required
               />
+            </div>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendTimer > 0}
+                className={`text-sm flex items-center justify-center gap-2 mx-auto ${
+                  resendTimer > 0 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'text-blue-600 hover:text-blue-700 font-medium'
+                }`}
+              >
+                <RefreshCw className={`h-3 w-3 ${resendTimer > 0 ? 'animate-spin' : ''}`} />
+                {resendTimer > 0 
+                  ? `Znovu odeslat za ${resendTimer}s` 
+                  : 'Znovu odeslat kód'}
+              </button>
             </div>
 
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
