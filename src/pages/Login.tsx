@@ -3,20 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { Button } from '../components/ui/Button';
 import { 
-  Mail, Smartphone, Lock, Facebook, Chrome, Instagram 
+  Mail, Smartphone, Lock, Facebook, Chrome, Instagram, User as UserIcon
 } from 'lucide-react';
 
 export function Login() {
   const navigate = useNavigate();
   const { login, verify2FA } = useAuthStore();
   const [step, setStep] = useState<'credentials' | '2fa'>('credentials');
+  const [isRegister, setIsRegister] = useState(false);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  
   const [code, setCode] = useState('');
   const [method, setMethod] = useState<'email' | 'sms'>('email');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRegister && !username) {
+      alert('Prosím zadejte uživatelské jméno');
+      return;
+    }
     // Simulate API call
     console.log('Logging in with', email, password);
     // Move to 2FA step
@@ -30,12 +38,12 @@ export function Login() {
     const isValid = await verify2FA(code);
     if (isValid) {
       login({
-        id: '1',
-        username: email.split('@')[0],
+        id: Date.now().toString(),
+        username: isRegister ? username : email.split('@')[0],
         email: email,
-        avatar: '',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
         subscribers: 0,
-        isVerified: true,
+        isVerified: false,
         createdAt: new Date().toISOString(),
         chatColor: '#000000',
         twoFactorEnabled: true
@@ -52,12 +60,31 @@ export function Login() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">3Play</h1>
           <p className="text-gray-500 mt-2">
-            {step === 'credentials' ? 'Přihlaste se ke svému účtu' : 'Dvoufázové ověření'}
+            {step === 'credentials' 
+              ? (isRegister ? 'Vytvořte si nový účet' : 'Přihlaste se ke svému účtu')
+              : 'Dvoufázové ověření'}
           </p>
         </div>
 
         {step === 'credentials' ? (
           <form onSubmit={handleLogin} className="space-y-4">
+            {isRegister && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Uživatelské jméno</label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Vaše jméno"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <div className="relative">
@@ -89,8 +116,20 @@ export function Login() {
             </div>
 
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Pokračovat
+              {isRegister ? 'Registrovat' : 'Pokračovat'}
             </Button>
+
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => setIsRegister(!isRegister)}
+                className="text-sm text-blue-600 hover:underline font-medium"
+              >
+                {isRegister 
+                  ? 'Již máte účet? Přihlaste se' 
+                  : 'Nemáte účet? Zaregistrujte se'}
+              </button>
+            </div>
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">

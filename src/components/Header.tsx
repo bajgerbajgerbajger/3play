@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, Search, Video, User as UserIcon, LogOut, Settings, LayoutDashboard, Globe } from 'lucide-react';
+import { Menu, Search, Video, User as UserIcon, LogOut, Settings, LayoutDashboard, Globe, Play } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { Button } from './ui/Button';
 import { Notifications } from './Notifications';
@@ -32,16 +32,16 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b z-50 px-4 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b z-50 px-4 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon">
           <Menu className="h-6 w-6" />
         </Button>
-        <Link to="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-            3
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="h-9 w-9 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-md group-hover:bg-red-700 transition-colors">
+            <Play className="h-5 w-5 fill-white ml-0.5" />
           </div>
-          <span className="text-xl font-bold tracking-tight">3Play</span>
+          <span className="text-xl font-bold tracking-tight text-gray-900 group-hover:text-red-600 transition-colors">3Play</span>
         </Link>
       </div>
 
