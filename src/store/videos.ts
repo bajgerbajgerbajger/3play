@@ -33,6 +33,20 @@ export const useVideoStore = create<VideoState>()(
     }),
     {
       name: 'video-storage',
+      version: 1,
+      migrate: (persistedState: any, version) => {
+        if (version === 0) {
+          // Migration from version 0 to 1: Add videoUrl to all videos if missing
+          return {
+            ...persistedState,
+            videos: persistedState.videos.map((v: Video) => ({
+              ...v,
+              videoUrl: v.videoUrl || 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4'
+            }))
+          };
+        }
+        return persistedState as VideoState;
+      },
     }
   )
 );

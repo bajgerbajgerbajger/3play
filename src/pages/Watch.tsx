@@ -42,7 +42,13 @@ export function Watch() {
 
   useEffect(() => {
     const loadVideo = async () => {
-      if (video.videoUrl?.startsWith('local-db://')) {
+      if (!video.videoUrl) {
+        // Fallback for completely missing URL
+        setCurrentVideoUrl(defaultVideo.videoUrl);
+        return;
+      }
+
+      if (video.videoUrl.startsWith('local-db://')) {
         const videoId = video.videoUrl.replace('local-db://', '');
         try {
           const blob = await getVideoFile(videoId);
@@ -50,12 +56,16 @@ export function Watch() {
             const url = URL.createObjectURL(blob);
             setCurrentVideoUrl(url);
             return () => URL.revokeObjectURL(url);
+          } else {
+            console.warn('Video blob not found in DB, falling back');
+            setCurrentVideoUrl(defaultVideo.videoUrl);
           }
         } catch (e) {
           console.error('Failed to load video from DB', e);
+          setCurrentVideoUrl(defaultVideo.videoUrl);
         }
       } else {
-        setCurrentVideoUrl(video.videoUrl || '');
+        setCurrentVideoUrl(video.videoUrl);
       }
     };
     loadVideo();
