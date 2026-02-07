@@ -30,7 +30,8 @@ export function Watch() {
     uploadedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     channelName: 'TechGuru CZ',
     channelAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TechGuru',
-    duration: '10:30'
+    duration: '10:30',
+    thumbnail: `https://picsum.photos/seed/${id || '1'}/1280/720`
   };
 
   const video = foundVideo || defaultVideo;
