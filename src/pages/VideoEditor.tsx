@@ -1,15 +1,64 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, Save, Eye, Infinity as InfinityIcon } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { RichTextEditor } from '../components/RichTextEditor';
 import { STORAGE_LIMITS } from '../config/storage';
+import { useAuthStore } from '../store/auth';
+import { useVideoStore } from '../store/videos';
+import { Video } from '../types';
 
 export function VideoEditor() {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { addVideo } = useVideoStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handlePublish = async () => {
+    if (!title || !videoFile) {
+      alert('Prosím vyplňte název a nahrajte video.');
+      return;
+    }
+
+    let thumbnailUrl = `https://picsum.photos/seed/${Date.now()}/320/180`;
+    if (thumbnail) {
+      try {
+        thumbnailUrl = await fileToBase64(thumbnail);
+      } catch (e) {
+        console.error('Thumbnail conversion failed', e);
+      }
+    }
+
+    const newVideo: Video = {
+      id: Date.now().toString(),
+      title,
+      description,
+      thumbnail: thumbnailUrl,
+      videoUrl: URL.createObjectURL(videoFile),
+      channelName: user?.username || 'Anonym',
+      channelAvatar: user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
+      views: 0,
+      uploadedAt: new Date().toISOString(),
+      duration: "00:00",
+      userId: user?.id
+    };
+
+    addVideo(newVideo);
+    navigate('/');
+  };
 
   const onDropVideo = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles[0]) setVideoFile(acceptedFiles[0]);
@@ -41,7 +90,10 @@ export function VideoEditor() {
             <Eye className="h-4 w-4" />
             Náhled
           </Button>
-          <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
+          <Button 
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+            onClick={handlePublish}
+          >
             <Save className="h-4 w-4" />
             Publikovat
           </Button>

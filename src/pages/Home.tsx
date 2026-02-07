@@ -1,17 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
 import { cs } from 'date-fns/locale';
+import { useVideoStore } from '../store/videos';
 
 export function Home() {
-  const videos = Array.from({ length: 8 }).map((_, i) => ({
-    id: i,
-    title: `Video Title ${i + 1} - Ukázka obsahu pro testování rozložení`,
-    thumbnail: `https://picsum.photos/seed/${i}/320/180`,
-    channelName: `Kanál ${i + 1}`,
-    channelAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
-    views: Math.floor(Math.random() * 1000000),
-    uploadedAt: new Date(Date.now() - Math.floor(Math.random() * 10000000000)),
-    duration: "10:30"
-  }));
+  const { videos } = useVideoStore();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -44,7 +36,7 @@ export function Home() {
                 {video.channelName}
               </p>
               <p className="text-xs text-gray-500">
-                {new Intl.NumberFormat('cs-CZ', { notation: "compact" }).format(video.views)} zhlédnutí • {formatDistanceToNow(video.uploadedAt, { addSuffix: true, locale: cs })}
+                {new Intl.NumberFormat('cs-CZ', { notation: "compact" }).format(video.views)} zhlédnutí • {formatDistanceToNow(new Date(video.uploadedAt), { addSuffix: true, locale: cs })}
               </p>
             </div>
           </div>

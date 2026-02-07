@@ -34,3 +34,17 @@ export interface AuthState {
   updateUser: (updates: Partial<User>) => void;
   verify2FA: (code: string) => Promise<boolean>;
 }
+
+export interface Video {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnail: string;
+  videoUrl?: string; // For local/blob url or external
+  channelName: string;
+  channelAvatar: string;
+  views: number;
+  uploadedAt: string; // ISO string for persistence
+  duration: string;
+  userId?: string; // To link to the creator
+}
