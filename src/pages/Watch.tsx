@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ThumbsUp, ThumbsDown, Share2, Save, MoreHorizontal } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -6,29 +6,59 @@ import { VideoAnalytics } from '../components/VideoAnalytics';
 import { LiveChat } from '../components/LiveChat';
 import { formatDistanceToNow } from 'date-fns';
 import { cs } from 'date-fns/locale';
+import { useVideoStore } from '../store/videos';
+import { getVideoFile } from '../lib/db';
 
 export function Watch() {
   const { id } = useParams();
+  const { videos } = useVideoStore();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showLiveChat, setShowLiveChat] = useState(true);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
 
-  // Mock data
-  const video = {
+  // Find video in store or fallback
+  const foundVideo = videos.find(v => v.id === id);
+  
+  // Default mock video if not found (preserves old behavior for unknown IDs)
+  const defaultVideo = {
     id: id || '1',
     title: 'Jak vytvořit moderní React aplikaci v roce 2026',
-    url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',
+    videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',
     description: '<p>V tomto videu se podíváme na <strong>nejnovější technologie</strong> v ekosystému Reactu.</p><p>Probereme:</p><ul><li>React 19+ features</li><li>Vite a jeho výhody</li><li>Tailwind CSS pro styling</li></ul>',
     views: 125000,
-    likes: 5400,
-    shares: 1200,
-    uploadedAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
-    channel: {
-      name: 'TechGuru CZ',
-      subscribers: 50000,
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TechGuru'
-    }
+    uploadedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    channelName: 'TechGuru CZ',
+    channelAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TechGuru',
+    duration: '10:30'
   };
+
+  const video = foundVideo || defaultVideo;
+  
+  // Mock extended stats that are not in store
+  const likes = 5400;
+  const shares = 1200;
+
+  useEffect(() => {
+    const loadVideo = async () => {
+      if (video.videoUrl?.startsWith('local-db://')) {
+        const videoId = video.videoUrl.replace('local-db://', '');
+        try {
+          const blob = await getVideoFile(videoId);
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            setCurrentVideoUrl(url);
+            return () => URL.revokeObjectURL(url);
+          }
+        } catch (e) {
+          console.error('Failed to load video from DB', e);
+        }
+      } else {
+        setCurrentVideoUrl(video.videoUrl || '');
+      }
+    };
+    loadVideo();
+  }, [video.videoUrl]);
 
   return (
     <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -37,10 +67,10 @@ export function Watch() {
         {/* Video Player */}
         <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
           <video 
-            src={video.url} 
+            src={currentVideoUrl} 
             controls 
             className="w-full h-full object-contain"
-            poster={`https://picsum.photos/seed/${id}/1280/720`}
+            poster={video.thumbnail || `https://picsum.photos/seed/${id}/1280/720`}
           >
             Váš prohlížeč nepodporuje přehrávání videa.
           </video>
@@ -53,14 +83,14 @@ export function Watch() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 gap-4">
             <div className="flex items-center gap-4">
               <img 
-                src={video.channel.avatar} 
-                alt={video.channel.name}
+                src={video.channelAvatar} 
+                alt={video.channelName}
                 className="h-10 w-10 rounded-full bg-gray-200"
               />
               <div>
-                <h3 className="font-semibold text-gray-900">{video.channel.name}</h3>
+                <h3 className="font-semibold text-gray-900">{video.channelName}</h3>
                 <p className="text-xs text-gray-500">
-                  {new Intl.NumberFormat('cs-CZ', { notation: "compact" }).format(video.channel.subscribers)} odběratelů
+                  {new Intl.NumberFormat('cs-CZ', { notation: "compact" }).format(50000)} odběratelů
                 </p>
               </div>
               <Button 
@@ -76,7 +106,7 @@ export function Watch() {
               <div className="flex items-center bg-gray-100 rounded-full">
                 <Button variant="ghost" size="sm" className="rounded-l-full px-4 gap-2 hover:bg-gray-200">
                   <ThumbsUp className="h-5 w-5" />
-                  {new Intl.NumberFormat('cs-CZ', { notation: "compact" }).format(video.likes)}
+                  {new Intl.NumberFormat('cs-CZ', { notation: "compact" }).format(likes)}
                 </Button>
                 <div className="w-px h-6 bg-gray-300" />
                 <Button variant="ghost" size="sm" className="rounded-r-full px-4 hover:bg-gray-200">
@@ -103,11 +133,11 @@ export function Watch() {
           {/* Description */}
           <div className="mt-4 bg-gray-100 rounded-xl p-3 text-sm hover:bg-gray-200 transition-colors cursor-pointer" onClick={() => setShowFullDescription(!showFullDescription)}>
             <div className="font-semibold mb-1">
-              {new Intl.NumberFormat('cs-CZ').format(video.views)} zhlédnutí • {formatDistanceToNow(video.uploadedAt, { addSuffix: true, locale: cs })}
+              {new Intl.NumberFormat('cs-CZ').format(video.views)} zhlédnutí • {formatDistanceToNow(new Date(video.uploadedAt), { addSuffix: true, locale: cs })}
             </div>
             <div 
               className={`prose prose-sm max-w-none ${!showFullDescription ? 'line-clamp-2' : ''}`}
-              dangerouslySetInnerHTML={{ __html: video.description }}
+              dangerouslySetInnerHTML={{ __html: video.description || '' }}
             />
             <button className="mt-2 font-semibold text-gray-700">
               {showFullDescription ? 'Zobrazit méně' : 'Zobrazit více'}
@@ -118,8 +148,8 @@ export function Watch() {
           <VideoAnalytics 
             videoId={video.id} 
             views={video.views} 
-            likes={video.likes} 
-            shares={video.shares} 
+            likes={likes} 
+            shares={shares} 
           />
 
           {/* Comments Section */}

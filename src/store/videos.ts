@@ -19,7 +19,8 @@ const MOCK_VIDEOS: Video[] = Array.from({ length: 8 }).map((_, i) => ({
   channelAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
   views: Math.floor(Math.random() * 1000000),
   uploadedAt: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
-  duration: "10:30"
+  duration: "10:30",
+  videoUrl: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4'
 }));
 
 export const useVideoStore = create<VideoState>()(

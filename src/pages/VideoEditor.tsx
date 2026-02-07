@@ -9,6 +9,8 @@ import { useAuthStore } from '../store/auth';
 import { useVideoStore } from '../store/videos';
 import { Video } from '../types';
 
+import { saveVideoFile } from '../lib/db';
+
 export function VideoEditor() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -17,6 +19,7 @@ export function VideoEditor() {
   const [description, setDescription] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -33,31 +36,44 @@ export function VideoEditor() {
       return;
     }
 
-    let thumbnailUrl = `https://picsum.photos/seed/${Date.now()}/320/180`;
-    if (thumbnail) {
-      try {
-        thumbnailUrl = await fileToBase64(thumbnail);
-      } catch (e) {
-        console.error('Thumbnail conversion failed', e);
+    setIsUploading(true);
+    try {
+      let thumbnailUrl = `https://picsum.photos/seed/${Date.now()}/320/180`;
+      if (thumbnail) {
+        try {
+          thumbnailUrl = await fileToBase64(thumbnail);
+        } catch (e) {
+          console.error('Thumbnail conversion failed', e);
+        }
       }
+
+      const videoId = Date.now().toString();
+      
+      // Save video content to IndexedDB for persistence
+      await saveVideoFile(videoId, videoFile);
+
+      const newVideo: Video = {
+        id: videoId,
+        title,
+        description,
+        thumbnail: thumbnailUrl,
+        videoUrl: `local-db://${videoId}`, // Special protocol for local DB
+        channelName: user?.username || 'Anonym',
+        channelAvatar: user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
+        views: 0,
+        uploadedAt: new Date().toISOString(),
+        duration: "00:00",
+        userId: user?.id
+      };
+
+      addVideo(newVideo);
+      navigate('/');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Nepodařilo se nahrát video. Zkuste to prosím znovu.');
+    } finally {
+      setIsUploading(false);
     }
-
-    const newVideo: Video = {
-      id: Date.now().toString(),
-      title,
-      description,
-      thumbnail: thumbnailUrl,
-      videoUrl: URL.createObjectURL(videoFile),
-      channelName: user?.username || 'Anonym',
-      channelAvatar: user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
-      views: 0,
-      uploadedAt: new Date().toISOString(),
-      duration: "00:00",
-      userId: user?.id
-    };
-
-    addVideo(newVideo);
-    navigate('/');
   };
 
   const onDropVideo = useCallback((acceptedFiles: File[]) => {
@@ -93,9 +109,10 @@ export function VideoEditor() {
           <Button 
             className="gap-2 bg-blue-600 hover:bg-blue-700"
             onClick={handlePublish}
+            disabled={isUploading}
           >
-            <Save className="h-4 w-4" />
-            Publikovat
+            <Save className={`h-4 w-4 ${isUploading ? 'animate-spin' : ''}`} />
+            {isUploading ? 'Nahrávám...' : 'Publikovat'}
           </Button>
         </div>
       </div>
